@@ -24,6 +24,7 @@
       "*": "ask",
 
       // ===== DEV FLOW SEM PROMPTS =====
+      "npx tsc": "allow",
       "npm test": "allow",
       "npm test *": "allow",
       "npm run test": "allow",

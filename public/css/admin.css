@@ -245,6 +245,31 @@ body {
   color: #fff;
 }
 
+/* PF/PJ toggle */
+.pill-tipo-pessoa {
+  display: flex;
+  background: #0f172a;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+.pill-tipo-pessoa .pill-button {
+  padding: 4px 14px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pill-tipo-pessoa .pill-button.active {
+  background: linear-gradient(135deg, #9333ea, #6366f1);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
 /* Detalhes dialog */
 .detalhes-filtros {
   display: flex;

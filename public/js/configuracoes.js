@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   configurarSessoes();
   configurarExportar();
   configurarExcluirConta();
+  configurarCompartilharCategorias();
   configurarCategorias();
 });
 
@@ -361,6 +362,15 @@ function configurarExcluirConta() {
       submitBtn.disabled = false;
       submitBtn.textContent = "Excluir";
     }
+  });
+}
+
+function configurarCompartilharCategorias() {
+  const toggle = document.getElementById("compartilharCategoriasToggle");
+  if (!toggle) return;
+
+  toggle.addEventListener("change", async () => {
+    await window.electronAPI.setCompartilharCategorias(toggle.checked);
   });
 }
 

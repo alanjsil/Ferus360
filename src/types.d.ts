@@ -12,6 +12,8 @@ export interface Usuario {
   ultimo_login?: string | null;
 }
 
+export type TipoPessoa = "PF" | "PJ";
+
 export interface Categoria {
   id: string;
   nome: string;
@@ -19,6 +21,7 @@ export interface Categoria {
   usuario_id: string | null;
   eh_global: boolean;
   ativo: boolean;
+  tipo_pessoa?: TipoPessoa | null;
   criado_em?: string;
   atualizado_em?: string;
   sync_status?: string;
@@ -31,6 +34,7 @@ export interface Subcategoria {
   categoria_id: string;
   nome: string;
   usuario_id: string;
+  tipo_pessoa?: TipoPessoa | null;
   criado_em?: string;
   atualizado_em?: string;
   sync_status?: string;
@@ -41,6 +45,7 @@ export interface Conta {
   id: string;
   nome: string;
   usuario_id: string;
+  tipo_pessoa: TipoPessoa;
   criado_em?: string;
   atualizado_em?: string;
   sync_status?: string;
@@ -51,6 +56,7 @@ export interface Pessoa {
   id: string;
   nome: string;
   usuario_id: string;
+  tipo_pessoa: TipoPessoa;
   criado_em?: string;
   atualizado_em?: string;
   sync_status?: string;
@@ -73,6 +79,7 @@ export interface Lancamento {
   conta_destino_id?: string | null;
   pessoa_id?: string | null;
   status: StatusLancamento;
+  tipo_pessoa?: TipoPessoa;
   data_pagamento?: string | null;
   transferencia_grupo_id?: string | null;
   data_busca?: string;
@@ -97,6 +104,7 @@ export interface Orcamento {
   subcategoria_id?: string | null;
   conta_id?: string | null;
   pessoa_id?: string | null;
+  tipo_pessoa?: TipoPessoa;
   recorrente: boolean;
   observacoes?: string | null;
   mes?: number;
@@ -222,19 +230,23 @@ export interface CreateCategoriaPayload {
   usuarioId?: string;
   eh_global?: boolean;
   ehGlobal?: boolean;
+  tipo_pessoa?: TipoPessoa | null;
 }
 
 export interface CreateSubcategoriaPayload {
   categoria_id: string;
   nome: string;
+  tipo_pessoa?: TipoPessoa | null;
 }
 
 export type createContaPayload = {
   nome: string;
+  tipo_pessoa?: TipoPessoa;
 };
 
 export type createPessoaPayload = {
   nome: string;
+  tipo_pessoa?: TipoPessoa;
 };
 
 export interface CreateLancamentoPayload {
@@ -248,6 +260,7 @@ export interface CreateLancamentoPayload {
   conta_destino_id?: string;
   pessoa_id?: string;
   status?: string;
+  tipo_pessoa?: TipoPessoa;
   id?: string;
 }
 
@@ -261,6 +274,7 @@ export interface CreateTransferenciaPayload {
   descricao?: string;
   conta_origem_id?: string;
   conta_destino_id?: string;
+  tipo_pessoa?: TipoPessoa;
 }
 
 export interface UpdatePerfilPayload {
@@ -284,5 +298,6 @@ export interface ImportarOrcamentoItem {
   usuario_id?: string;
   recorrente?: boolean | string;
   observacoes?: string;
+  tipo_pessoa?: TipoPessoa;
   id?: string;
 }

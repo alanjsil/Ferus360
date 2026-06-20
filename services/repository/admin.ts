@@ -27,12 +27,16 @@ async function getAdminDashboard(): Promise<AdminDashboard> {
   };
 }
 
-async function getTransacoesCliente(usuarioId: string, mes?: string | number, ano?: string | number): Promise<Lancamento[]> {
+async function getTransacoesCliente(usuarioId: string, mes?: string | number, ano?: string | number, tipoPessoa?: string): Promise<Lancamento[]> {
   let query = supabase
     .from("financas_lancamentos")
     .select("*, categoria:financas_categorias(nome), subcategoria:financas_subcategorias(nome)")
     .eq("usuario_id", usuarioId)
     .order("data", { ascending: false }) as any;
+
+  if (tipoPessoa) {
+    query = query.eq("tipo_pessoa", tipoPessoa);
+  }
 
   if (ano) {
     const mesStr = mes ? String(mes).padStart(2, "0") : null;
@@ -113,12 +117,24 @@ async function getClientes(): Promise<Usuario[]> {
   return result;
 }
 
-async function getResumoCliente(usuarioId: string): Promise<{ lancamentos: Lancamento[]; orcamento: Orcamento[] }> {
-  const { data: lancamentos, error: err1 } = await supabase.from("financas_lancamentos").select("tipo, valor, status, data").eq("usuario_id", usuarioId);
+async function getResumoCliente(usuarioId: string, tipoPessoa?: string): Promise<{ lancamentos: Lancamento[]; orcamento: Orcamento[] }> {
+  let lancQuery = supabase.from("financas_lancamentos").select("tipo, valor, status, data").eq("usuario_id", usuarioId) as any;
+
+  if (tipoPessoa) {
+    lancQuery = lancQuery.eq("tipo_pessoa", tipoPessoa);
+  }
+
+  const { data: lancamentos, error: err1 } = await lancQuery;
 
   if (err1) throw err1;
 
-  const { data: orcamento, error: err2 } = await supabase.from("financas_orcamento").select("tipo, valor_planejado, valor_realizado").eq("usuario_id", usuarioId);
+  let orcQuery = supabase.from("financas_orcamento").select("tipo, valor_planejado, valor_realizado").eq("usuario_id", usuarioId) as any;
+
+  if (tipoPessoa) {
+    orcQuery = orcQuery.eq("tipo_pessoa", tipoPessoa);
+  }
+
+  const { data: orcamento, error: err2 } = await orcQuery;
 
   if (err2) throw err2;
 

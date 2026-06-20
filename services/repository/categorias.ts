@@ -6,11 +6,12 @@ import * as logger from "../logger";
 import {
   supabase, _doSQLite, _popularCache, _atualizarLocal, _syncAposEscrita,
   _marcarPendente, _inserirLocal, _limparCacheEviccao,
-  addUsuarioFilter, validarUUID, normalizarNome,
+  addUsuarioFilter, addTipoPessoaCategoriaFilter, addTipoPessoaWhere,
+  validarUUID, normalizarNome,
 } from "./utils";
 import { logAuditoria } from "./auditoria";
 
-async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas = false): Promise<Categoria[]> {
+async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas = false, tipoPessoa?: string, compartilhar?: boolean): Promise<Categoria[]> {
   function montarQueryBaseLocal(): { where: string; params: Record<string, unknown> } {
     let where = "1=1";
     const params: Record<string, unknown> = {};
@@ -18,6 +19,11 @@ async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas 
     if (tipo) {
       where += " AND tipo = @tipo";
       params.tipo = tipo;
+    }
+    if (!compartilhar) {
+      const r = addTipoPessoaWhere(where, params, tipoPessoa, true);
+      where = r.where;
+      params.tipoPessoaAtivo = r.params.tipoPessoaAtivo;
     }
     return { where, params };
   }
@@ -49,6 +55,7 @@ async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas 
     let q = supabase.from("financas_categorias").select("*");
     if (!mostrarInativas) q = q.eq("ativo", true);
     if (tipo) q = q.eq("tipo", tipo);
+    q = addTipoPessoaCategoriaFilter(q, tipoPessoa, compartilhar);
     return q;
   }
 
@@ -77,7 +84,7 @@ async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas 
 }
 
 async function createCategoria(payload: CreateCategoriaPayload): Promise<Categoria> {
-  const { nome, tipo, usuarioId } = payload;
+  const { nome, tipo, usuarioId, tipo_pessoa } = payload;
   const ehGlobal = payload.eh_global ?? payload.ehGlobal ?? false;
 
   const nomeNormalizado = normalizarNome(nome);
@@ -124,6 +131,7 @@ async function createCategoria(payload: CreateCategoriaPayload): Promise<Categor
     usuario_id: ehGlobal ? null : usuarioId || null,
     eh_global: ehGlobal,
     ativo: true,
+    tipo_pessoa: tipo_pessoa ?? null,
   };
 
   _syncAposEscrita("financas_categorias", insertPayload);
@@ -212,7 +220,7 @@ async function toggleCategoriaAtivo(id: string, usuarioId?: string): Promise<Cat
 }
 
 async function createSubcategoria(usuarioId: string, payload: CreateSubcategoriaPayload): Promise<Subcategoria> {
-  const { categoria_id, nome } = payload;
+  const { categoria_id, nome, tipo_pessoa } = payload;
 
   const nomeNormalizado = normalizarNome(nome);
   if (nomeNormalizado.length < 2 || nomeNormalizado.length > 40) {
@@ -226,7 +234,7 @@ async function createSubcategoria(usuarioId: string, payload: CreateSubcategoria
   }
 
   const id = crypto.randomUUID();
-  const insertPayload = { id, categoria_id, nome: nomeNormalizado, usuario_id: usuarioId };
+  const insertPayload = { id, categoria_id, nome: nomeNormalizado, usuario_id: usuarioId, tipo_pessoa: tipo_pessoa ?? null };
   _syncAposEscrita("financas_subcategorias", insertPayload);
 
   const { data, error } = await supabase.from("financas_subcategorias").insert(insertPayload).select().single();
@@ -266,7 +274,7 @@ async function updateSubcategoria(id: string, patch: { nome?: string }): Promise
   return data[0];
 }
 
-async function getSubcategorias(usuarioId?: string, categoriaId?: string): Promise<Subcategoria[]> {
+async function getSubcategorias(usuarioId?: string, categoriaId?: string, tipoPessoa?: string, compartilhar?: boolean): Promise<Subcategoria[]> {
   if (database.getDb()) {
     try {
       let where = "1=1";
@@ -274,6 +282,11 @@ async function getSubcategorias(usuarioId?: string, categoriaId?: string): Promi
       if (categoriaId) {
         where += " AND categoria_id = @categoriaId";
         params.categoriaId = categoriaId;
+      }
+      if (!compartilhar) {
+        const r = addTipoPessoaWhere(where, params, tipoPessoa, true);
+        where = r.where;
+        params.tipoPessoaAtivo = r.params.tipoPessoaAtivo;
       }
       const data = database.query(`SELECT * FROM financas_subcategorias WHERE deleted_at IS NULL AND ${where} ORDER BY nome`, params).map((r) => _doSQLite(r));
       if (data.length > 0) return data as unknown as Subcategoria[];
@@ -285,6 +298,7 @@ async function getSubcategorias(usuarioId?: string, categoriaId?: string): Promi
   let query = supabase.from("financas_subcategorias").select("*").order("nome") as any;
 
   query = addUsuarioFilter(query, usuarioId);
+  query = addTipoPessoaCategoriaFilter(query, tipoPessoa, compartilhar);
 
   if (categoriaId) {
     query = query.eq("categoria_id", categoriaId);

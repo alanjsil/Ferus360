@@ -46,7 +46,12 @@ const mockRepository = {
 };
 
 const mockSetState = vi.fn();
-const mockGetState = vi.fn((key) => key === "usuarioAtual" ? { id: "user-123" } : []);
+const mockGetState = vi.fn((key) => {
+  if (key === "usuarioAtual") return { id: "user-123" };
+  if (key === "tipoPessoaAtivo") return "PF";
+  if (key === "compartilharCategorias") return false;
+  return [];
+});
 
 const mockAuth = {
   verificarToken: vi.fn(),
@@ -251,7 +256,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("calls repository.getCategorias on categorias:get", async () => {
       // Act
       const result = await handlers.handleCategoriasGet(null, "DESPESA");
-      expect(mockRepository.getCategorias).toHaveBeenCalledWith("user-123", "DESPESA");
+      expect(mockRepository.getCategorias).toHaveBeenCalledWith("user-123", "DESPESA", false, "PF", false);
       expect(mockSetState).toHaveBeenCalledWith("categorias", [mockData]);
       expect(result).toEqual([mockData]);
     });
@@ -263,14 +268,14 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("calls repository.getContas on contas:get", async () => {
       // Act
       const result = await handlers.handleContasGet(null);
-      expect(mockRepository.getContas).toHaveBeenCalledWith("user-123");
+      expect(mockRepository.getContas).toHaveBeenCalledWith("user-123", "PF");
       expect(mockSetState).toHaveBeenCalledWith("contas", [mockData]);
       expect(result).toEqual([mockData]);
     });
 
     it("calls repository.getPessoas on pessoas:get", async () => {
       const result = await handlers.handlePessoasGet(null);
-      expect(mockRepository.getPessoas).toHaveBeenCalledWith("user-123");
+      expect(mockRepository.getPessoas).toHaveBeenCalledWith("user-123", "PF");
       expect(mockSetState).toHaveBeenCalledWith("pessoas", [mockData]);
       expect(result).toEqual([mockData]);
     });
@@ -278,7 +283,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("calls repository.createConta on conta:create", async () => {
       const payload = { nome: "Nova Conta" };
       const result = await handlers.handleContaCreate(null, payload);
-      expect(mockRepository.createConta).toHaveBeenCalledWith("user-123", payload);
+      expect(mockRepository.createConta).toHaveBeenCalledWith("user-123", { ...payload, tipo_pessoa: "PF" });
       expect(mockSetState).toHaveBeenCalledWith("contas", [mockData]);
       expect(result).toEqual(mockData);
     });
@@ -299,7 +304,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("calls repository.createPessoa on pessoa:create", async () => {
       const payload = { nome: "Nova Pessoa" };
       const result = await handlers.handlePessoaCreate(null, payload);
-      expect(mockRepository.createPessoa).toHaveBeenCalledWith("user-123", payload);
+      expect(mockRepository.createPessoa).toHaveBeenCalledWith("user-123", { ...payload, tipo_pessoa: "PF" });
       expect(mockSetState).toHaveBeenCalledWith("pessoas", [mockData]);
       expect(result).toEqual(mockData);
     });
@@ -319,42 +324,42 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("calls repository.getLancamentos on lancamentos:get", async () => {
       const result = await handlers.handleLancamentosGet(null, "2026-06");
-      expect(mockRepository.getLancamentos).toHaveBeenCalledWith("2026-06", "user-123");
+      expect(mockRepository.getLancamentos).toHaveBeenCalledWith("2026-06", "user-123", "PF");
       expect(mockSetState).toHaveBeenCalledWith("lancamentos", [mockData]);
       expect(result).toEqual([mockData]);
     });
 
     it("calls repository.getOrcamento on orcamento:get", async () => {
       const result = await handlers.handleOrcamentoGet(null, "2026-06");
-      expect(mockRepository.getOrcamento).toHaveBeenCalledWith("2026-06", "user-123");
+      expect(mockRepository.getOrcamento).toHaveBeenCalledWith("2026-06", "user-123", "PF");
       expect(mockSetState).toHaveBeenCalledWith("orcamento", [mockData]);
       expect(result).toEqual([mockData]);
     });
 
     it("calls repository.getSubcategorias on subcategorias:get", async () => {
       const result = await handlers.handleSubcategoriasGet(null, "cat-1");
-      expect(mockRepository.getSubcategorias).toHaveBeenCalledWith("user-123", "cat-1");
+      expect(mockRepository.getSubcategorias).toHaveBeenCalledWith("user-123", "cat-1", "PF", false);
       expect(mockSetState).toHaveBeenCalledWith("subcategorias", [mockData]);
       expect(result).toEqual([mockData]);
     });
 
     it("calls repository.getDashboardDados on dashboard:dados", async () => {
       const result = await handlers.handleDashboardDados(null, "2026", "06", "cat-1");
-      expect(mockRepository.getDashboardDados).toHaveBeenCalledWith("2026", "06", "cat-1", "user-123");
+      expect(mockRepository.getDashboardDados).toHaveBeenCalledWith("2026", "06", "cat-1", "user-123", "PF");
       expect(mockSetState).toHaveBeenCalledWith("dashboard", mockData);
       expect(result).toEqual(mockData);
     });
 
     it("calls repository.getDashboard on dashboard:get", async () => {
       const result = await handlers.handleDashboardGet(null, "2026-06");
-      expect(mockRepository.getDashboard).toHaveBeenCalledWith("2026-06", "user-123");
+      expect(mockRepository.getDashboard).toHaveBeenCalledWith("2026-06", "user-123", "PF");
       expect(result).toEqual(mockData);
     });
 
     it("calls repository.createLancamento on lancamentos:create", async () => {
       const payload = { data: "2026-06-01", tipo: "DESPESA", valor: 100 };
       const result = await handlers.handleLancamentosCreate(null, payload);
-      expect(mockRepository.createLancamento).toHaveBeenCalledWith(payload, "user-123");
+      expect(mockRepository.createLancamento).toHaveBeenCalledWith({ ...payload, tipo_pessoa: "PF" }, "user-123");
       expect(mockSetState).toHaveBeenCalledWith("lancamentos", [mockData]);
       expect(result).toEqual(mockData);
     });
@@ -512,7 +517,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
   describe("handlers de categorias", () => {
     it("cat:list calls getCategorias with usuarioId", async () => {
       const result = await handlers.handleCatList(null);
-      expect(mockRepository.getCategorias).toHaveBeenCalledWith("user-123", null, true);
+      expect(mockRepository.getCategorias).toHaveBeenCalledWith("user-123", null, true, "PF", false);
       expect(mockSetState).toHaveBeenCalledWith("categorias", [mockData]);
       expect(result).toEqual([mockData]);
     });
@@ -520,7 +525,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("cat:create calls createCategoria with payload and token", async () => {
       const payload = { nome: "Nova Cat", tipo: "RECEITA" };
       const result = await handlers.handleCatCreate(null, payload);
-      expect(mockRepository.createCategoria).toHaveBeenCalledWith({ ...payload, usuarioId: "user-123" });
+      expect(mockRepository.createCategoria).toHaveBeenCalledWith({ ...payload, usuarioId: "user-123", tipo_pessoa: "PF" });
       expect(result).toEqual(mockData);
     });
 
@@ -560,7 +565,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("subcat:create calls createSubcategoria", async () => {
       const payload = { nome: "Sub", categoria_id: "cat-1" };
       const result = await handlers.handleSubcatCreate(null, payload);
-      expect(mockRepository.createSubcategoria).toHaveBeenCalledWith("user-123", payload);
+      expect(mockRepository.createSubcategoria).toHaveBeenCalledWith("user-123", { ...payload, tipo_pessoa: "PF" });
       expect(result).toEqual(mockData);
     });
 
@@ -635,7 +640,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("handleAdminGetResumoCliente retorna resumo", async () => {
       const result = await handlers.handleAdminGetResumoCliente(null, "u-1");
-      expect(mockAdminService.getResumoCliente).toHaveBeenCalledWith("u-1");
+      expect(mockAdminService.getResumoCliente).toHaveBeenCalledWith("u-1", undefined);
       expect(result).toHaveProperty("lancamentos");
     });
 
@@ -647,7 +652,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("handleAdminGetTransacoesCliente retorna transacoes", async () => {
       const result = await handlers.handleAdminGetTransacoesCliente(null, "u-1", 1, 2026);
-      expect(mockAdminService.getTransacoesCliente).toHaveBeenCalledWith("u-1", 1, 2026);
+      expect(mockAdminService.getTransacoesCliente).toHaveBeenCalledWith("u-1", 1, 2026, undefined);
       expect(result).toHaveLength(1);
     });
 
@@ -748,7 +753,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
       const result = await handlers.handleAdminGetOrcamentoCliente(null, "u-1");
 
       // Assert
-      expect(mockAdminService.getOrcamentoCliente).toHaveBeenCalledWith("u-1");
+      expect(mockAdminService.getOrcamentoCliente).toHaveBeenCalledWith("u-1", undefined);
       expect(result).toHaveLength(1);
       expect(result[0].categoria).toBe("Salário");
     });
@@ -769,7 +774,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
       const result = await handlers.handleAdminGetDashboardDadosCliente(null, "u-1", "2026", "06", null);
 
       // Assert
-      expect(mockAdminService.getDashboardDadosCliente).toHaveBeenCalledWith("u-1", "2026", "06", null);
+      expect(mockAdminService.getDashboardDadosCliente).toHaveBeenCalledWith("u-1", "2026", "06", null, undefined);
       expect(result).toEqual({ receitas: [], despesas: [] });
     });
 
@@ -789,7 +794,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
       const result = await handlers.handleAdminGetAnosDisponiveisCliente(null, "u-1");
 
       // Assert
-      expect(mockAdminService.getAnosDisponiveisCliente).toHaveBeenCalledWith("u-1");
+      expect(mockAdminService.getAnosDisponiveisCliente).toHaveBeenCalledWith("u-1", undefined);
       expect(result).toEqual([2026, 2025]);
     });
 
@@ -809,7 +814,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
       const result = await handlers.handleAdminGetContasCliente(null, "u-1");
 
       // Assert
-      expect(mockAdminService.getContasCliente).toHaveBeenCalledWith("u-1");
+      expect(mockAdminService.getContasCliente).toHaveBeenCalledWith("u-1", undefined);
       expect(result).toHaveLength(1);
       expect(result[0].nome).toBe("Conta Cliente");
     });

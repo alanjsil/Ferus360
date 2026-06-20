@@ -303,6 +303,10 @@ function matchesFilters(item, filters) {
     if (value && typeof value === "object" && "$like" in value) {
       const pattern = value.$like.replace(/%/g, "");
       if (!String(item[key]).includes(pattern)) return false;
+    } else if (value && typeof value === "object" && "$gte" in value) {
+      if (item[key] < value.$gte) return false;
+    } else if (value && typeof value === "object" && "$lte" in value) {
+      if (item[key] > value.$lte) return false;
     } else if (item[key] !== value) {
       return false;
     }

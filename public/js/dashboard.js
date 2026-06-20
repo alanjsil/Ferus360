@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Adicionar event listeners para os filtros
   adicionarEventListeners();
   configurarLogout();
+  configurarTipoPessoaToggle();
 });
 
 /**
@@ -46,6 +47,33 @@ function configurarLogout() {
 
     clearAuthSession();
     window.location.href = "login.html";
+  });
+}
+
+function configurarTipoPessoaToggle() {
+  const container = document.getElementById("tipoPessoaToggle");
+  if (!container) return;
+
+  container.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-tp]");
+    if (!btn) return;
+
+    const tp = btn.dataset.tp;
+    container.querySelectorAll("[data-tp]").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    await window.electronAPI.setTipoPessoa(tp);
+    await carregarCategorias();
+    await popularAnos();
+    await carregarDashboard();
+    popularMeses();
+  });
+
+  window.electronAPI.onTipoPessoaChanged(async () => {
+    await carregarCategorias();
+    await popularAnos();
+    await carregarDashboard();
+    popularMeses();
   });
 }
 

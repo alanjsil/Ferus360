@@ -10,6 +10,8 @@ let chamados = [];
 let categoriasGlobais = [];
 let editingCatGlobalId = null;
 let clienteVisualizadoId = null;
+let tipoPessoaResumo = "PF";
+let tipoPessoaDetalhes = "PF";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const auth = await ensureAuthenticated({ requireAdmin: true });
@@ -26,6 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   configurarRedefinirSenha();
   configurarChamados();
   configurarNovoUsuario();
+  configurarTipoPessoaToggle();
 });
 
 /**
@@ -46,6 +49,24 @@ function preencherSelectsFiltro() {
     opt.textContent = a;
     anoSelect.appendChild(opt);
   }
+}
+
+function configurarTipoPessoaToggle() {
+  document.querySelectorAll("#tipoPessoaResumo .pill-button, #tipoPessoaDetalhes .pill-button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const parent = btn.closest(".pill-tipo-pessoa");
+      parent.querySelectorAll(".pill-button").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const tipo = btn.dataset.tipo;
+      if (parent.id === "tipoPessoaResumo") {
+        tipoPessoaResumo = tipo;
+        if (clienteVisualizadoId) visualizarCliente(clienteVisualizadoId, "");
+      } else {
+        tipoPessoaDetalhes = tipo;
+        if (clienteVisualizadoId) abrirDetalhesCliente(clienteVisualizadoId);
+      }
+    });
+  });
 }
 
 function configurarNavegacao() {
@@ -197,7 +218,7 @@ async function visualizarCliente(id, nome) {
   dialog.showModal();
 
   try {
-    const resumo = await window.electronAPI.adminGetResumoCliente(id);
+    const resumo = await window.electronAPI.adminGetResumoCliente(id, tipoPessoaResumo);
     if (resumo?.error) {
       body.innerHTML = '<p class="empty-state">Erro ao carregar resumo.</p>';
       return;
@@ -252,7 +273,7 @@ async function abrirDetalhesCliente(id) {
   document.getElementById("detalhesTitulo").textContent = `Transações${ano ? ` de ${ano}${mes ? `/${mes}` : ""}` : ""}`;
 
   try {
-    const transacoes = await window.electronAPI.adminGetTransacoesCliente(id, mes || null, ano || null);
+    const transacoes = await window.electronAPI.adminGetTransacoesCliente(id, mes || null, ano || null, tipoPessoaDetalhes);
 
     const tableBody = document.getElementById("detalhesBody");
 

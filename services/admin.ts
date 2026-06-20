@@ -50,12 +50,12 @@ interface AdminService {
   getDashboard: () => Promise<AdminDashboard>;
   getClientes: () => Promise<Usuario[]>;
   toggleCliente: (id: string) => Promise<Usuario>;
-  getResumoCliente: (id: string) => Promise<{ lancamentos: Lancamento[]; orcamento: Orcamento[] }>;
-  getTransacoesCliente: (id: string, mes?: string | number, ano?: string | number) => Promise<Lancamento[]>;
-  getOrcamentoCliente: (id: string) => Promise<Orcamento[]>;
-  getDashboardDadosCliente: (usuarioId: string, ano: string | number, mes?: string | number, categoria?: string) => Promise<DashboardDadosResult>;
-  getAnosDisponiveisCliente: (usuarioId: string) => Promise<number[]>;
-  getContasCliente: (id: string) => Promise<Conta[]>;
+  getResumoCliente: (id: string, tipoPessoa?: string) => Promise<{ lancamentos: Lancamento[]; orcamento: Orcamento[] }>;
+  getTransacoesCliente: (id: string, mes?: string | number, ano?: string | number, tipoPessoa?: string) => Promise<Lancamento[]>;
+  getOrcamentoCliente: (id: string, tipoPessoa?: string) => Promise<Orcamento[]>;
+  getDashboardDadosCliente: (usuarioId: string, ano: string | number, mes?: string | number, categoria?: string, tipoPessoa?: string) => Promise<DashboardDadosResult>;
+  getAnosDisponiveisCliente: (usuarioId: string, tipoPessoa?: string) => Promise<number[]>;
+  getContasCliente: (id: string, tipoPessoa?: string) => Promise<Conta[]>;
   resetSenha: (id: string) => Promise<{ success: boolean; message: string; redefinidoPor: string }>;
   getChamados: () => Promise<(Chamado & { usuario_nome: string; usuario_email: string })[]>;
   responderChamado: (id: string, msg: string) => Promise<Chamado>;
@@ -117,40 +117,40 @@ function buildAdminService(dependencies: AdminDependencies = {}): AdminService {
     return result;
   }
 
-  async function getResumoCliente(id: string): Promise<{ lancamentos: Lancamento[]; orcamento: Orcamento[] }> {
+  async function getResumoCliente(id: string, tipoPessoa?: string): Promise<{ lancamentos: Lancamento[]; orcamento: Orcamento[] }> {
     await verificarAdmin();
     validarUUID(id);
-    return await deps.repository.getResumoCliente(id);
+    return await deps.repository.getResumoCliente(id, tipoPessoa);
   }
 
-  async function getTransacoesCliente(id: string, mes?: string | number, ano?: string | number): Promise<Lancamento[]> {
+  async function getTransacoesCliente(id: string, mes?: string | number, ano?: string | number, tipoPessoa?: string): Promise<Lancamento[]> {
     await verificarAdmin();
     validarUUID(id);
-    return await deps.repository.getTransacoesCliente(id, mes, ano);
+    return await deps.repository.getTransacoesCliente(id, mes, ano, tipoPessoa);
   }
 
-  async function getOrcamentoCliente(id: string): Promise<Orcamento[]> {
+  async function getOrcamentoCliente(id: string, tipoPessoa?: string): Promise<Orcamento[]> {
     await verificarAdmin();
     validarUUID(id);
-    return await deps.repository.getOrcamento(undefined, id);
+    return await deps.repository.getOrcamento(undefined, id, undefined, tipoPessoa);
   }
 
-  async function getDashboardDadosCliente(usuarioId: string, ano: string | number, mes?: string | number, categoria?: string): Promise<DashboardDadosResult> {
+  async function getDashboardDadosCliente(usuarioId: string, ano: string | number, mes?: string | number, categoria?: string, tipoPessoa?: string): Promise<DashboardDadosResult> {
     await verificarAdmin();
     validarUUID(usuarioId);
-    return await deps.repository.getDashboardDados(ano, mes, categoria, usuarioId);
+    return await deps.repository.getDashboardDados(ano, mes, categoria, usuarioId, tipoPessoa);
   }
 
-  async function getAnosDisponiveisCliente(usuarioId: string): Promise<number[]> {
+  async function getAnosDisponiveisCliente(usuarioId: string, tipoPessoa?: string): Promise<number[]> {
     await verificarAdmin();
     validarUUID(usuarioId);
-    return await deps.repository.getAnosDisponiveis(usuarioId);
+    return await deps.repository.getAnosDisponiveis(usuarioId, tipoPessoa);
   }
 
-  async function getContasCliente(id: string): Promise<Conta[]> {
+  async function getContasCliente(id: string, tipoPessoa?: string): Promise<Conta[]> {
     await verificarAdmin();
     validarUUID(id);
-    return await deps.repository.getContas(id);
+    return await deps.repository.getContas(id, tipoPessoa);
   }
 
   async function resetSenha(id: string): Promise<{ success: boolean; message: string; redefinidoPor: string }> {

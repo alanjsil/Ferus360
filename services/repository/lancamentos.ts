@@ -5,11 +5,12 @@ import * as logger from "../logger";
 import {
   supabase, _doSQLite, _popularCache, _atualizarLocal, _syncAposEscrita,
   _marcarPendente, _inserirLocal,
-  addUsuarioFilter, validarMes, validarUUID, normalizarNome,
+  addUsuarioFilter, addTipoPessoaFilterStrict, addTipoPessoaWhere,
+  validarMes, validarUUID, normalizarNome,
 } from "./utils";
 import { logAuditoria } from "./auditoria";
 
-async function getLancamentos(mes?: string, usuarioId?: string): Promise<Lancamento[]> {
+async function getLancamentos(mes?: string, usuarioId?: string, tipoPessoa?: string): Promise<Lancamento[]> {
   if (database.getDb()) {
     try {
       let where = "1=1";
@@ -22,7 +23,8 @@ async function getLancamentos(mes?: string, usuarioId?: string): Promise<Lancame
         where += " AND usuario_id = @usuarioId";
         params.usuarioId = usuarioId;
       }
-      const data = database.query(`SELECT * FROM financas_lancamentos WHERE deleted_at IS NULL AND ${where} ORDER BY data DESC`, params).map((r) => _doSQLite(r));
+      const r = addTipoPessoaWhere(where, params, tipoPessoa);
+      const data = database.query(`SELECT * FROM financas_lancamentos WHERE deleted_at IS NULL AND ${r.where} ORDER BY data DESC`, r.params).map((r2) => _doSQLite(r2));
       if (data.length > 0) return data as unknown as Lancamento[];
     } catch {
       logger.warn("repository", "getLancamentos cache local indisponível, fallback");
@@ -32,6 +34,7 @@ async function getLancamentos(mes?: string, usuarioId?: string): Promise<Lancame
   let query = supabase.from("financas_lancamentos").select("*").order("data", { ascending: false }).limit(5000) as any;
 
   query = addUsuarioFilter(query, usuarioId);
+  query = addTipoPessoaFilterStrict(query, tipoPessoa);
 
   if (mes) {
     validarMes(mes);
@@ -45,7 +48,7 @@ async function getLancamentos(mes?: string, usuarioId?: string): Promise<Lancame
   return data;
 }
 
-async function getOrcamento(mes?: string, usuarioId?: string): Promise<Orcamento[]> {
+async function getOrcamento(mes?: string, usuarioId?: string, tipoPessoa?: string): Promise<Orcamento[]> {
   if (database.getDb()) {
     try {
       let where = "1=1";
@@ -54,7 +57,8 @@ async function getOrcamento(mes?: string, usuarioId?: string): Promise<Orcamento
         where += " AND data_busca LIKE @mes";
         params.mes = mes + "%";
       }
-      const data = database.query(`SELECT * FROM financas_orcamento WHERE deleted_at IS NULL AND ${where} ORDER BY data ASC`, params).map((r) => _doSQLite(r));
+      const r = addTipoPessoaWhere(where, params, tipoPessoa);
+      const data = database.query(`SELECT * FROM financas_orcamento WHERE deleted_at IS NULL AND ${r.where} ORDER BY data ASC`, r.params).map((r2) => _doSQLite(r2));
       if (data.length > 0) return data as unknown as Orcamento[];
     } catch {
       logger.warn("repository", "getOrcamento cache local indisponível, fallback");
@@ -64,6 +68,7 @@ async function getOrcamento(mes?: string, usuarioId?: string): Promise<Orcamento
   let query = supabase.from("financas_orcamento").select("*").order("data", { ascending: true }) as any;
 
   query = addUsuarioFilter(query, usuarioId);
+  query = addTipoPessoaFilterStrict(query, tipoPessoa);
 
   if (mes) {
     validarMes(mes);
@@ -76,11 +81,17 @@ async function getOrcamento(mes?: string, usuarioId?: string): Promise<Orcamento
   return data;
 }
 
-async function getAnosDisponiveis(usuarioId?: string): Promise<number[]> {
+async function getAnosDisponiveis(usuarioId?: string, tipoPessoa?: string): Promise<number[]> {
   if (database.getDb()) {
     try {
-      const lancamentos = database.query("SELECT DISTINCT substr(data, 1, 4) as ano FROM financas_lancamentos WHERE deleted_at IS NULL").map((r: Record<string, unknown>) => Number(r.ano));
-      const orcamentos = database.query("SELECT DISTINCT substr(data, 1, 4) as ano FROM financas_orcamento WHERE deleted_at IS NULL").map((r: Record<string, unknown>) => Number(r.ano));
+      let lWhere = "deleted_at IS NULL";
+      let oWhere = "deleted_at IS NULL";
+      const lParams: Record<string, unknown> = {};
+      const oParams: Record<string, unknown> = {};
+      const lr = addTipoPessoaWhere(lWhere, lParams, tipoPessoa);
+      const or = addTipoPessoaWhere(oWhere, oParams, tipoPessoa);
+      const lancamentos = database.query(`SELECT DISTINCT substr(data, 1, 4) as ano FROM financas_lancamentos WHERE ${lr.where}`, lr.params).map((r: Record<string, unknown>) => Number(r.ano));
+      const orcamentos = database.query(`SELECT DISTINCT substr(data, 1, 4) as ano FROM financas_orcamento WHERE ${or.where}`, or.params).map((r: Record<string, unknown>) => Number(r.ano));
       const anos = new Set([...lancamentos, ...orcamentos]);
       if (anos.size > 0) return [...anos].sort((a, b) => b - a);
     } catch {
@@ -90,9 +101,11 @@ async function getAnosDisponiveis(usuarioId?: string): Promise<number[]> {
 
   let lancamentosQuery = supabase.from("financas_lancamentos").select("data") as any;
   lancamentosQuery = addUsuarioFilter(lancamentosQuery, usuarioId);
+  lancamentosQuery = addTipoPessoaFilterStrict(lancamentosQuery, tipoPessoa);
 
   let orcamentoQuery = supabase.from("financas_orcamento").select("data") as any;
   orcamentoQuery = addUsuarioFilter(orcamentoQuery, usuarioId);
+  orcamentoQuery = addTipoPessoaFilterStrict(orcamentoQuery, tipoPessoa);
 
   const [{ data: lancamentos, error: errorL }, { data: orcamentos, error: errorO }] = await Promise.all([lancamentosQuery, orcamentoQuery]);
 
@@ -106,7 +119,7 @@ async function getAnosDisponiveis(usuarioId?: string): Promise<number[]> {
   return [...anos].sort((a, b) => b - a);
 }
 
-async function getDashboardDados(ano: string | number, mes?: string | number, categoria?: string, usuarioId?: string): Promise<DashboardDadosResult> {
+async function getDashboardDados(ano: string | number, mes?: string | number, categoria?: string, usuarioId?: string, tipoPessoa?: string): Promise<DashboardDadosResult> {
   if (database.getDb()) {
     try {
       let lWhere = "deleted_at IS NULL AND status = 'PAGO' AND data >= @anoInicio AND data <= @anoFim";
@@ -121,14 +134,17 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
         lWhere += " AND categoria_id = @categoria";
         params.categoria = categoria;
       }
-      const lancamentos = database.query(`SELECT * FROM financas_lancamentos WHERE ${lWhere} ORDER BY data ASC`, params).map((r) => _doSQLite(r));
+      const lr = addTipoPessoaWhere(lWhere, params, tipoPessoa);
+      const lancamentos = database.query(`SELECT * FROM financas_lancamentos WHERE ${lr.where} ORDER BY data ASC`, lr.params).map((r) => _doSQLite(r));
 
-      let oWhere = "deleted_at IS NULL AND data >= @anoInicio AND data <= @anoFim";
+      let oWhere = "deleted_at IS NULL AND data >= @anoInicio2 AND data <= @anoFim2";
+      const oParams: Record<string, unknown> = { anoInicio2: `${ano}-01-01`, anoFim2: `${ano}-12-31` };
       if (mes && mes !== "all") {
         oWhere += " AND mes = @mesN";
-        params.mesN = parseInt(mes.toString());
+        oParams.mesN = parseInt(mes.toString());
       }
-      const orcamentos = database.query(`SELECT * FROM financas_orcamento WHERE ${oWhere} ORDER BY data ASC`, params).map((r) => _doSQLite(r));
+      const or = addTipoPessoaWhere(oWhere, oParams, tipoPessoa);
+      const orcamentos = database.query(`SELECT * FROM financas_orcamento WHERE ${or.where} ORDER BY data ASC`, or.params).map((r) => _doSQLite(r));
 
       if (lancamentos.length > 0 || orcamentos.length > 0) {
         return {
@@ -157,7 +173,9 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
     .lte("data", `${ano}-12-31`) as any;
 
   lancamentosQuery = addUsuarioFilter(lancamentosQuery, usuarioId);
+  lancamentosQuery = addTipoPessoaFilterStrict(lancamentosQuery, tipoPessoa);
   orcamentoQuery = addUsuarioFilter(orcamentoQuery, usuarioId);
+  orcamentoQuery = addTipoPessoaFilterStrict(orcamentoQuery, tipoPessoa);
 
   if (mes && mes !== "all") {
     const mesFormatado = mes.toString().padStart(2, "0");
@@ -185,7 +203,7 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
   };
 }
 
-async function getDashboard(mes?: string, usuarioId?: string): Promise<DashboardData> {
+async function getDashboard(mes?: string, usuarioId?: string, tipoPessoa?: string): Promise<DashboardData> {
   if (database.getDb()) {
     try {
       let lWhere = "deleted_at IS NULL AND status = 'PAGO'";
@@ -198,8 +216,10 @@ async function getDashboard(mes?: string, usuarioId?: string): Promise<Dashboard
         oWhere += " AND data_busca LIKE @mesO";
         oParams.mesO = mes + "%";
       }
-      const orcamento = database.query(`SELECT * FROM financas_orcamento WHERE ${oWhere} ORDER BY data ASC`, { ...oParams, ...lParams }).map((r) => _doSQLite(r));
-      const realizados = database.query(`SELECT * FROM financas_lancamentos WHERE ${lWhere} ORDER BY data DESC`, { ...lParams, ...oParams }).map((r) => _doSQLite(r));
+      const lr = addTipoPessoaWhere(lWhere, lParams, tipoPessoa);
+      const or = addTipoPessoaWhere(oWhere, oParams, tipoPessoa);
+      const orcamento = database.query(`SELECT * FROM financas_orcamento WHERE ${or.where} ORDER BY data ASC`, { ...or.params, ...lr.params }).map((r) => _doSQLite(r));
+      const realizados = database.query(`SELECT * FROM financas_lancamentos WHERE ${lr.where} ORDER BY data DESC`, { ...lr.params, ...or.params }).map((r) => _doSQLite(r));
 
       if (orcamento.length > 0 || realizados.length > 0) {
         const totais = {
@@ -225,6 +245,7 @@ async function getDashboard(mes?: string, usuarioId?: string): Promise<Dashboard
 
   let orcamentoSP = supabase.from("financas_orcamento").select("*").limit(5000) as any;
   orcamentoSP = addUsuarioFilter(orcamentoSP, usuarioId);
+  orcamentoSP = addTipoPessoaFilterStrict(orcamentoSP, tipoPessoa);
 
   if (mes) {
     validarMes(mes);
@@ -235,6 +256,7 @@ async function getDashboard(mes?: string, usuarioId?: string): Promise<Dashboard
 
   let financasSP = supabase.from("financas_lancamentos").select("*").eq("status", "PAGO").limit(5000) as any;
   financasSP = addUsuarioFilter(financasSP, usuarioId);
+  financasSP = addTipoPessoaFilterStrict(financasSP, tipoPessoa);
 
   if (mes) {
     validarMes(mes);
@@ -302,6 +324,7 @@ async function createLancamento(payload: CreateLancamentoPayload, usuarioId?: st
   const insertPayload: Record<string, unknown> = payloadNormalizado.status === "PAGO" ? { ...payloadNormalizado, data_pagamento: hoje } : { ...payloadNormalizado };
   if (usuarioId) insertPayload.usuario_id = usuarioId;
   if (!insertPayload.id) insertPayload.id = crypto.randomUUID();
+  if (!insertPayload.tipo_pessoa) insertPayload.tipo_pessoa = "PF";
 
   _syncAposEscrita("financas_lancamentos", insertPayload);
 
@@ -363,6 +386,7 @@ async function createTransferencia(payload: CreateTransferenciaPayload, usuarioI
     pessoa_id: payload.pessoa_id || null,
     descricao: payload.descricao || null,
     transferencia_grupo_id: grupoId,
+    tipo_pessoa: payload.tipo_pessoa || "PF",
   };
 
   const debito: Record<string, unknown> = {
@@ -497,6 +521,7 @@ async function importarOrcamento(itens: ImportarOrcamentoItem[], usuarioId?: str
     usuario_id: usuarioId || item.usuario_id || null,
     recorrente: item.recorrente === true || item.recorrente === "true",
     observacoes: item.observacoes || null,
+    tipo_pessoa: item.tipo_pessoa || "PF",
     id: item.id || crypto.randomUUID(),
   }));
 
