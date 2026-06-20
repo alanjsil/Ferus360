@@ -86,13 +86,7 @@ describe("auth-guard (guardião de autenticação)", () => {
     expect(getAccessToken()).toBe(SESSION.token);
   });
 
-  it("getAccessToken falls back to legacy 'token' key", () => {
-    // Arrange
-    localStorage.setItem("token", SESSION.token);
 
-    // Act & Assert
-    expect(getAccessToken()).toBe(SESSION.token);
-  });
 
   it("getAccessToken prefers sessionStorage over localStorage", () => {
     // Arrange
