@@ -14,7 +14,7 @@ function configurarSyncStatus() {
   if (!badge) return;
 
   try {
-    const salvo = localStorage.getItem("conflitos_count");
+    const salvo = localStorage.getItem(STORAGE_KEYS.CONFLITOS_COUNT);
     if (salvo && salvo !== "0") {
       badge.hidden = false;
       badge.textContent = salvo;
@@ -28,11 +28,40 @@ function configurarSyncStatus() {
     badge.hidden = count === 0;
     badge.textContent = count;
     try {
-      localStorage.setItem("conflitos_count", String(count));
+      localStorage.setItem(STORAGE_KEYS.CONFLITOS_COUNT, String(count));
     } catch {
       /* ok */
     }
   });
+}
+
+function configurarTipoPessoaToggle() {
+  const container = document.getElementById("tipoPessoaToggle");
+  if (!container) return;
+
+  container.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-tp]");
+    if (!btn) return;
+
+    const tp = btn.dataset.tp;
+    container.querySelectorAll("[data-tp]").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    await window.electronAPI.setTipoPessoa(tp);
+    await recarregarTudo();
+  });
+
+  window.electronAPI.onTipoPessoaChanged(async () => {
+    await recarregarTudo();
+  });
+}
+
+async function recarregarTudo() {
+  await carregarSubcategoriasCache();
+  await carregarContas();
+  await carregarPessoas();
+  await carregarCategorias();
+  await aplicarFiltrosSalvos();
 }
 
 let categoriasCache = [];
@@ -46,12 +75,14 @@ let filtroAtualAno = "all";
 let filtroAtualMes = "all";
 let _importTimeoutId = null;
 // ====== SISTEMA DE FILTROS EM LOCALSTORAGE ======
+const NS = "fnc:v1:";
 const STORAGE_KEYS = {
-  FILTRO_ANO: "filtro_ano_selecionado",
-  FILTRO_MES: "filtro_mes_selecionado",
-  FILTRO_TIPO: "filtro_tipo_selecionado",
-  FILTRO_STATUS: "filtro_status_selecionado",
-  FILTRO_ESTADO: "filtro_estado_geral",
+  FILTRO_ANO: NS + "filtro_ano",
+  FILTRO_MES: NS + "filtro_mes",
+  FILTRO_TIPO: NS + "filtro_tipo",
+  FILTRO_STATUS: NS + "filtro_status",
+  FILTRO_ESTADO: NS + "filtro_estado",
+  CONFLITOS_COUNT: NS + "conflitos_count",
 };
 // ====== FUNÇÕES DE GESTÃO DE FILTROS ======
 /**
@@ -1321,7 +1352,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // 5. Sync status badge
+  // 5. Tipo Pessoa toggle
+  configurarTipoPessoaToggle();
+
+  // 6. Sync status badge
   configurarSyncStatus();
 
   // 6. Forçar reativação do input

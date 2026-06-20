@@ -11,6 +11,9 @@ export {
   descriptografar,
   limparCacheGeral,
   addUsuarioFilter,
+  addTipoPessoaFilterStrict,
+  addTipoPessoaCategoriaFilter,
+  addTipoPessoaWhere,
 } from "./utils";
 
 export {

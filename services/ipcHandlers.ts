@@ -1,4 +1,4 @@
-import type { Usuario, Categoria, Conta, Pessoa, Lancamento, Orcamento } from "../src/types";
+import type { Usuario, Categoria, Conta, Pessoa, Lancamento, Orcamento, TipoPessoa } from "../src/types";
 import type { IpcMainInvokeEvent } from "electron";
 import { AuthError } from "./auth";
 import * as logger from "./logger";
@@ -35,6 +35,14 @@ function createHandlers(
   function obterUsuarioId(): string | null {
     const usuario = getState("usuarioAtual") as { id: string } | null;
     return usuario?.id || null;
+  }
+
+  function obterTipoPessoaAtivo(): string {
+    return (getState("tipoPessoaAtivo") as string) || "PF";
+  }
+
+  function obterCompartilharCategorias(): boolean {
+    return !!(getState("compartilharCategorias") as boolean);
   }
 
   async function _extrairMetadados(event?: IpcMainInvokeEvent): Promise<{ ip?: string; user_agent?: string }> {
@@ -124,7 +132,9 @@ function createHandlers(
     handleCategoriasGet: async (_event: unknown, tipo: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const data = await repository.getCategorias(usuarioId, tipo);
+      const tipoPessoa = obterTipoPessoaAtivo();
+      const compartilhar = obterCompartilharCategorias();
+      const data = await repository.getCategorias(usuarioId, tipo, false, tipoPessoa, compartilhar);
       setState("categorias", data);
       return data;
     },
@@ -132,7 +142,9 @@ function createHandlers(
     handleSubcategoriasGet: async (_event: unknown, categoriaId: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const data = await repository.getSubcategorias(usuarioId, categoriaId);
+      const tipoPessoa = obterTipoPessoaAtivo();
+      const compartilhar = obterCompartilharCategorias();
+      const data = await repository.getSubcategorias(usuarioId, categoriaId, tipoPessoa, compartilhar);
       setState("subcategorias", data);
       return data;
     },
@@ -140,7 +152,8 @@ function createHandlers(
     handleContasGet: async () => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const data = await repository.getContas(usuarioId);
+      const tipoPessoa = obterTipoPessoaAtivo();
+      const data = await repository.getContas(usuarioId, tipoPessoa);
       setState("contas", data);
       return data;
     },
@@ -149,6 +162,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
+        if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
         const data = await repository.createConta(usuarioId, payload);
         const current = (getState("contas") as unknown[]) || [];
         setState("contas", [...current, data]);
@@ -193,7 +207,8 @@ function createHandlers(
     handlePessoasGet: async () => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const data = await repository.getPessoas(usuarioId);
+      const tipoPessoa = obterTipoPessoaAtivo();
+      const data = await repository.getPessoas(usuarioId, tipoPessoa);
       setState("pessoas", data);
       return data;
     },
@@ -202,6 +217,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
+        if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
         const data = await repository.createPessoa(usuarioId, payload);
         const current = (getState("pessoas") as unknown[]) || [];
         setState("pessoas", [...current, data]);
@@ -246,7 +262,8 @@ function createHandlers(
     handleLancamentosGet: async (_event: unknown, mes: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const data = await repository.getLancamentos(mes, usuarioId);
+      const tipoPessoa = obterTipoPessoaAtivo();
+      const data = await repository.getLancamentos(mes, usuarioId, tipoPessoa);
       setState("lancamentos", data);
       return data;
     },
@@ -254,7 +271,8 @@ function createHandlers(
     handleOrcamentoGet: async (_event: unknown, mes: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const data = await repository.getOrcamento(mes, usuarioId);
+      const tipoPessoa = obterTipoPessoaAtivo();
+      const data = await repository.getOrcamento(mes, usuarioId, tipoPessoa);
       setState("orcamento", data);
       return data;
     },
@@ -262,7 +280,8 @@ function createHandlers(
     handleDashboardDados: async (_event: unknown, ano: unknown, mes: unknown, categoria: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const data = await repository.getDashboardDados(ano, mes, categoria, usuarioId);
+      const tipoPessoa = obterTipoPessoaAtivo();
+      const data = await repository.getDashboardDados(ano, mes, categoria, usuarioId, tipoPessoa);
       setState("dashboard", data);
       return data;
     },
@@ -270,13 +289,15 @@ function createHandlers(
     handleDashboardAnos: async () => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      return await repository.getAnosDisponiveis(usuarioId);
+      const tipoPessoa = obterTipoPessoaAtivo();
+      return await repository.getAnosDisponiveis(usuarioId, tipoPessoa);
     },
 
     handleDashboardGet: async (_event: unknown, mes: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const data = await repository.getDashboard(mes, usuarioId);
+      const tipoPessoa = obterTipoPessoaAtivo();
+      const data = await repository.getDashboard(mes, usuarioId, tipoPessoa);
       return data;
     },
 
@@ -284,6 +305,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
+        if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
         const data = await repository.createLancamento(payload, usuarioId);
         const current = (getState("lancamentos") as unknown[]) || [];
         setState("lancamentos", [...current, data]);
@@ -344,6 +366,7 @@ function createHandlers(
     handleTransferenciaCreate: async (_event: unknown, payload: Record<string, unknown>) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
+      if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
       const data = await repository.createTransferencia(payload, usuarioId);
       const current = (getState("lancamentos") as unknown[]) || [];
       setState("lancamentos", [...current, ...(data as unknown[])]);
@@ -374,7 +397,9 @@ function createHandlers(
 
     handleCatList: async () => {
       const usuarioId = obterUsuarioId();
-      const data = await repository.getCategorias(usuarioId, null, true);
+      const tipoPessoa = obterTipoPessoaAtivo();
+      const compartilhar = obterCompartilharCategorias();
+      const data = await repository.getCategorias(usuarioId, null, true, tipoPessoa, compartilhar);
       setState("categorias", data);
       return data;
     },
@@ -384,6 +409,7 @@ function createHandlers(
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
         const ehGlobal = payload.eh_global ?? payload.ehGlobal ?? false;
+        if (!payload.tipo_pessoa && !ehGlobal) payload.tipo_pessoa = obterTipoPessoaAtivo();
         const data = await repository.createCategoria({
           ...payload,
           ...(ehGlobal ? {} : { usuarioId }),
@@ -432,6 +458,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
+        if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
         const data = await repository.createSubcategoria(usuarioId, payload);
         return data;
       } catch (err) {
@@ -543,49 +570,49 @@ function createHandlers(
       }
     },
 
-    handleAdminGetResumoCliente: async (_event: unknown, id: string) => {
+    handleAdminGetResumoCliente: async (_event: unknown, id: string, tipoPessoa: unknown) => {
       try {
-        return await adminService.getResumoCliente(id);
+        return await adminService.getResumoCliente(id, (tipoPessoa as string) || undefined);
       } catch {
         return { error: "UNAUTHORIZED" };
       }
     },
 
-    handleAdminGetTransacoesCliente: async (_event: unknown, id: string, mes: unknown, ano: unknown) => {
+    handleAdminGetTransacoesCliente: async (_event: unknown, id: string, mes: unknown, ano: unknown, tipoPessoa: unknown) => {
       try {
-        return await adminService.getTransacoesCliente(id, mes, ano);
+        return await adminService.getTransacoesCliente(id, mes, ano, (tipoPessoa as string) || undefined);
       } catch {
         return { error: "UNAUTHORIZED" };
       }
     },
 
-    handleAdminGetOrcamentoCliente: async (_event: unknown, id: string) => {
+    handleAdminGetOrcamentoCliente: async (_event: unknown, id: string, tipoPessoa: unknown) => {
       try {
-        return await adminService.getOrcamentoCliente(id);
+        return await adminService.getOrcamentoCliente(id, (tipoPessoa as string) || undefined);
       } catch {
         return { error: "UNAUTHORIZED" };
       }
     },
 
-    handleAdminGetDashboardDadosCliente: async (_event: unknown, usuarioId: string, ano: unknown, mes: unknown, categoria: string) => {
+    handleAdminGetDashboardDadosCliente: async (_event: unknown, usuarioId: string, ano: unknown, mes: unknown, categoria: string, tipoPessoa: unknown) => {
       try {
-        return await adminService.getDashboardDadosCliente(usuarioId, ano, mes, categoria);
+        return await adminService.getDashboardDadosCliente(usuarioId, ano, mes, categoria, (tipoPessoa as string) || undefined);
       } catch {
         return { error: "UNAUTHORIZED" };
       }
     },
 
-    handleAdminGetAnosDisponiveisCliente: async (_event: unknown, usuarioId: string) => {
+    handleAdminGetAnosDisponiveisCliente: async (_event: unknown, usuarioId: string, tipoPessoa: unknown) => {
       try {
-        return await adminService.getAnosDisponiveisCliente(usuarioId);
+        return await adminService.getAnosDisponiveisCliente(usuarioId, (tipoPessoa as string) || undefined);
       } catch {
         return { error: "UNAUTHORIZED" };
       }
     },
 
-    handleAdminGetContasCliente: async (_event: unknown, id: string) => {
+    handleAdminGetContasCliente: async (_event: unknown, id: string, tipoPessoa: unknown) => {
       try {
-        return await adminService.getContasCliente(id);
+        return await adminService.getContasCliente(id, (tipoPessoa as string) || undefined);
       } catch {
         return { error: "UNAUTHORIZED" };
       }
@@ -658,6 +685,16 @@ function createHandlers(
       } catch (err) {
         return { error: (err as Error).message };
       }
+    },
+
+    handleTipoPessoaSet: async (_event: unknown, tipoPessoa: string) => {
+      setState("tipoPessoaAtivo", tipoPessoa);
+      return { success: true };
+    },
+
+    handleCompartilharCategoriasSet: async (_event: unknown, compartilhar: boolean) => {
+      setState("compartilharCategorias", compartilhar);
+      return { success: true };
     },
 
     handleLimparCache: async () => {
@@ -753,6 +790,8 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("admin:updateChamado", handlers.handleAdminUpdateChamado);
   ipcMain.handle("admin:getAuditoria", handlers.handleAdminGetAuditoria);
   ipcMain.handle("admin:criarUsuario", handlers.handleAdminCriarUsuario);
+  ipcMain.handle("tipo-pessoa:set", handlers.handleTipoPessoaSet);
+  ipcMain.handle("compartilhar-categorias:set", handlers.handleCompartilharCategoriasSet);
   ipcMain.handle("sync:force", handlers.handleSyncForce);
   ipcMain.handle("sync:conflitos", handlers.handleSyncConflitos);
   ipcMain.handle("sync:resolver-conflito", handlers.handleSyncResolverConflito);

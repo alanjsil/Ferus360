@@ -1,5 +1,5 @@
 import { BrowserWindow } from "electron";
-import type { Usuario, Categoria, Subcategoria, Conta, Pessoa, Lancamento, Orcamento, DashboardData } from "../src/types";
+import type { Usuario, Categoria, Subcategoria, Conta, Pessoa, Lancamento, Orcamento, DashboardData, TipoPessoa } from "../src/types";
 
 interface State {
   categorias: Categoria[];
@@ -10,6 +10,8 @@ interface State {
   orcamento: Orcamento[];
   dashboard: DashboardData | null;
   usuarioAtual: Usuario | null;
+  tipoPessoaAtivo: TipoPessoa;
+  compartilharCategorias: boolean;
 }
 
 let state: State = {
@@ -21,6 +23,8 @@ let state: State = {
   orcamento: [],
   dashboard: null,
   usuarioAtual: null,
+  tipoPessoaAtivo: "PF",
+  compartilharCategorias: false,
 };
 
 function notify(channel: string, data: unknown): void {
@@ -55,6 +59,8 @@ function resetState(): void {
     orcamento: [],
     dashboard: null,
     usuarioAtual: null,
+    tipoPessoaAtivo: "PF",
+    compartilharCategorias: false,
   };
 }
 

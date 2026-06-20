@@ -194,7 +194,7 @@ describe("admin (página administrativa)", () => {
       document.querySelector("[data-visualizar]").click();
       // Assert
       await vi.waitFor(() => {
-        expect(window.electronAPI.adminGetResumoCliente).toHaveBeenCalledWith("u1");
+        expect(window.electronAPI.adminGetResumoCliente).toHaveBeenCalledWith("u1", "PF");
       });
     });
   });

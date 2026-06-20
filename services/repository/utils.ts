@@ -259,6 +259,34 @@ function addUsuarioFilter(query: any, usuarioId: string | null | undefined): any
   return query;
 }
 
+function addTipoPessoaFilterStrict(query: any, tipoPessoa?: string): any {
+  if (tipoPessoa) {
+    return query.eq("tipo_pessoa", tipoPessoa);
+  }
+  return query;
+}
+
+function addTipoPessoaCategoriaFilter(query: any, tipoPessoa?: string, compartilhar?: boolean): any {
+  if (compartilhar || !tipoPessoa) {
+    return query;
+  }
+  return query.or(`tipo_pessoa.is.null,tipo_pessoa.eq.${tipoPessoa}`);
+}
+
+function addTipoPessoaWhere(where: string, params: Record<string, unknown>, tipoPessoa?: string, permitirNulo = false): { where: string; params: Record<string, unknown> } {
+  if (!tipoPessoa) return { where, params };
+  if (permitirNulo) {
+    return {
+      where: `${where} AND (tipo_pessoa IS NULL OR tipo_pessoa = @tipoPessoaAtivo)`,
+      params: { ...params, tipoPessoaAtivo: tipoPessoa },
+    };
+  }
+  return {
+    where: `${where} AND tipo_pessoa = @tipoPessoaAtivo`,
+    params: { ...params, tipoPessoaAtivo: tipoPessoa },
+  };
+}
+
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function validarUUID(valor: string): void {
@@ -309,6 +337,9 @@ export {
   setAuthSession,
   clearAuthSession,
   addUsuarioFilter,
+  addTipoPessoaFilterStrict,
+  addTipoPessoaCategoriaFilter,
+  addTipoPessoaWhere,
   validarUUID,
   validarMes,
   normalizarNome,

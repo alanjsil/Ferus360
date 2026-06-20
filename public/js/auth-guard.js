@@ -55,7 +55,7 @@ function storageRemove(storage, key) {
  * @returns {string | null}
  */
 function getAccessToken() {
-  return storageGet(sessionStorage, ACCESS_TOKEN_KEY) ?? storageGet(localStorage, ACCESS_TOKEN_KEY) ?? storageGet(sessionStorage, "token") ?? storageGet(localStorage, "token");
+  return storageGet(sessionStorage, ACCESS_TOKEN_KEY) ?? storageGet(localStorage, ACCESS_TOKEN_KEY);
 }
 
 /**
@@ -71,8 +71,6 @@ function clearAuthSession() {
   storageRemove(localStorage, REFRESH_TOKEN_KEY);
   storageRemove(sessionStorage, USER_KEY);
   storageRemove(localStorage, USER_KEY);
-  storageRemove(sessionStorage, "token");
-  storageRemove(localStorage, "token");
 }
 
 /**
@@ -80,7 +78,6 @@ function clearAuthSession() {
  */
 function storeAuthSession({ token, refreshToken, usuario, rememberMe }) {
   storageSet(sessionStorage, ACCESS_TOKEN_KEY, token);
-  storageSet(sessionStorage, "token", token);
   storageSet(sessionStorage, USER_KEY, JSON.stringify(usuario));
 
   if (rememberMe && refreshToken) {
@@ -90,7 +87,6 @@ function storeAuthSession({ token, refreshToken, usuario, rememberMe }) {
   }
 
   storageRemove(localStorage, ACCESS_TOKEN_KEY);
-  storageRemove(localStorage, "token");
 }
 
 /**
@@ -152,7 +148,6 @@ async function ensureAuthenticated(options = {}) {
   }
 
   storageSet(sessionStorage, ACCESS_TOKEN_KEY, token);
-  storageSet(sessionStorage, "token", token);
   storageSet(sessionStorage, USER_KEY, JSON.stringify(usuario));
 
   return { token, usuario };
