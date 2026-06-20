@@ -11,43 +11,95 @@
 
 ### 🧭 Pontos de Parada Sugeridos (Main Process)
 
-| Checado | Onde                                                       | O que observar                                          |
-| ------- | ---------------------------------------------------------- | ------------------------------------------------------- |
-| [ ]     | `services/repository/categorias.ts:13`—`getCategorias()`   | Categorias globais + pessoais carregando corretamente   |
-| [ ]     | `services/repository/auditoria.ts:35`—`logAuditoria()`     | Todo log de auditoria passa aqui                        |
-| [ ]     | `services/repository/admin.ts:58`—`getChamados()`          | Listagem de chamados (admin vê todos, user vê próprios) |
-| [ ]     | `services/repository/admin.ts:81`—`updateChamado()`        | Atualização de status + respostas                       |
-| [ ]     | `services/admin.ts:156`—`resetSenha()`                     | Redefinição de senha via admin                          |
-| [ ]     | `services/admin.ts:179`—`getChamados()`                    | Chamados lado admin (join com usuário)                  |
-| [ ]     | `services/admin.ts:231`—`getAuditoria()`                   | Consulta de auditoria (back-end)                        |
-| [ ]     | `services/admin.ts:236`—`criarUsuario()`                   | Criação via edge function do Supabase                   |
-| [ ]     | `services/auth.ts:74`—`login()`                            | Login com auditoria (LOGIN / LOGIN_FAILED)              |
-| [ ]     | `services/ipcHandlers.ts:567`—`handleAdminGetChamados`     | IPC de chamados                                         |
-| [ ]     | `services/ipcHandlers.ts:591`—`handleAdminGetAuditoria`    | IPC de auditoria                                        |
-| [ ]     | `services/ipcHandlers.ts:503`—`handleAdminToggleCliente`   | Toggle ativa/inativa cliente                            |
-| [ ]     | `services/ipcHandlers.ts:441`—`handleConfigGetSessoes`     | IPC listar sessões ativas                               |
-| [ ]     | `services/ipcHandlers.ts:469`—`handleConfigExportarDados`  | IPC exportar dados JSON                                 |
-| [ ]     | `services/ipcHandlers.ts:475`—`handleConfigExcluirConta`   | IPC deletar conta (RLS-protected)                       |
-| [ ]     | `services/ipcHandlers.ts:447`—`handleConfigEncerrarSessao` | IPC encerrar sessão específica                          |
-| [ ]     | `services/state.ts:37/42`—`setState/getState`              | State mirror (fonte da verdade)                         |
+| Checado | Onde                                                                 | O que observar                                          |
+| ------- | -------------------------------------------------------------------- | ------------------------------------------------------- |
+| [ ]     | `services/repository/categorias.ts:13`—`getCategorias()`             | Categorias globais + pessoais carregando corretamente   |
+| [ ]     | `services/repository/auditoria.ts:35`—`logAuditoria()`               | Todo log de auditoria passa aqui                        |
+| [ ]     | `services/repository/admin.ts:58`—`getChamados()`                    | Listagem de chamados (admin vê todos, user vê próprios) |
+| [ ]     | `services/repository/admin.ts:81`—`updateChamado()`                  | Atualização de status + respostas                       |
+| [ ]     | `services/admin.ts:156`—`resetSenha()`                               | Redefinição de senha via admin                          |
+| [ ]     | `services/admin.ts:179`—`getChamados()`                              | Chamados lado admin (join com usuário)                  |
+| [ ]     | `services/admin.ts:231`—`getAuditoria()`                             | Consulta de auditoria (back-end)                        |
+| [ ]     | `services/admin.ts:236`—`criarUsuario()`                             | Criação via edge function do Supabase                   |
+| [ ]     | `services/auth.ts:74`—`login()`                                      | Login com auditoria (LOGIN / LOGIN_FAILED)              |
+| [ ]     | `services/ipcHandlers.ts:567`—`handleAdminGetChamados`               | IPC de chamados                                         |
+| [ ]     | `services/ipcHandlers.ts:591`—`handleAdminGetAuditoria`              | IPC de auditoria                                        |
+| [ ]     | `services/ipcHandlers.ts:503`—`handleAdminToggleCliente`             | Toggle ativa/inativa cliente                            |
+| [ ]     | `services/ipcHandlers.ts:441`—`handleConfigGetSessoes`               | IPC listar sessões ativas                               |
+| [ ]     | `services/ipcHandlers.ts:469`—`handleConfigExportarDados`            | IPC exportar dados JSON                                 |
+| [ ]     | `services/ipcHandlers.ts:475`—`handleConfigExcluirConta`             | IPC deletar conta (RLS-protected)                       |
+| [ ]     | `services/ipcHandlers.ts:447`—`handleConfigEncerrarSessao`           | IPC encerrar sessão específica                          |
+| [ ]     | `services/ipcHandlers.ts:383`—`handleAdminGetResumoCliente`          | IPC resumo cliente (aceita `tipoPessoa` opcional)       |
+| [ ]     | `services/ipcHandlers.ts:403`—`handleAdminGetTransacoesCliente`      | IPC transações cliente (aceita `tipoPessoa` opcional)   |
+| [ ]     | `services/ipcHandlers.ts:410`—`handleAdminGetOrcamentoCliente`       | IPC orçamento cliente (aceita `tipoPessoa` opcional)    |
+| [ ]     | `services/ipcHandlers.ts:417`—`handleAdminGetContasCliente`          | IPC contas cliente (aceita `tipoPessoa` opcional)       |
+| [ ]     | `services/ipcHandlers.ts:424`—`handleAdminGetAnosDisponiveisCliente` | IPC anos disponíveis (aceita `tipoPessoa` opcional)     |
+| [ ]     | `services/ipcHandlers.ts:431`—`handleAdminGetDashboardDadosCliente`  | IPC dashboard cliente (aceita `tipoPessoa` opcional)    |
+| [ ]     | `services/admin.ts:42`—`getResumoCliente()`                          | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/admin.ts:59`—`getTransacoesCliente()`                      | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/admin.ts:76`—`getOrcamentoCliente()`                       | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/admin.ts:91`—`getDashboardDadosCliente()`                  | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/admin.ts:104`—`getAnosDisponiveisCliente()`                | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/admin.ts:113`—`getContasCliente()`                         | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/repository/admin.ts:36`—`getTransacoesCliente()`           | Repository filtra `.eq("tipo_pessoa")` se passado       |
+| [ ]     | `services/repository/admin.ts:46`—`getResumoCliente()`               | Repository filtra `.eq("tipo_pessoa")` se passado       |
+| [ ]     | `services/state.ts:37/42`—`setState/getState`                        | State mirror (fonte da verdade)                         |
+| Checado | Onde                                                                 | O que observar                                          |
+| ------- | ----------------------------------------------------------           | ------------------------------------------------------- |
+| [ ]     | `services/repository/categorias.ts:13`—`getCategorias()`             | Categorias globais + pessoais carregando corretamente   |
+| [ ]     | `services/repository/auditoria.ts:35`—`logAuditoria()`               | Todo log de auditoria passa aqui                        |
+| [ ]     | `services/repository/admin.ts:58`—`getChamados()`                    | Listagem de chamados (admin vê todos, user vê próprios) |
+| [ ]     | `services/repository/admin.ts:81`—`updateChamado()`                  | Atualização de status + respostas                       |
+| [ ]     | `services/admin.ts:156`—`resetSenha()`                               | Redefinição de senha via admin                          |
+| [ ]     | `services/admin.ts:179`—`getChamados()`                              | Chamados lado admin (join com usuário)                  |
+| [ ]     | `services/admin.ts:231`—`getAuditoria()`                             | Consulta de auditoria (back-end)                        |
+| [ ]     | `services/admin.ts:236`—`criarUsuario()`                             | Criação via edge function do Supabase                   |
+| [ ]     | `services/auth.ts:74`—`login()`                                      | Login com auditoria (LOGIN / LOGIN_FAILED)              |
+| [ ]     | `services/ipcHandlers.ts:567`—`handleAdminGetChamados`               | IPC de chamados                                         |
+| [ ]     | `services/ipcHandlers.ts:591`—`handleAdminGetAuditoria`              | IPC de auditoria                                        |
+| [ ]     | `services/ipcHandlers.ts:503`—`handleAdminToggleCliente`             | Toggle ativa/inativa cliente                            |
+| [ ]     | `services/ipcHandlers.ts:441`—`handleConfigGetSessoes`               | IPC listar sessões ativas                               |
+| [ ]     | `services/ipcHandlers.ts:469`—`handleConfigExportarDados`            | IPC exportar dados JSON                                 |
+| [ ]     | `services/ipcHandlers.ts:475`—`handleConfigExcluirConta`             | IPC deletar conta (RLS-protected)                       |
+| [ ]     | `services/ipcHandlers.ts:447`—`handleConfigEncerrarSessao`           | IPC encerrar sessão específica                          |
+| [ ]     | `services/state.ts:37/42`—`setState/getState`                        | State mirror (fonte da verdade)                         |
 
 ### 🧭 Pontos de Parada Sugeridos (Renderer)
 
-| Checado | Onde                                                        | O que observar                          |
-| ------- | ----------------------------------------------------------- | --------------------------------------- |
-| [ ]     | public/js/admin.js:76`—`carregarDashboard()                 | Dashboard admin (cards totais)          |
-| [ ]     | public/js/admin.js:118`—`carregarClientes()                 | Listagem + filtro de clientes           |
-| [ ]     | public/js/admin.js:456`—`configurarRedefinirSenha()         | Busca + redefinição de senha            |
-| [ ]     | public/js/admin.js:540`—`carregarChamados()                 | Carregar chamados + badge               |
-| [ ]     | public/js/admin.js:590`—`abrirAtendimento()                 | Dialog de atendimento com histórico     |
-| [ ]     | public/js/admin.js:632`—`enviarRespostaChamado()            | Enviar resposta + mudar status          |
-| [ ]     | public/js/admin.js:665`—`configurarNovoUsuario()            | Criação de usuário (modal)              |
-| [ ]     | public/js/conflitos.js`—`resolverConflito()                 | Resolver conflitos de sync (UI novo)    |
-| [ ]     | public/js/index.js:800`—`parseCSV()                         | Parser de importação CSV                |
-| [ ]     | public/js/index.js:863`—`processarImportacao()              | Fluxo completo de importação            |
-| [ ]     | public/js/visualizar-cliente.js:126`—`carregarLancamentos() | Carregar dados do cliente               |
-| [ ]     | public/js/visualizar-dashboard-cliente.js`                  | Dashboard do cliente via admin          |
-| [ ]     | public/js/auth-guard.js:99` — renovação de token            | `renewFromRefreshToken()` quando expira |
+| Checado | Onde                                                                        | O que observar                          |
+| ------- | --------------------------------------------------------------------------- | --------------------------------------- |
+| [ ]     | public/js/admin.js:76`—`carregarDashboard()                                 | Dashboard admin (cards totais)          |
+| [ ]     | public/js/admin.js:118`—`carregarClientes()                                 | Listagem + filtro de clientes           |
+| [ ]     | public/js/admin.js:204`—`configurarTipoPessoaToggle()                       | Toggle PF/PJ no resumo cliente          |
+| [ ]     | public/js/admin.js:220`—`configurarTipoPessoaToggleDetalhes()               | Toggle PF/PJ nos detalhes transações    |
+| [ ]     | public/js/visualizar-cliente.js:98`—`configurarTipoPessoaToggle()           | Toggle PF/PJ na página do cliente       |
+| [ ]     | public/js/visualizar-dashboard-cliente.js:99`—`configurarTipoPessoaToggle() | Toggle PF/PJ no dashboard do cliente    |
+| [ ]     | public/js/admin.js:456`—`configurarRedefinirSenha()                         | Busca + redefinição de senha            |
+| [ ]     | public/js/admin.js:540`—`carregarChamados()                                 | Carregar chamados + badge               |
+| [ ]     | public/js/admin.js:590`—`abrirAtendimento()                                 | Dialog de atendimento com histórico     |
+| [ ]     | public/js/admin.js:632`—`enviarRespostaChamado()                            | Enviar resposta + mudar status          |
+| [ ]     | public/js/admin.js:665`—`configurarNovoUsuario()                            | Criação de usuário (modal)              |
+| [ ]     | public/js/conflitos.js`—`resolverConflito()                                 | Resolver conflitos de sync (UI novo)    |
+| [ ]     | public/js/index.js:800`—`parseCSV()                                         | Parser de importação CSV                |
+| [ ]     | public/js/index.js:863`—`processarImportacao()                              | Fluxo completo de importação            |
+| [ ]     | public/js/visualizar-cliente.js:126`—`carregarLancamentos()                 | Carregar dados do cliente               |
+| [ ]     | public/js/visualizar-dashboard-cliente.js`                                  | Dashboard do cliente via admin          |
+| [ ]     | public/js/auth-guard.js:99` — renovação de token                            | `renewFromRefreshToken()` quando expira |
+| Checado | Onde                                                                        | O que observar                          |
+| ------- | -----------------------------------------------------------                 | --------------------------------------- |
+| [ ]     | public/js/admin.js:76`—`carregarDashboard()                                 | Dashboard admin (cards totais)          |
+| [ ]     | public/js/admin.js:118`—`carregarClientes()                                 | Listagem + filtro de clientes           |
+| [ ]     | public/js/admin.js:456`—`configurarRedefinirSenha()                         | Busca + redefinição de senha            |
+| [ ]     | public/js/admin.js:540`—`carregarChamados()                                 | Carregar chamados + badge               |
+| [ ]     | public/js/admin.js:590`—`abrirAtendimento()                                 | Dialog de atendimento com histórico     |
+| [ ]     | public/js/admin.js:632`—`enviarRespostaChamado()                            | Enviar resposta + mudar status          |
+| [ ]     | public/js/admin.js:665`—`configurarNovoUsuario()                            | Criação de usuário (modal)              |
+| [ ]     | public/js/conflitos.js`—`resolverConflito()                                 | Resolver conflitos de sync (UI novo)    |
+| [ ]     | public/js/index.js:800`—`parseCSV()                                         | Parser de importação CSV                |
+| [ ]     | public/js/index.js:863`—`processarImportacao()                              | Fluxo completo de importação            |
+| [ ]     | public/js/visualizar-cliente.js:126`—`carregarLancamentos()                 | Carregar dados do cliente               |
+| [ ]     | public/js/visualizar-dashboard-cliente.js`                                  | Dashboard do cliente via admin          |
+| [ ]     | public/js/auth-guard.js:99` — renovação de token                            | `renewFromRefreshToken()` quando expira |
 
 ---
 
@@ -68,9 +120,9 @@
 - [x] 0.7 Login — sucesso → redireciona (admin → `admin.html`, user → `index.html`)
   - **Breakpoint:** `login.js:131` `window.location.href` conforme role
   - **Breakpoint:** `auth-guard.js:81` `storeAuthSession()`
-- [] 0.9 Toggle senha (olho mostra/esconde senha)
+- [x] 0.9 Toggle senha (olho mostra/esconde senha)
   - **Breakpoint:** `password-utils.js:25` `iniciarToggleSenha()`
-- [] 0.10 Restaurar sessão automática ao carregar página de login (se já logado, redireciona)
+- [x] 0.10 Restaurar sessão automática ao carregar página de login (se já logado, redireciona)
   - **Breakpoint:** `login.js:140` `tentarRestaurarSessao()`
   - **Breakpoint:** `auth-guard.js:114` `ensureAuthenticated()` — verifica token, tenta renovar
 - [ ] 0.11 Renovação de token expirado via refreshToken

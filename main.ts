@@ -1,13 +1,18 @@
 const path = require("path");
 const { app, BrowserWindow, ipcMain } = require("electron");
 const logger = require("./services/logger");
+const { isDev } = require("./src/env");
 
 logger.init(app.getPath("userData"));
 
 const consoleErrorOriginal = console.error;
 console.error = function (...args: unknown[]) {
   const msg = args.map((a) => (typeof a === "string" ? a : String(a))).join(" ");
-  logger.error("console", msg, args.find((a) => a instanceof Error));
+  logger.error(
+    "console",
+    msg,
+    args.find((a) => a instanceof Error),
+  );
   consoleErrorOriginal.apply(console, args);
 };
 
@@ -39,6 +44,10 @@ function createWindow() {
   mainWindow.maximize();
 
   mainWindow.loadFile(path.join(__dirname, "..", "public", "login.html"));
+
+  if (isDev) {
+    mainWindow.webContents.openDevTools();
+  }
 
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
