@@ -1,0 +1,271 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+  ],
+
+  "settings": {
+    // =========================================================
+    // EXCLUSÕES VISUAIS
+    // =========================================================
+    "files.exclude": {
+      //Pastas
+      "build": false, // Somente o icon do APP
+      ".github": false, // Somente o teste de CI
+      "_old.rar": false, // Pasta com a versão em JS funcionando, somente referencia.
+      "dist-ts": false, // Pasta com os maps do ts
+
+      // Arquivos
+      ".env": false,
+      ".gitignore": false,
+      "opencode.json": false,
+      ".gitattributes": false,
+      "package-lock.json": false,
+
+      // Arquivos de configuração
+      "tsconfig.json": false,
+      "vitest.config.js": false,
+      "eslint.config.mjs": false,
+      "vitest.config.integrado.js": false,
+
+      // Documentos
+      "README.md": false, // ATIVAR
+      "LICENSE.md": false,
+      "CHANGELOG.md": false, // ATIVAR
+      "CODE_OF_CONDUCT.md": false,
+      "THIRD-PARTY-NOTICES.md": false,
+
+      "bugs": false, // ATIVAR
+      "scripts": false, // ATIVAR
+
+      "AGENTS.md": false, // ATIVAR
+      "node_modules": false,
+    },
+
+    // =========================================================
+    // JSON
+    // =========================================================
+    "json.schemaDownload.enable": true,
+
+    // =========================================================
+    // EDITOR
+    // =========================================================
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 150,
+    "editor.rulers": [150],
+
+    "editor.minimap.enabled": false,
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": true,
+    "breadcrumbs.enabled": true,
+
+    // Exibe espaços apenas quando selecionados
+    "editor.renderWhitespace": "selection",
+
+    // Mostra caracteres invisíveis/problemáticos
+    "editor.renderControlCharacters": true,
+
+    // Sempre abre arquivos .md em visualização
+    "workbench.editorAssociations": {
+      "*.md": "vscode.markdown.preview.editor",
+    },
+
+    // =========================================================
+    // ARQUIVOS / EOL
+    // =========================================================
+    // Força LF em todos os arquivos
+    "files.eol": "\n",
+
+    // Remove espaços no fim da linha ao salvar
+    "files.trimTrailingWhitespace": true,
+
+    // Garante linha vazia no fim do arquivo
+    "files.insertFinalNewline": true,
+
+    // Salvamento automático ao trocar de foco
+    "files.autoSave": "onFocusChange",
+
+    // Associa .mjs como JavaScript (ESM)
+    "files.associations": {
+      "*.mjs": "javascript",
+    },
+
+    // =========================================================
+    // FORMATAÇÃO
+    // =========================================================
+    "editor.formatOnSave": true,
+
+    // Formatter padrão global
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+    // Não ignorar diferenças de trailing spaces
+    "diffEditor.ignoreTrimWhitespace": false,
+
+    // =========================================================
+    // CODE ACTIONS
+    // =========================================================
+    "editor.codeActionsOnSave": {
+      // Executa correções automáticas do ESLint
+      "source.fixAll.eslint": "always",
+
+      // Organiza imports manualmente/sob demanda
+      "source.organizeImports": "explicit",
+    },
+
+    // ESLint só linta, não formata (quem formata é o Prettier)
+    "eslint.format.enable": false,
+
+    // =========================================================
+    // SQL FORMATTER
+    // =========================================================
+    // Dialeto SQL usado pelo formatter
+    "SQL-Formatter-VSCode.dialect": "postgresql",
+
+    // Largura máxima antes de quebrar expressões
+    "SQL-Formatter-VSCode.expressionWidth": 90,
+
+    // =========================================================
+    // TERMINAL
+    // =========================================================
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+
+    // Aprovação automática para comandos específicos do Chat
+    "chat.tools.terminal.autoApprove": {
+      "npx vitest": true,
+    },
+
+    // =========================================================
+    // EXPLORER
+    // =========================================================
+    "explorer.confirmDelete": false,
+    "explorer.compactFolders": false, // Não compactar pastas únicas
+    "explorer.confirmDragAndDrop": false,
+
+    // =========================================================
+    // GIT / SCM
+    // =========================================================
+    "scm.diffDecorations": "all", // Mostra indicadores de alteração no editor
+    "git.autofetch": true,
+    "git.confirmSync": false,
+
+    // Habilita decorações visuais do Git
+    "git.decorations.enabled": true,
+
+    // =========================================================
+    // EXCLUSÕES DA BUSCA
+    // =========================================================
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+    },
+
+    // =========================================================
+    // PERFORMANCE / WATCHERS
+    // =========================================================
+    "files.watcherExclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+    },
+
+    // =========================================================
+    // JAVASCRIPT / TYPESCRIPT
+    // =========================================================
+    // Atualizar imports automaticamente ao mover arquivos
+    "js/ts.updateImportsOnFileMove.enabled": "prompt",
+
+    // =========================================================
+    // HTML
+    // =========================================================
+    "[html]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true,
+    },
+
+    // =========================================================
+    // CSS
+    // =========================================================
+    "[css]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true,
+    },
+
+    // =========================================================
+    // JSON
+    // =========================================================
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true,
+    },
+    "[jsonc]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true,
+    },
+
+    // =========================================================
+    // MARKDOWN
+    // =========================================================
+    "[markdown]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true,
+      "diffEditor.ignoreTrimWhitespace": false,
+    },
+
+    // =========================================================
+    // SQL
+    // =========================================================
+    "[sql]": {
+      "editor.defaultFormatter": "ReneSaarsoo.sql-formatter-vsc",
+      "editor.formatOnSave": true,
+    },
+  },
+
+  "extensions": {
+    "recommendations": [
+      "eamodio.gitlens",
+      "vitest.explorer",
+      "sst-dev.opencode",
+      "continue.continue",
+      "mhutchie.git-graph",
+      "ms-vscode.powershell",
+      "gruntfuggly.todo-tree",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "github.vscode-github-actions",
+      "ReneSaarsoo.sql-formatter-vsc",
+      "christian-kohler.path-intellisense",
+      "ms-ceintl.vscode-language-pack-pt-br",
+      "ms-vscode.vscode-chat-customizations-evaluations",
+    ],
+  },
+
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Electron: Main Process",
+        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+        "windows": {
+          "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd",
+        },
+        "program": "${workspaceFolder}/main.ts",
+        "skipFiles": ["<node_internals>/**"],
+      },
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Debug Popular Dados",
+        "skipFiles": ["<node_internals>/**"],
+        "program": "${workspaceFolder}/scripts/popular-dados-exemplo.mjs",
+        "args": ["-debug"],
+        "console": "integratedTerminal",
+      },
+    ],
+  },
+}

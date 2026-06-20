@@ -1,0 +1,728 @@
+import type { Usuario, Categoria, Conta, Pessoa, Lancamento, Orcamento } from "../src/types";
+import { AuthError } from "./auth";
+import * as logger from "./logger";
+
+function createHandlers(
+  repository: Record<string, Function>,
+  setState: (key: string, value: unknown) => void,
+  getState: (key: string) => unknown,
+  resetStateFn: () => void = () => {},
+  auth: Record<string, Function> = require("./auth"),
+  adminService: Record<string, Function> = require("./admin"),
+  promptSenha?: (msg: string) => Promise<string>,
+  sync?: Record<string, Function>,
+): Record<string, Function> {
+  function obterUsuarioId(): string | null {
+    const usuario = getState("usuarioAtual") as { id: string } | null;
+    return usuario?.id || null;
+  }
+  return {
+    handleLogError: async (_event: unknown, context: string, message: string, err?: unknown) => {
+      logger.error(context, message, err);
+      return { success: true };
+    },
+    handleLogWarn: async (_event: unknown, context: string, message: string, err?: unknown) => {
+      logger.warn(context, message, err);
+      return { success: true };
+    },
+    handleAuthLogin: async (_event: unknown, email: string, senha: string) => {
+      try {
+        const data = await auth.login(email, senha);
+        setState("usuarioAtual", data.usuario);
+        return data;
+      } catch (err) {
+        // FIX: propaga o code do AuthError em vez da mensagem genérica
+        const code = (err as { code?: string }).code || (err as Error).message || "ERRO_INTERNO";
+        logger.warn("ipcHandlers", `login falhou: ${code}`, err);
+        return { error: code };
+      }
+    },
+
+    handleAuthLogout: async () => {
+      const data = await auth.logout();
+      resetStateFn();
+      setState("usuarioAtual", null);
+      return data;
+    },
+
+    handleAuthVerificar: async (_event: unknown, token: string, refreshToken: string) => {
+      const usuario = await auth.verificarToken(token);
+      if (refreshToken) {
+        await repository.setAuthSession(token, refreshToken).catch((err: unknown) => logger.error("ipcHandlers", "setAuthSession falhou", err));
+      }
+      if (usuario) setState("usuarioAtual", usuario);
+      return usuario;
+    },
+
+    handleAuthRecuperar: async (_event: unknown, email: string) => auth.solicitarRecuperacao(email),
+
+    handleAuthConfirmarRecuperacao: async (_event: unknown, email: string, token: string, novaSenha: string) => auth.confirmarRecuperacao(email, token, novaSenha),
+
+    handleAuthRedefinirSenha: async (_event: unknown, novaSenha: string) => {
+      const recoveryTokens = auth.getRecoveryTokens();
+      if (!recoveryTokens) return { error: "TOKEN_RECUPERACAO_AUSENTE" };
+      return await auth.redefinirSenha(recoveryTokens.accessToken, recoveryTokens.refreshToken, novaSenha);
+    },
+
+    handleAuthTemTokenRecuperacao: async () => auth.hasRecoveryTokens(),
+
+    handleAuthRenovar: async (_event: unknown, refreshToken: string) => {
+      try {
+        const result = await auth.renovarSessao(refreshToken);
+        await repository.setAuthSession(result.token, result.refreshToken);
+        setState("usuarioAtual", result.usuario);
+        return result;
+      } catch (err) {
+        return { error: err instanceof AuthError ? err.code : "ERRO_INTERNO" };
+      }
+    },
+
+    handleAuthTrocarSenha: async (_event: unknown, usuarioId: string, novaSenha: string) => {
+      try {
+        const senhaAtual = await promptSenha!("Digite sua senha atual para confirmar a troca");
+        return await auth.trocarSenha(usuarioId, senhaAtual, novaSenha);
+      } catch {
+        return { error: "USUARIO_CANCELOU" };
+      }
+    },
+
+    handleCategoriasGet: async (_event: unknown, tipo: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.getCategorias(usuarioId, tipo);
+      setState("categorias", data);
+      return data;
+    },
+
+    handleSubcategoriasGet: async (_event: unknown, categoriaId: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.getSubcategorias(usuarioId, categoriaId);
+      setState("subcategorias", data);
+      return data;
+    },
+
+    handleContasGet: async () => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.getContas(usuarioId);
+      setState("contas", data);
+      return data;
+    },
+
+    handleContaCreate: async (_event: unknown, payload: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.createConta(usuarioId, payload);
+        const current = (getState("contas") as unknown[]) || [];
+        setState("contas", [...current, data]);
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handleContaUpdate: async (_event: unknown, id: string, patch: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.updateConta(id, patch);
+        const current = (getState("contas") as { id: string }[]) || [];
+        setState(
+          "contas",
+          current.map((c: { id: string }) => (c.id === id ? data : c)),
+        );
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handleContaDelete: async (_event: unknown, id: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.deleteConta(usuarioId, id);
+        const current = (getState("contas") as { id: string }[]) || [];
+        setState(
+          "contas",
+          current.filter((c: { id: string }) => c.id !== id),
+        );
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handlePessoasGet: async () => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.getPessoas(usuarioId);
+      setState("pessoas", data);
+      return data;
+    },
+
+    handlePessoaCreate: async (_event: unknown, payload: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.createPessoa(usuarioId, payload);
+        const current = (getState("pessoas") as unknown[]) || [];
+        setState("pessoas", [...current, data]);
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handlePessoaUpdate: async (_event: unknown, id: string, patch: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.updatePessoa(id, patch);
+        const current = (getState("pessoas") as { id: string }[]) || [];
+        setState(
+          "pessoas",
+          current.map((p: { id: string }) => (p.id === id ? data : p)),
+        );
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handlePessoaDelete: async (_event: unknown, id: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.deletePessoa(usuarioId, id);
+        const current = (getState("pessoas") as { id: string }[]) || [];
+        setState(
+          "pessoas",
+          current.filter((p: { id: string }) => p.id !== id),
+        );
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handleLancamentosGet: async (_event: unknown, mes: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.getLancamentos(mes, usuarioId);
+      setState("lancamentos", data);
+      return data;
+    },
+
+    handleOrcamentoGet: async (_event: unknown, mes: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.getOrcamento(mes, usuarioId);
+      setState("orcamento", data);
+      return data;
+    },
+
+    handleDashboardDados: async (_event: unknown, ano: unknown, mes: unknown, categoria: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.getDashboardDados(ano, mes, categoria, usuarioId);
+      setState("dashboard", data);
+      return data;
+    },
+
+    handleDashboardAnos: async () => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      return await repository.getAnosDisponiveis(usuarioId);
+    },
+
+    handleDashboardGet: async (_event: unknown, mes: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.getDashboard(mes, usuarioId);
+      return data;
+    },
+
+    handleLancamentosCreate: async (_event: unknown, payload: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.createLancamento(payload, usuarioId);
+        const current = (getState("lancamentos") as unknown[]) || [];
+        setState("lancamentos", [...current, data]);
+        return data;
+      } catch (err) {
+        // FIX: erro de validação/banco não era surfaced corretamente
+        const msg = (err as Error).message || "ERRO_CRIAR_LANCAMENTO";
+        logger.error("ipcHandlers", "createLancamento falhou", err);
+        return { error: msg };
+      }
+    },
+
+    handleLancamentosDelete: async (_event: unknown, id: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.deleteLancamento(id, usuarioId);
+        const current = (getState("lancamentos") as { id: string }[]) || [];
+        setState(
+          "lancamentos",
+          current.filter((l: { id: string }) => l.id !== id),
+        );
+        return data;
+      } catch (err) {
+        // FIX: erro de delete silencioso causava estado inconsistente
+        const msg = (err as Error).message || "ERRO_EXCLUIR_LANCAMENTO";
+        logger.error("ipcHandlers", "deleteLancamento falhou", err);
+        return { error: msg };
+      }
+    },
+
+    handleLancamentosUpdate: async (_event: unknown, id: string, payload: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.updateLancamento(id, payload, usuarioId);
+        const current = (getState("lancamentos") as { id: string }[]) || [];
+        setState(
+          "lancamentos",
+          current.map((l: { id: string }) => (l.id === id ? data : l)),
+        );
+        return data;
+      } catch (err) {
+        // FIX: erros de update silenciosos em produção
+        const msg = (err as Error).message || "ERRO_ATUALIZAR_LANCAMENTO";
+        logger.error("ipcHandlers", "updateLancamento falhou", err);
+        return { error: msg };
+      }
+    },
+
+    handleOrcamentoImportar: async (_event: unknown, itens: unknown[]) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.importarOrcamento(itens, usuarioId);
+      return data;
+    },
+
+    handleTransferenciaCreate: async (_event: unknown, payload: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.createTransferencia(payload, usuarioId);
+      const current = (getState("lancamentos") as unknown[]) || [];
+      setState("lancamentos", [...current, ...(data as unknown[])]);
+      return data;
+    },
+
+    handleTransferenciaDelete: async (_event: unknown, grupoId: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.deleteTransferencia(grupoId, usuarioId);
+      const current = (getState("lancamentos") as { transferencia_grupo_id: string }[]) || [];
+      setState(
+        "lancamentos",
+        current.filter((l: { transferencia_grupo_id: string }) => l.transferencia_grupo_id !== grupoId),
+      );
+      return data;
+    },
+
+    handleTransferenciaUpdate: async (_event: unknown, grupoId: string, payload: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      const data = await repository.updateTransferencia(grupoId, payload, usuarioId);
+      const current = (getState("lancamentos") as { transferencia_grupo_id: string }[]) || [];
+      const withoutGroup = current.filter((l: { transferencia_grupo_id: string }) => l.transferencia_grupo_id !== grupoId);
+      setState("lancamentos", [...withoutGroup, ...(data as unknown[])]);
+      return data;
+    },
+
+    handleCatList: async () => {
+      const usuarioId = obterUsuarioId();
+      const data = await repository.getCategorias(usuarioId, null, true);
+      setState("categorias", data);
+      return data;
+    },
+
+    handleCatCreate: async (_event: unknown, payload: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const ehGlobal = payload.eh_global ?? payload.ehGlobal ?? false;
+        const data = await repository.createCategoria({
+          ...payload,
+          ...(ehGlobal ? {} : { usuarioId }),
+        });
+        const current = (getState("categorias") as unknown[]) || [];
+        setState("categorias", [...current, data]);
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handleCatUpdate: async (_event: unknown, id: string, patch: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.updateCategoria(id, patch, usuarioId);
+        const current = (getState("categorias") as { id: string }[]) || [];
+        setState(
+          "categorias",
+          current.map((c: { id: string }) => (c.id === id ? data : c)),
+        );
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handleCatToggleAtivo: async (_event: unknown, id: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.toggleCategoriaAtivo(id, usuarioId);
+        const current = (getState("categorias") as { id: string }[]) || [];
+        setState(
+          "categorias",
+          current.map((c: { id: string }) => (c.id === id ? data : c)),
+        );
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handleSubcatCreate: async (_event: unknown, payload: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.createSubcategoria(usuarioId, payload);
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handleSubcatUpdate: async (_event: unknown, id: string, patch: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.updateSubcategoria(id, patch);
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handleSubcatDelete: async (_event: unknown, id: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const data = await repository.deleteSubcategoria(id);
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handleConfigGetPerfil: async () => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      return await repository.getPerfil(usuarioId);
+    },
+
+    handleConfigUpdatePerfil: async (_event: unknown, payload: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      return await repository.updatePerfil(usuarioId, payload);
+    },
+
+    handleConfigGetSessoes: async () => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      return await repository.getSessoes(usuarioId);
+    },
+
+    handleConfigEncerrarSessao: async (_event: unknown, sessaoId: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        return await repository.deleteSessao(sessaoId);
+      } catch (err) {
+        logger.error("ipcHandlers", "Erro ao encerrar sessão", err);
+        return { error: "FALHA_AO_ENCERRAR_SESSAO" };
+      }
+    },
+
+    handleConfigEncerrarOutrasSessoes: async () => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        return await repository.revokeOtherSessions();
+      } catch (err) {
+        logger.error("ipcHandlers", "Erro ao encerrar outras sessões", err);
+        return { error: "FALHA_AO_ENCERRAR_SESSOES" };
+      }
+    },
+
+    handleConfigExportarDados: async () => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      return await repository.exportarDados(usuarioId);
+    },
+
+    handleConfigExcluirConta: async () => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const senha = await promptSenha!("Digite sua senha para excluir sua conta");
+        await auth.verificarSenha(usuarioId, senha);
+        return await repository.excluirConta(usuarioId);
+      } catch {
+        return { error: "USUARIO_CANCELOU" };
+      }
+    },
+
+    handleAdminGetDashboard: async () => {
+      try {
+        return await adminService.getDashboard();
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminGetClientes: async () => {
+      try {
+        return await adminService.getClientes();
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminToggleCliente: async (_event: unknown, id: string) => {
+      try {
+        return await adminService.toggleCliente(id);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminGetResumoCliente: async (_event: unknown, id: string) => {
+      try {
+        return await adminService.getResumoCliente(id);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminGetTransacoesCliente: async (_event: unknown, id: string, mes: unknown, ano: unknown) => {
+      try {
+        return await adminService.getTransacoesCliente(id, mes, ano);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminGetOrcamentoCliente: async (_event: unknown, id: string) => {
+      try {
+        return await adminService.getOrcamentoCliente(id);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminGetDashboardDadosCliente: async (_event: unknown, usuarioId: string, ano: unknown, mes: unknown, categoria: string) => {
+      try {
+        return await adminService.getDashboardDadosCliente(usuarioId, ano, mes, categoria);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminGetAnosDisponiveisCliente: async (_event: unknown, usuarioId: string) => {
+      try {
+        return await adminService.getAnosDisponiveisCliente(usuarioId);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminGetContasCliente: async (_event: unknown, id: string) => {
+      try {
+        return await adminService.getContasCliente(id);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminResetSenha: async (_event: unknown, id: string) => {
+      try {
+        return await adminService.resetSenha(id);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminGetChamados: async () => {
+      try {
+        return await adminService.getChamados();
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminResponderChamado: async (_event: unknown, id: string, msg: string) => {
+      try {
+        return await adminService.responderChamado(id, msg);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminUpdateChamado: async (_event: unknown, id: string, status: string) => {
+      try {
+        return await adminService.updateChamado(id, status);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminGetAuditoria: async (_event: unknown, filtros: Record<string, unknown>) => {
+      try {
+        return await adminService.getAuditoria(filtros);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
+    handleAdminCriarUsuario: async (_event: unknown, nome: string, email: string, senha: string) => {
+      try {
+        return await adminService.criarUsuario(nome, email, senha);
+      } catch (err) {
+        return { error: (err as { code?: string }).code || "ERRO_CRIAR_USUARIO" };
+      }
+    },
+
+    handleSyncForce: async () => {
+      if (!sync) return { error: "SYNC_NAO_INICIALIZADO" };
+      await sync.forceSync();
+      return { success: true };
+    },
+
+    handleSyncConflitos: async () => {
+      if (!sync) return { error: "SYNC_NAO_INICIALIZADO" };
+      return sync.getConflitos();
+    },
+
+    handleSyncResolverConflito: async (_event: unknown, id: string, decisao: string, payloadMesclado: Record<string, unknown>) => {
+      if (!sync) return { error: "SYNC_NAO_INICIALIZADO" };
+      try {
+        await sync.resolverConflito(id, decisao, payloadMesclado);
+        return { success: true };
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    },
+
+    handleLimparCache: async () => {
+      repository.limparCacheGeral();
+      return { success: true };
+    },
+
+    handleTrialStatus: async () => {
+      const { estaExpirado, diasRestantes, diasTrial } = require("./expiration");
+      return {
+        expirado: estaExpirado(),
+        diasRestantes: diasRestantes(),
+        diasTrial: diasTrial(),
+      };
+    },
+  };
+}
+
+function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
+  let ipcMain: { handle: (channel: string, handler: Function) => void };
+  try {
+    ({ ipcMain } = require("electron"));
+  } catch {
+    return;
+  }
+
+  const repository = require("./repository");
+  const { setState, getState, resetState } = require("./state");
+  const auth = require("./auth");
+  const admin = require("./admin");
+  const sync = require("./sync");
+  const handlers = createHandlers(repository, setState, getState, resetState, auth, admin, promptSenha, sync);
+
+  ipcMain.handle("log:error", handlers.handleLogError);
+  ipcMain.handle("log:warn", handlers.handleLogWarn);
+  ipcMain.handle("categorias:get", handlers.handleCategoriasGet);
+  ipcMain.handle("auth:login", handlers.handleAuthLogin);
+  ipcMain.handle("auth:logout", handlers.handleAuthLogout);
+  ipcMain.handle("auth:verificar", handlers.handleAuthVerificar);
+  ipcMain.handle("auth:recuperar", handlers.handleAuthRecuperar);
+  ipcMain.handle("auth:confirmar-recuperacao", handlers.handleAuthConfirmarRecuperacao);
+  ipcMain.handle("auth:redefinir-senha", handlers.handleAuthRedefinirSenha);
+  ipcMain.handle("auth:tem-token-recuperacao", handlers.handleAuthTemTokenRecuperacao);
+  ipcMain.handle("auth:renovar", handlers.handleAuthRenovar);
+  ipcMain.handle("auth:trocar-senha", handlers.handleAuthTrocarSenha);
+  ipcMain.handle("subcategorias:get", handlers.handleSubcategoriasGet);
+  ipcMain.handle("contas:get", handlers.handleContasGet);
+  ipcMain.handle("conta:create", handlers.handleContaCreate);
+  ipcMain.handle("conta:update", handlers.handleContaUpdate);
+  ipcMain.handle("conta:delete", handlers.handleContaDelete);
+  ipcMain.handle("pessoas:get", handlers.handlePessoasGet);
+  ipcMain.handle("pessoa:create", handlers.handlePessoaCreate);
+  ipcMain.handle("pessoa:update", handlers.handlePessoaUpdate);
+  ipcMain.handle("pessoa:delete", handlers.handlePessoaDelete);
+  ipcMain.handle("lancamentos:get", handlers.handleLancamentosGet);
+  ipcMain.handle("orcamento:get", handlers.handleOrcamentoGet);
+  ipcMain.handle("dashboard:dados", handlers.handleDashboardDados);
+  ipcMain.handle("dashboard:anos", handlers.handleDashboardAnos);
+  ipcMain.handle("dashboard:get", handlers.handleDashboardGet);
+  ipcMain.handle("lancamentos:create", handlers.handleLancamentosCreate);
+  ipcMain.handle("lancamentos:delete", handlers.handleLancamentosDelete);
+  ipcMain.handle("lancamentos:update", handlers.handleLancamentosUpdate);
+  ipcMain.handle("transferencia:create", handlers.handleTransferenciaCreate);
+  ipcMain.handle("transferencia:delete", handlers.handleTransferenciaDelete);
+  ipcMain.handle("transferencia:update", handlers.handleTransferenciaUpdate);
+  ipcMain.handle("orcamento:importar", handlers.handleOrcamentoImportar);
+  ipcMain.handle("cat:list", handlers.handleCatList);
+  ipcMain.handle("cat:create", handlers.handleCatCreate);
+  ipcMain.handle("cat:update", handlers.handleCatUpdate);
+  ipcMain.handle("cat:toggleAtivo", handlers.handleCatToggleAtivo);
+  ipcMain.handle("subcat:create", handlers.handleSubcatCreate);
+  ipcMain.handle("subcat:update", handlers.handleSubcatUpdate);
+  ipcMain.handle("subcat:delete", handlers.handleSubcatDelete);
+  ipcMain.handle("config:getPerfil", handlers.handleConfigGetPerfil);
+  ipcMain.handle("config:updatePerfil", handlers.handleConfigUpdatePerfil);
+  ipcMain.handle("config:getSessoes", handlers.handleConfigGetSessoes);
+  ipcMain.handle("config:encerrar-sessao", handlers.handleConfigEncerrarSessao);
+  ipcMain.handle("config:encerrar-outras-sessoes", handlers.handleConfigEncerrarOutrasSessoes);
+  ipcMain.handle("config:exportarDados", handlers.handleConfigExportarDados);
+  ipcMain.handle("config:excluir-conta", handlers.handleConfigExcluirConta);
+  ipcMain.handle("admin:getDashboard", handlers.handleAdminGetDashboard);
+  ipcMain.handle("admin:getClientes", handlers.handleAdminGetClientes);
+  ipcMain.handle("admin:toggleCliente", handlers.handleAdminToggleCliente);
+  ipcMain.handle("admin:getResumoCliente", handlers.handleAdminGetResumoCliente);
+  ipcMain.handle("admin:getTransacoesCliente", handlers.handleAdminGetTransacoesCliente);
+  ipcMain.handle("admin:getOrcamentoCliente", handlers.handleAdminGetOrcamentoCliente);
+  ipcMain.handle("admin:getDashboardDadosCliente", handlers.handleAdminGetDashboardDadosCliente);
+  ipcMain.handle("admin:getAnosDisponiveisCliente", handlers.handleAdminGetAnosDisponiveisCliente);
+  ipcMain.handle("admin:getContasCliente", handlers.handleAdminGetContasCliente);
+  ipcMain.handle("admin:resetSenha", handlers.handleAdminResetSenha);
+  ipcMain.handle("admin:getChamados", handlers.handleAdminGetChamados);
+  ipcMain.handle("admin:responderChamado", handlers.handleAdminResponderChamado);
+  ipcMain.handle("admin:updateChamado", handlers.handleAdminUpdateChamado);
+  ipcMain.handle("admin:getAuditoria", handlers.handleAdminGetAuditoria);
+  ipcMain.handle("admin:criarUsuario", handlers.handleAdminCriarUsuario);
+  ipcMain.handle("sync:force", handlers.handleSyncForce);
+  ipcMain.handle("sync:conflitos", handlers.handleSyncConflitos);
+  ipcMain.handle("sync:resolver-conflito", handlers.handleSyncResolverConflito);
+  ipcMain.handle("sync:limpar-cache", handlers.handleLimparCache);
+  ipcMain.handle("trial:status", handlers.handleTrialStatus);
+}
+
+export { registerHandlers, createHandlers };

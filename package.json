@@ -1,0 +1,109 @@
+{
+  "name": "financas",
+  "version": "0.1.0",
+  "description": "Sistema de Finanças Pessoais",
+  "main": "dist-ts/main.js",
+  "author": "Alan Silveira",
+  "private": true,
+  "homepage": "https://github.com/alanjsil/financas",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alanjsil/financas.git"
+  },
+  "scripts": {
+    "start": "npm run build:ts && electron .",
+    "build:ts": "tsc",
+    "postinstall": "npx @electron/rebuild -f -w better-sqlite3 && npm run build:ts",
+    "pretest": "npm rebuild better-sqlite3",
+    "posttest": "npx @electron/rebuild -f -w better-sqlite3",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.config.integrado.js",
+    "cover": "npx vitest run --coverage",
+    "build": "electron-builder --publish never",
+    "build_mac": "electron-builder --mac --publish never",
+    "build_win": "electron-builder --win --publish never",
+    "build:trial": "node -e \"require('fs').writeFileSync('trial-config.json',JSON.stringify({dias:15})+'\\n')\" && electron-builder --publish never",
+    "check": "npm run lint && npm run test",
+    "conecta": "tsx scripts/list-tables.mts"
+  },
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
+  },
+  "build": {
+    "appId": "com.deltaAutomacoes.financas",
+    "productName": "Finanças Pessoais",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "license": "LICENSE.md",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.png"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "dialog-senha-preload.js",
+      "public/**/*",
+      "services/**/*",
+      "src/",
+      "dist-ts/",
+      "package.json",
+      "trial-config.json"
+    ],
+    "extraFiles": [
+      {
+        "from": "LICENSE.md",
+        "to": "."
+      },
+      {
+        "from": "README.md",
+        "to": "."
+      }
+    ],
+    "forceCodeSigning": false
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.90.1",
+    "better-sqlite3": "^12.10.1",
+    "chart.js": "^4.4.8"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
+    "@emnapi/core": "^1.10.0",
+    "@emnapi/runtime": "^1.10.0",
+    "@eslint/js": "^10.0.1",
+    "@fortawesome/fontawesome-free": "^7.2.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@vitest/coverage-v8": "^4.1.6",
+    "dotenv": "^17.4.2",
+    "electron": "^39.8.10",
+    "electron-builder": "^26.0.12",
+    "eslint": "^10.4.0",
+    "globals": "^17.6.0",
+    "jsdom": "^29.1.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true,
+    "electron@39.8.10": true,
+    "better-sqlite3@12.10.1": true
+  }
+}

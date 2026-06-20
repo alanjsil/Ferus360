@@ -1,0 +1,27 @@
+# Padroniza finais de linha
+* text=auto
+
+# Sempre LF
+*.js text eol=lf
+*.ts text eol=lf
+*.md text eol=lf
+*.sql text eol=lf
+*.yml text eol=lf
+*.env text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+package-lock.json -text
+
+# Windows
+*.bat text eol=crlf
+
+# Binários
+*.ico binary
+*.png binary
+*.jpg binary
+*.xlsx binary
+*.xlsm binary
+*.pdf binary
+*.rar binary
+*.pptx binary

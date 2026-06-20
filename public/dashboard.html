@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://lsjoopdtjjadfoqsaasu.supabase.co"
+    />
+    <title>Dashboard - Finanças</title>
+    <script src="../node_modules/chart.js/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/dashboard.css" />
+    <link rel="stylesheet" href="fontawesome/css/all.min.css" />
+  </head>
+
+  <body>
+    <div class="dashboard-header">
+      <h1><i class="fa-solid fa-chart-line"></i> Dashboard Financeiro</h1>
+      <div class="header-actions">
+        <a href="index.html" class="voltar-btn"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
+        <a href="configuracoes.html" class="voltar-btn"><i class="fa-solid fa-gear"></i> Config</a>
+        <button type="button" class="voltar-btn" id="logoutBtn">Sair</button>
+      </div>
+    </div>
+
+    <div class="filtros">
+      <div class="filtro-group">
+        <label>Ano</label>
+        <select id="filtroAno">
+        </select>
+      </div>
+
+      <div class="filtro-group">
+        <label>Mês</label>
+        <select id="filtroMes">
+        </select>
+      </div>
+
+      <div class="filtro-group">
+        <label>Categoria</label>
+        <select id="filtroCategoria">
+          <option value="all">Todas</option>
+        </select>
+      </div>
+
+      <div class="filtro-group">
+        <label>Comparação de Categorias</label>
+        <select id="filtroTipoGrafico">
+          <option value="DESPESA">Apenas Despesas</option>
+          <option value="RECEITA">Apenas Receitas</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-container">
+        <div class="chart-title">Receitas vs Despesas - Mensal</div>
+        <div class="chart-wrapper">
+          <canvas id="chartMensal"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">Gastos por Categoria</div>
+        <div class="chart-wrapper">
+          <canvas id="chartCategorias"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-container chart-full">
+        <div class="chart-title">Evolução do Saldo</div>
+        <div class="chart-wrapper">
+          <canvas id="chartSaldo"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="js/dashboard.js"></script>
+  </body>
+</html>

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://lsjoopdtjjadfoqsaasu.supabase.co"
+    />
+    <title>Configurações - Finanças</title>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/configuracoes.css" />
+    <link rel="stylesheet" href="css/toast.css" />
+    <link rel="stylesheet" href="fontawesome/css/all.min.css" />
+  </head>
+  <body>
+    <div class="config-header">
+      <h1>Configurações</h1>
+      <div class="header-actions">
+        <a href="index.html" class="btn-secondary">Voltar</a>
+        <button type="button" class="btn-secondary" id="logoutBtn">Sair</button>
+      </div>
+    </div>
+
+    <nav class="config-nav" id="configNav">
+      <button type="button" class="nav-item active" data-section="perfil">Perfil</button>
+      <button type="button" class="nav-item" data-section="seguranca">Segurança</button>
+      <button type="button" class="nav-item" data-section="conta">Conta</button>
+      <button type="button" class="nav-item" data-section="cadastro">Cadastro</button>
+    </nav>
+
+    <main class="config-content">
+      <!-- PERFIL -->
+      <section id="section-perfil" class="config-section active">
+        <h2>Perfil</h2>
+        <form id="perfilForm" class="config-form">
+          <div class="field">
+            <label for="perfilNome">Nome</label>
+            <input id="perfilNome" name="nome" type="text" required />
+          </div>
+          <div class="field">
+            <label for="perfilEmail">Email principal</label>
+            <input id="perfilEmail" type="email" readonly />
+          </div>
+          <div class="field">
+            <label for="perfilEmailRecuperacao">Email de recuperação</label>
+            <input id="perfilEmailRecuperacao" name="email_recuperacao" type="email" />
+          </div>
+          <div class="field">
+            <label>Avatar</label>
+            <div class="avatar-field">
+              <img id="avatarPreview" class="avatar-preview" src="" alt="Preview do avatar" />
+              <input id="avatarInput" type="file" accept="image/png,image/jpeg" />
+              <span class="avatar-hint">PNG ou JPG, até 2 MB</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="submit" id="perfilSubmit">Salvar alterações</button>
+          </div>
+          <p class="message" id="perfilMessage" role="alert"></p>
+        </form>
+      </section>
+
+      <!-- SEGURANÇA -->
+      <section id="section-seguranca" class="config-section">
+        <h2>Segurança</h2>
+        <h3>Trocar senha</h3>
+        <form id="senhaForm" class="config-form">
+          <div class="field">
+            <label for="novaSenha">Nova senha</label>
+            <div class="password-wrapper">
+              <input id="novaSenha" type="password" autocomplete="new-password" required />
+              <button type="button" class="toggle-password" data-target="novaSenha" aria-label="Mostrar senha" tabindex="-1">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+            <ul class="password-requirements" id="novaSenhaRequisitos">
+              <li data-req="length">Mínimo de 8 caracteres</li>
+              <li data-req="uppercase">Pelo menos 1 letra maiúscula</li>
+              <li data-req="number">Pelo menos 1 número</li>
+            </ul>
+          </div>
+          <div class="field">
+            <label for="confirmarSenha">Confirmar nova senha</label>
+            <div class="password-wrapper">
+              <input id="confirmarSenha" type="password" autocomplete="new-password" required />
+              <button type="button" class="toggle-password" data-target="confirmarSenha" aria-label="Mostrar senha" tabindex="-1">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="submit" id="senhaSubmit">Trocar senha</button>
+          </div>
+          <p class="message" id="senhaMessage" role="alert"></p>
+        </form>
+        <h3>Sessões ativas</h3>
+        <div id="sessoesList" class="sessoes-list">
+          <p class="empty-state">Carregando...</p>
+        </div>
+        <button type="button" id="encerrarTodasBtn" class="btn-danger">Encerrar todas as outras sessões</button>
+        <p class="message" id="sessoesMessage" role="alert"></p>
+      </section>
+
+      <!-- CONTA -->
+      <section id="section-conta" class="config-section">
+        <h2>Conta</h2>
+        <div class="conta-actions">
+          <div class="conta-action">
+            <div>
+              <strong>Exportar meus dados</strong>
+              <p>Baixe um arquivo CSV com todos os seus lançamentos.</p>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button type="button" id="exportarBtn" class="btn-secondary">Exportar</button>
+              <button type="button" id="templateBtn" class="btn-secondary">Baixar template</button>
+            </div>
+          </div>
+          <div class="conta-action danger">
+            <div>
+              <strong>Excluir conta</strong>
+              <p>Remove permanentemente sua conta e todos os dados associados.</p>
+            </div>
+            <button type="button" id="excluirContaBtn" class="btn-danger">Excluir conta</button>
+          </div>
+        </div>
+        <p class="message" id="contaMessage" role="alert"></p>
+      </section>
+
+      <!-- CADASTRO -->
+      <section id="section-cadastro" class="config-section">
+        <nav class="sub-nav" id="subNav">
+          <button type="button" class="sub-nav-item active" data-subsection="categorias">Categorias</button>
+          <button type="button" class="sub-nav-item" data-subsection="contas">Contas</button>
+          <button type="button" class="sub-nav-item" data-subsection="pessoas">Pessoas</button>
+        </nav>
+
+        <!-- CATEGORIAS -->
+        <div id="subsection-categorias" class="subsection active">
+          <h2>Categorias</h2>
+          <div class="cat-toolbar">
+            <div class="filtro-group">
+              <label>Tipo</label>
+              <select id="filtroTipo">
+                <option value="">Todos</option>
+                <option value="RECEITA">Receita</option>
+                <option value="DESPESA">Despesa</option>
+                <option value="TRANSFERENCIA">Transferência</option>
+              </select>
+            </div>
+            <button type="button" class="btn-primary" id="novaCategoriaBtn">+ Nova categoria</button>
+          </div>
+          <div class="cat-table-wrapper">
+            <table class="cat-table" id="catTable">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Tipo</th>
+                  <th>Subcategorias</th>
+                  <th>Ativo</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="catBody"></tbody>
+            </table>
+            <p class="empty-state" id="catEmpty">Nenhuma categoria encontrada.</p>
+          </div>
+          <div class="inline-form" id="inlineForm" hidden>
+            <h3>Nova categoria</h3>
+            <div class="inline-fields">
+              <input id="newCatNome" type="text" placeholder="Nome (2-40 caracteres)" maxlength="40" />
+              <select id="newCatTipo">
+                <option value="RECEITA">Receita</option>
+                <option value="DESPESA">Despesa</option>
+              </select>
+              <button type="button" class="btn-primary" id="salvarNovaCat">Salvar</button>
+              <button type="button" class="btn-secondary" id="cancelarNovaCat">Cancelar</button>
+            </div>
+            <p class="message" id="newCatMessage" role="alert"></p>
+          </div>
+          <div class="subcat-panel" id="subcatPanel" hidden>
+            <div class="subcat-header">
+              <h3 id="subcatTitle">Subcategorias</h3>
+              <button type="button" class="btn-close" id="fecharSubcat">&times;</button>
+            </div>
+            <div class="subcat-list" id="subcatBody"></div>
+            <div class="subcat-inline">
+              <input id="newSubcatNome" type="text" placeholder="Nova subcategoria" maxlength="40" />
+              <button type="button" class="btn-primary" id="salvarSubcat">Adicionar</button>
+            </div>
+            <p class="message" id="subcatMessage" role="alert"></p>
+          </div>
+        </div>
+
+        <!-- CONTAS -->
+        <div id="subsection-contas" class="subsection">
+          <h2>Contas</h2>
+          <div class="cat-toolbar">
+            <button type="button" class="btn-primary" id="novaContaBtn">+ Nova conta</button>
+          </div>
+          <div class="cat-table-wrapper">
+            <table class="cat-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="contasBody"></tbody>
+            </table>
+            <p class="empty-state" id="contasEmpty">Nenhuma conta cadastrada.</p>
+          </div>
+          <div class="inline-form" id="inlineContaForm" hidden>
+            <h3>Nova conta</h3>
+            <div class="inline-fields">
+              <input id="newContaNome" type="text" placeholder="Nome da conta" maxlength="40" />
+              <button type="button" class="btn-primary" id="salvarNovaConta">Salvar</button>
+              <button type="button" class="btn-secondary" id="cancelarNovaConta">Cancelar</button>
+            </div>
+            <p class="message" id="newContaMessage" role="alert"></p>
+          </div>
+        </div>
+
+        <!-- PESSOAS -->
+        <div id="subsection-pessoas" class="subsection">
+          <h2>Pessoas</h2>
+          <div class="cat-toolbar">
+            <button type="button" class="btn-primary" id="novaPessoaBtn">+ Nova pessoa</button>
+          </div>
+          <div class="cat-table-wrapper">
+            <table class="cat-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="pessoasBody"></tbody>
+            </table>
+            <p class="empty-state" id="pessoasEmpty">Nenhuma pessoa cadastrada.</p>
+          </div>
+          <div class="inline-form" id="inlinePessoaForm" hidden>
+            <h3>Nova pessoa</h3>
+            <div class="inline-fields">
+              <input id="newPessoaNome" type="text" placeholder="Nome da pessoa" maxlength="40" />
+              <button type="button" class="btn-primary" id="salvarNovaPessoa">Salvar</button>
+              <button type="button" class="btn-secondary" id="cancelarNovaPessoa">Cancelar</button>
+            </div>
+            <p class="message" id="newPessoaMessage" role="alert"></p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Dialog excluir conta -->
+    <dialog id="excluirDialog" class="dialog">
+      <form method="dialog" id="excluirForm">
+        <h2>Excluir conta</h2>
+        <p>Esta ação é irreversível. Digite seu email e senha para confirmar.</p>
+        <label for="excluirEmail">Email</label>
+        <input id="excluirEmail" type="email" required />
+        <div class="dialog-actions">
+          <button value="cancel" type="button" id="cancelarExcluir">Cancelar</button>
+          <button type="submit" id="confirmarExcluir" class="btn-danger">Excluir</button>
+        </div>
+        <p class="message" id="excluirMessage" role="alert"></p>
+      </form>
+    </dialog>
+
+    <script type="module" src="js/configuracoes.js"></script>
+  </body>
+</html>

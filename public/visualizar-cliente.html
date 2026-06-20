@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://lsjoopdtjjadfoqsaasu.supabase.co"
+    />
+    <title>Visualizar Cliente - Finanças</title>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="css/toast.css" />
+    <link rel="stylesheet" href="fontawesome/css/all.min.css" />
+  </head>
+  <body>
+    <div id="splashScreen">
+      <div class="splash-content">
+        <div class="splash-coin">👁️</div>
+        <p class="splash-text">Carregando...</p>
+      </div>
+    </div>
+    <div class="app-shell">
+      <header>
+        <div class="header-top">
+          <div class="brand">
+            <div class="logo-pill">F</div>
+            <div class="brand-text">
+              <p>Visualizando:</p>
+            </div>
+          </div>
+
+          <div class="header-saldos">
+            <div class="saldo-item">
+              <span class="saldo-label">Receitas:</span>
+              <span class="saldo-value positivo" id="headerReceitas">R$ 0,00</span>
+            </div>
+            <div class="saldo-item">
+              <span class="saldo-label">Despesas:</span>
+              <span class="saldo-value negativo" id="headerDespesas">R$ 0,00</span>
+            </div>
+            <div class="saldo-item destaque">
+              <span class="saldo-label">Saldo:</span>
+              <span class="saldo-value" id="headerSaldo">R$ 0,00</span>
+            </div>
+          </div>
+
+          <div class="header-controls">
+            <div class="pill-select">
+              <span>Ano:</span>
+              <select id="filtroAno">
+                <option value="all">Todos</option>
+              </select>
+            </div>
+            <div class="pill-select">
+              <span>Mês:</span>
+              <select id="filtroMes">
+                <option value="all">Todos</option>
+              </select>
+            </div>
+            <a href="admin.html" class="pill-button">
+              <i class="fa-solid fa-arrow-left"></i>
+              <span>Voltar</span>
+            </a>
+            <a href="visualizar-dashboard-cliente.html" class="pill-button primary" id="btnDashboardCliente">
+              <span class="icon">📊</span>
+              <span>Dashboard</span>
+            </a>
+            <button class="pill-button" id="logoutBtn" type="button">
+              <i class="fa-solid fa-right-from-bracket"></i>
+              <span>Sair</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <div class="layout">
+          <!-- Coluna direita: resumo + tabela (ocupa toda a largura) -->
+          <section class="card" style="grid-column: 1 / -1; max-width: 100%">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  <span class="marker"></span>
+                  <span>Visão rápida do mês</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="comparison-section">
+              <div class="card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">
+                      <span class="marker"></span>
+                      <span>Planejado vs Realizado</span>
+                    </div>
+                    <div class="card-subtitle">Compare o que foi planejado com o que realmente aconteceu</div>
+                  </div>
+                  <div class="chip">Controle Orçamentário</div>
+                </div>
+
+                <div class="comparison-grid">
+                  <div class="comparison-card">
+                    <div class="comparison-label">Receitas</div>
+                    <div class="comparison-values">
+                      <div class="value-group">
+                        <span class="value-label">Planejado:</span>
+                        <span class="value planned" id="receitasPlanejadas">R$ 0,00</span>
+                      </div>
+                      <div class="value-group">
+                        <span class="value-label">Realizado:</span>
+                        <span class="value actual" id="receitasRealizadas">R$ 0,00</span>
+                      </div>
+                      <div class="value-group">
+                        <span class="value-label">Diferença:</span>
+                        <span class="value difference" id="diffReceitas">R$ 0,00</span>
+                      </div>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill" id="progressReceitas" style="width: 0%"></div>
+                    </div>
+                  </div>
+
+                  <div class="comparison-card">
+                    <div class="comparison-label">Despesas</div>
+                    <div class="comparison-values">
+                      <div class="value-group">
+                        <span class="value-label">Planejado:</span>
+                        <span class="value planned" id="despesasPlanejadas">R$ 0,00</span>
+                      </div>
+                      <div class="value-group">
+                        <span class="value-label">Realizado:</span>
+                        <span class="value actual" id="despesasRealizadas">R$ 0,00</span>
+                      </div>
+                      <div class="value-group">
+                        <span class="value-label">Diferença:</span>
+                        <span class="value difference" id="diffDespesas">R$ 0,00</span>
+                      </div>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill" id="progressDespesas" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="summary-grid">
+              <div class="summary-card receitas">
+                <div class="summary-label">Receitas</div>
+                <div class="summary-value">
+                  <span class="prefix">R$</span>
+                  <span id="totalReceitas">0,00</span>
+                </div>
+                <div class="summary-tag">Entradas confirmadas no período</div>
+              </div>
+              <div class="summary-card despesas">
+                <div class="summary-label">Despesas</div>
+                <div class="summary-value">
+                  <span class="prefix">R$</span>
+                  <span id="totalDespesas">0,00</span>
+                </div>
+                <div class="summary-tag">Saídas já consideradas</div>
+              </div>
+              <div class="summary-card saldo">
+                <div class="summary-label">Saldo</div>
+                <div class="summary-value">
+                  <span class="prefix">R$</span>
+                  <span id="saldoAtual">0,00</span>
+                </div>
+                <div class="summary-tag" id="saldoTag">Equilíbrio por enquanto.</div>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <div class="table-toolbar">
+                <div class="table-toolbar-left">
+                  <span class="muted" id="contadorLancamentos"> 0 lançamentos </span>
+                </div>
+                <div class="table-toolbar-right">
+                  <button class="pill-filter active" data-filter-tipo="all" data-filter-status="all" type="button">Todos</button>
+                  <button class="pill-filter" data-filter-tipo="RECEITA" data-filter-status="all" type="button">Receitas</button>
+                  <button class="pill-filter" data-filter-tipo="DESPESA" data-filter-status="all" type="button">Despesas</button>
+
+                  <div class="separator" style="display: inline-block; width: 1px; height: 20px; background: var(--border-color); margin: 0 8px"></div>
+
+                  <button class="pill-filter status-filter" data-filter-tipo="all" data-filter-status="all" type="button">Todos Status</button>
+                  <button class="pill-filter status-filter" data-filter-tipo="all" data-filter-status="PAGO" type="button">Pagos</button>
+                  <button class="pill-filter status-filter" data-filter-tipo="all" data-filter-status="PENDENTE" type="button">Pendentes</button>
+                </div>
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Conta</th>
+                    <th>Status</th>
+                    <th>Valor</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaLancamentos">
+                  <tr class="empty-state-row">
+                    <td colspan="7">
+                      <div class="empty-state">Nenhum lançamento encontrado.</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="js/visualizar-cliente.js"></script>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+npm rebuild better-sqlite3
+
+
+rm -r node_modules
+del package-lock.json
+npm install
+npm audit
+
+
+const fs = require("fs");
+const path = require("path");
+
+fs.writeFileSync(
+  path.join(app.getPath("desktop"), "debug.txt"),
+  JSON.stringify(
+    {
+      NODE_ENV: process.env.NODE_ENV,
+      isPackaged: app.isPackaged,
+      execPath: process.execPath,
+    },
+    null,
+    2,
+  ),
+);
+
+console.log({
+  NODE_ENV: process.env.NODE_ENV,
+  isPackaged: app.isPackaged,
+  execPath: process.execPath,
+});

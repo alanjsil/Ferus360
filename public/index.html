@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://lsjoopdtjjadfoqsaasu.supabase.co"
+    />
+    <title>Finanças 2026 - Painel</title>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="css/toast.css" />
+    <link rel="stylesheet" href="fontawesome/css/all.min.css" />
+  </head>
+  <body>
+    <div id="splashScreen">
+      <div class="splash-content">
+        <div class="splash-coin">💰</div>
+        <p class="splash-text">Carregando...</p>
+      </div>
+    </div>
+    <div class="app-shell">
+      <header>
+        <div class="header-top">
+          <div class="brand">
+            <div class="logo-pill" id="avatarPill">F</div>
+            <div class="brand-text">
+              <p>Meu controle financeiro.</p>
+            </div>
+          </div>
+
+          <div class="header-saldos">
+            <div class="saldo-item">
+              <span class="saldo-label">Receitas:</span>
+              <span class="saldo-value positivo" id="headerReceitas">R$ 0,00</span>
+            </div>
+            <div class="saldo-item">
+              <span class="saldo-label">Despesas:</span>
+              <span class="saldo-value negativo" id="headerDespesas">R$ 0,00</span>
+            </div>
+            <div class="saldo-item destaque">
+              <span class="saldo-label">Saldo:</span>
+              <span class="saldo-value" id="headerSaldo">R$ 0,00</span>
+            </div>
+          </div>
+
+          <div class="header-controls">
+            <div class="pill-select">
+              <span>Ano:</span>
+              <select id="filtroAno">
+                <option value="all">Todos</option>
+              </select>
+            </div>
+            <div class="pill-select">
+              <span>Mês:</span>
+              <select id="filtroMes">
+                <option value="all">Todos</option>
+              </select>
+            </div>
+            <button class="pill-button" id="btnImportar" type="button">📤 Importar Orçamento</button>
+            <button class="pill-button primary" id="btnDashboard" type="button">
+              <span class="icon">📊</span>
+              <span>Dashboard</span>
+            </button>
+            <a href="conflitos.html" class="pill-button" id="btnConflitos">
+              <i class="fa-solid fa-code-branch"></i>
+              <span>Conflitos</span>
+              <span class="badge-danger" id="conflitosBadge" hidden>0</span>
+            </a>
+            <a href="configuracoes.html" class="pill-button">
+              <i class="fa-solid fa-gear"></i>
+              <span>Config</span>
+            </a>
+            <button class="pill-button" id="logoutBtn" type="button">
+              <i class="fa-solid fa-right-from-bracket"></i>
+              <span>Sair</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <div class="layout">
+          <!-- Coluna esquerda: formulário -->
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  <span class="marker"></span>
+                  <span>Lançamento rápido</span>
+                </div>
+                <div class="card-subtitle">Preencha os campos.</div>
+              </div>
+              <div class="chip">Entrada manual</div>
+            </div>
+
+            <form id="formLancamento">
+              <div class="form-row form-field">
+                <label for="data">Data</label>
+                <input id="data" name="data" type="date" class="input" required />
+              </div>
+
+              <div class="form-row form-field">
+                <label for="tipo">Tipo</label>
+                <select id="tipo" name="tipo" required>
+                  <option value="RECEITA">Receita</option>
+                  <option value="DESPESA" selected>Despesa</option>
+                  <option value="TRANSFERENCIA">Transferência</option>
+                </select>
+              </div>
+
+              <div class="form-row form-field">
+                <label for="valor">Valor</label>
+                <input id="valor" name="valor" type="number" step="0.01" min="0" placeholder="0,00" class="input" required />
+              </div>
+
+              <div class="form-row form-field">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                  <option value="PAGO">Pago</option>
+                  <option value="PENDENTE" selected>Pendente</option>
+                  <option value="CANCELADO">Cancelado</option>
+                </select>
+              </div>
+
+              <div class="form-row form-field">
+                <label for="categoria">Categoria</label>
+                <select id="categoria" name="categoria" required></select>
+              </div>
+
+              <div class="form-row form-field">
+                <label for="subcategoria">Subcategoria</label>
+                <select id="subcategoria" name="subcategoria" required></select>
+              </div>
+
+              <div class="form-row form-field">
+                <label for="contaOrigem">Conta origem</label>
+                <select id="contaOrigem" name="contaOrigem" required></select>
+              </div>
+
+              <div class="form-row form-field">
+                <label for="contaDestino">Conta destino</label>
+                <select id="contaDestino" name="contaDestino">
+                  <option value="">(nenhuma)</option>
+                </select>
+              </div>
+
+              <div class="form-row form-field">
+                <label for="pessoa">Pessoa</label>
+                <select id="pessoa" name="pessoa">
+                  <option value="">(não especificar)</option>
+                </select>
+              </div>
+
+              <div class="form-row form-field full">
+                <label for="descricao">Descrição</label>
+                <textarea id="descricao" name="descricao" placeholder="Ex: Mercado da semana, gasolina, conta de luz..."></textarea>
+                <div class="tag-row">
+                  <span class="tag">Dica:__________</span>
+                </div>
+              </div>
+
+              <div class="form-row full submit-row">
+                <button type="button" class="btn outline" id="btnCancelar" style="display: none">Cancelar</button>
+                <button type="reset" class="btn outline" id="btnLimpar">Limpar</button>
+                <button type="submit" class="btn primary">
+                  <span>Salvar lançamento</span>
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Coluna direita: resumo + tabela -->
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  <span class="marker"></span>
+                  <span>Visão rápida do mês</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="comparison-section">
+              <div class="card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">
+                      <span class="marker"></span>
+                      <span>Planejado vs Realizado</span>
+                    </div>
+                    <div class="card-subtitle">Compare o que foi planejado com o que realmente aconteceu</div>
+                  </div>
+                  <div class="chip">Controle Orçamentário</div>
+                </div>
+
+                <div class="comparison-grid">
+                  <div class="comparison-card">
+                    <div class="comparison-label">Receitas</div>
+                    <div class="comparison-values">
+                      <div class="value-group">
+                        <span class="value-label">Planejado:</span>
+                        <span class="value planned" id="receitasPlanejadas">R$ 0,00</span>
+                      </div>
+                      <div class="value-group">
+                        <span class="value-label">Realizado:</span>
+                        <span class="value actual" id="receitasRealizadas">R$ 0,00</span>
+                      </div>
+                      <div class="value-group">
+                        <span class="value-label">Diferença:</span>
+                        <span class="value difference" id="diffReceitas">R$ 0,00</span>
+                      </div>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill" id="progressReceitas" style="width: 0%"></div>
+                    </div>
+                  </div>
+
+                  <div class="comparison-card">
+                    <div class="comparison-label">Despesas</div>
+                    <div class="comparison-values">
+                      <div class="value-group">
+                        <span class="value-label">Planejado:</span>
+                        <span class="value planned" id="despesasPlanejadas">R$ 0,00</span>
+                      </div>
+                      <div class="value-group">
+                        <span class="value-label">Realizado:</span>
+                        <span class="value actual" id="despesasRealizadas">R$ 0,00</span>
+                      </div>
+                      <div class="value-group">
+                        <span class="value-label">Diferença:</span>
+                        <span class="value difference" id="diffDespesas">R$ 0,00</span>
+                      </div>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill" id="progressDespesas" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="summary-grid">
+              <div class="summary-card receitas">
+                <div class="summary-label">Receitas</div>
+                <div class="summary-value">
+                  <span class="prefix">R$</span>
+                  <span id="totalReceitas">0,00</span>
+                </div>
+                <div class="summary-tag">Entradas confirmadas no período</div>
+              </div>
+              <div class="summary-card despesas">
+                <div class="summary-label">Despesas</div>
+                <div class="summary-value">
+                  <span class="prefix">R$</span>
+                  <span id="totalDespesas">0,00</span>
+                </div>
+                <div class="summary-tag">Saídas já consideradas</div>
+              </div>
+              <div class="summary-card saldo">
+                <div class="summary-label">Saldo</div>
+                <div class="summary-value">
+                  <span class="prefix">R$</span>
+                  <span id="saldoAtual">0,00</span>
+                </div>
+                <div class="summary-tag" id="saldoTag">Equilíbrio por enquanto.</div>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <div class="table-toolbar">
+                <div class="table-toolbar-left">
+                  <span class="muted" id="contadorLancamentos"> 0 lançamentos </span>
+                </div>
+                <div class="table-toolbar-right">
+                  <!-- Filtros de Tipo -->
+                  <button class="pill-filter active" data-filter-tipo="all" data-filter-status="all" type="button">Todos</button>
+                  <button class="pill-filter" data-filter-tipo="RECEITA" data-filter-status="all" type="button">Receitas</button>
+                  <button class="pill-filter" data-filter-tipo="DESPESA" data-filter-status="all" type="button">Despesas</button>
+
+                  <!-- Filtros de Status -->
+                  <div class="separator" style="display: inline-block; width: 1px; height: 20px; background: var(--border-color); margin: 0 8px"></div>
+
+                  <button class="pill-filter status-filter" data-filter-tipo="all" data-filter-status="all" type="button">Todos Status</button>
+                  <button class="pill-filter status-filter" data-filter-tipo="all" data-filter-status="PAGO" type="button">Pagos</button>
+                  <button class="pill-filter status-filter" data-filter-tipo="all" data-filter-status="PENDENTE" type="button">Pendentes</button>
+                </div>
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Conta</th>
+                    <th>Status</th>
+                    <th>Valor</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaLancamentos">
+                  <tr class="empty-state-row">
+                    <td colspan="7">
+                      <div class="empty-state">Nenhum lançamento ainda. Use o formulário ao lado para começar a brincar com os dados.</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div id="modalImportacao" class="modal">
+      <div class="card" style="max-width: 800px; margin: 20px auto; max-height: 90vh; overflow-y: auto">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <span class="marker"></span>
+              <span>Importar Orçamento</span>
+            </div>
+            <div class="card-subtitle">Cole os dados da sua planilha no formato CSV</div>
+          </div>
+          <button class="btn outline" id="btnFecharModal" type="button" style="border: none; font-size: 18px">✕</button>
+        </div>
+
+        <div style="margin-bottom: 15px">
+          <div class="chip" style="margin-bottom: 10px">Formato Esperado</div>
+          <div style="font-size: 12px; color: var(--text-muted); background: rgba(15, 23, 42, 0.5); padding: 10px; border-radius: 8px; margin-bottom: 10px">
+            <strong>Formato CSV:</strong>
+            Data,Descrição,Tipo,Valor,Categoria,Subcategoria,Recorrente<br />
+            <strong>Exemplo:</strong><br />
+            <code style="color: #bbf7d0">
+              2024-01-05,Aluguel,DESPESA,1500,Moradia,Aluguel,true<br />
+              2024-01-10,Salário,RECEITA,5000,Salário,Salário fixo,true<br />
+              2024-01-15,Mercado,DESPESA,800,Alimentação,Mercado,true
+            </code>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="dadosImportacao">Dados da Planilha (CSV):</label>
+          <textarea
+            id="dadosImportacao"
+            placeholder="Cole aqui os dados da sua planilha no formato:
+              Data,Descrição,Tipo,Valor,Categoria,Subcategoria,Recorrente
+              2024-01-05,Aluguel,DESPESA,1500,Moradia,Aluguel,true
+              2024-01-10,Salário,RECEITA,5000,Salário,Salário fixo,true
+              ..."
+            style="width: 100%; height: 300px; font-family: monospace; font-size: 12px"
+          ></textarea>
+        </div>
+
+        <div class="form-field">
+          <label for="mesImportacao">Mês de Referência:</label>
+          <input type="month" id="mesImportacao" class="input" />
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px">
+          <button type="button" class="btn outline" id="btnCancelarImportacao">Cancelar</button>
+          <button type="button" class="btn primary" id="btnImportarDados">📤 Importar Dados</button>
+        </div>
+
+        <div id="resultadoImportacao" style="margin-top: 15px; display: none"></div>
+      </div>
+    </div>
+
+    <script type="module" src="js/index.js"></script>
+  </body>
+</html>

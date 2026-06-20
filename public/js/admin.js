@@ -1,0 +1,748 @@
+/**
+ * @file Página administrativa do sistema.
+ */
+
+import { clearAuthSession, ensureAuthenticated, escapeHtml } from "./auth-guard.js";
+import { formatarMoeda } from "./helper.js";
+import { exibirToast } from "./toast.js";
+
+let chamados = [];
+let categoriasGlobais = [];
+let editingCatGlobalId = null;
+let clienteVisualizadoId = null;
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const auth = await ensureAuthenticated({ requireAdmin: true });
+  if (!auth) return;
+
+  preencherSelectsFiltro();
+  configurarNavegacao();
+  configurarLogout();
+  carregarDashboard();
+  carregarChamados();
+  carregarCategoriasGlobais();
+  configurarClientes();
+  configurarCategoriasGlobais();
+  configurarRedefinirSenha();
+  configurarChamados();
+  configurarNovoUsuario();
+});
+
+/**
+ * @returns {void}
+ */
+function preencherSelectsFiltro() {
+  const mesSelect = document.getElementById("detalhesMes");
+  for (let m = 1; m <= 12; m++) {
+    const opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = String(m).padStart(2, "0");
+    mesSelect.appendChild(opt);
+  }
+  const anoSelect = document.getElementById("detalhesAno");
+  for (let a = 2024; a <= 2030; a++) {
+    const opt = document.createElement("option");
+    opt.value = a;
+    opt.textContent = a;
+    anoSelect.appendChild(opt);
+  }
+}
+
+function configurarNavegacao() {
+  document.querySelectorAll(".nav-item").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".nav-item").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".admin-tab").forEach((s) => s.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+    });
+  });
+}
+
+function configurarLogout() {
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    try {
+      await window.electronAPI.logout();
+    } catch {
+      /* ok */
+    }
+    clearAuthSession();
+    window.location.href = "login.html";
+  });
+}
+
+/* ---------- ABA 1 — DASHBOARD ---------- */
+
+async function carregarDashboard() {
+  try {
+    const data = await window.electronAPI.adminGetDashboard();
+    if (data?.error) return;
+
+    document.getElementById("dashReceitas").textContent = `R$ ${formatarMoeda(data.totalReceitas)}`;
+    document.getElementById("dashReceitas").className = "dash-card-value positivo";
+
+    document.getElementById("dashDespesas").textContent = `R$ ${formatarMoeda(data.totalDespesas)}`;
+    document.getElementById("dashDespesas").className = "dash-card-value negativo";
+
+    const saldo = Number(data.saldo || 0);
+    const saldoEl = document.getElementById("dashSaldo");
+    saldoEl.textContent = `R$ ${formatarMoeda(saldo)}`;
+    saldoEl.className = `dash-card-value ${saldo >= 0 ? "positivo" : "negativo"}`;
+
+    document.getElementById("dashUsuarios").textContent = data.totalUsuariosAtivos;
+    document.getElementById("dashUsuarios").className = "dash-card-value";
+  } catch {
+    /* ignore */
+  }
+}
+
+/* ---------- ABA 2 — CLIENTES ---------- */
+
+function configurarClientes() {
+  document.getElementById("filtroStatusCliente").addEventListener("change", carregarClientes);
+  document.getElementById("buscaCliente").addEventListener("input", carregarClientes);
+  document.getElementById("fecharResumo").addEventListener("click", () => {
+    document.getElementById("resumoDialog").close();
+  });
+  document.getElementById("fecharDetalhes").addEventListener("click", () => {
+    document.getElementById("detalhesDialog").close();
+  });
+
+  document.getElementById("btnFiltrarDetalhes").addEventListener("click", () => {
+    abrirDetalhesCliente(clienteVisualizadoId);
+  });
+
+  carregarClientes();
+}
+
+async function carregarClientes() {
+  const body = document.getElementById("clientesBody");
+  const empty = document.getElementById("clientesEmpty");
+
+  try {
+    const data = await window.electronAPI.adminGetClientes();
+    if (data?.error) {
+      body.innerHTML = "";
+      empty.hidden = false;
+      return;
+    }
+
+    const clientes = data || [];
+    const filtroStatus = document.getElementById("filtroStatusCliente").value;
+    const busca = document.getElementById("buscaCliente").value.toLowerCase();
+
+    const filtered = clientes.filter((c) => {
+      if (filtroStatus === "ativo" && !c.ativo) return false;
+      if (filtroStatus === "inativo" && c.ativo) return false;
+      if (busca && !c.nome.toLowerCase().includes(busca) && !c.email.toLowerCase().includes(busca)) return false;
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      body.innerHTML = "";
+      empty.hidden = false;
+      return;
+    }
+
+    empty.hidden = true;
+    body.innerHTML = filtered
+      .map(
+        (c) => `
+        <tr>
+          <td>${escapeHtml(c.nome)}</td>
+          <td>${escapeHtml(c.email)}</td>
+          <td>${formatarData(c.criado_em)}</td>
+          <td>${formatarData(c.ultimo_login)}</td>
+          <td><span class="${c.ativo ? "badge-ativo" : "badge-inativo"}">${c.ativo ? "Ativo" : "Inativo"}</span></td>
+          <td class="actions-cell">
+            <button type="button" class="btn-secondary" data-visualizar="${c.id}" data-nome="${escapeHtml(c.nome)}">Visualizar</button>
+            <button type="button" class="${c.ativo ? "btn-danger" : "btn-primary"}" data-toggle="${c.id}">
+              ${c.ativo ? "Inativar" : "Ativar"}
+            </button>
+          </td>
+        </tr>`,
+      )
+      .join("");
+
+    body.querySelectorAll("[data-visualizar]").forEach((btn) => {
+      btn.addEventListener("click", () => visualizarCliente(btn.dataset.visualizar, btn.dataset.nome));
+    });
+
+    body.querySelectorAll("[data-toggle]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.toggle;
+        btn.disabled = true;
+        try {
+          await window.electronAPI.adminToggleCliente(id);
+          carregarClientes();
+        } catch {
+          /* ignore */
+        }
+      });
+    });
+  } catch {
+    body.innerHTML = '<tr><td colspan="6" class="empty-state">Erro ao carregar clientes.</td></tr>';
+    empty.hidden = true;
+  }
+}
+
+async function visualizarCliente(id, nome) {
+  clienteVisualizadoId = id;
+  const dialog = document.getElementById("resumoDialog");
+  const body = document.getElementById("resumoBody");
+  const footer = document.getElementById("resumoFooter");
+  document.getElementById("resumoTitulo").textContent = "Carregando...";
+  body.innerHTML = '<p class="empty-state">Carregando...</p>';
+  footer.hidden = true;
+  dialog.showModal();
+
+  try {
+    const resumo = await window.electronAPI.adminGetResumoCliente(id);
+    if (resumo?.error) {
+      body.innerHTML = '<p class="empty-state">Erro ao carregar resumo.</p>';
+      return;
+    }
+
+    const totalReceitas = (resumo.lancamentos || []).filter((l) => l.tipo === "RECEITA" && l.status === "PAGO").reduce((s, l) => s + Number(l.valor), 0);
+
+    const totalDespesas = (resumo.lancamentos || []).filter((l) => l.tipo === "DESPESA" && l.status === "PAGO").reduce((s, l) => s + Number(l.valor), 0);
+
+    document.getElementById("resumoTitulo").textContent = "Resumo Financeiro";
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="background:#0f172a;padding:14px;border-radius:8px;text-align:center">
+          <div style="color:#4ade80;font-size:1.5rem;font-weight:700">R$ ${formatarMoeda(totalReceitas)}</div>
+          <div style="color:#94a3b8;font-size:0.75rem">Receitas pagas</div>
+        </div>
+        <div style="background:#0f172a;padding:14px;border-radius:8px;text-align:center">
+          <div style="color:#f87171;font-size:1.5rem;font-weight:700">R$ ${formatarMoeda(totalDespesas)}</div>
+          <div style="color:#94a3b8;font-size:0.75rem">Despesas pagas</div>
+        </div>
+      </div>
+      <div style="background:#0f172a;padding:10px 14px;border-radius:6px;font-size:0.85rem">
+        <span style="color:#94a3b8">Total de lançamentos:</span> ${(resumo.lancamentos || []).length}
+        &middot;
+        <span style="color:#94a3b8">Total de orçamentos:</span> ${(resumo.orcamento || []).length}
+
+      </div>
+      <div style="margin-top:16px;text-align:right">
+        <button type="button" class="btn-primary" id="verDetalhesBtn">Ver detalhes</button>
+        <button type="button" class="btn-secondary" id="fecharResumoBtn">Fechar</button>
+      </div>`;
+    document.getElementById("fecharResumoBtn").addEventListener("click", () => dialog.close());
+    document.getElementById("verDetalhesBtn").addEventListener("click", () => {
+      dialog.close();
+      window.location.href = `visualizar-cliente.html?usuarioId=${id}&nome=${encodeURIComponent(nome || "")}`;
+    });
+    footer.hidden = false;
+  } catch {
+    body.innerHTML = '<p class="empty-state">Erro ao carregar resumo.</p>';
+  }
+}
+
+async function abrirDetalhesCliente(id) {
+  const dialog = document.getElementById("detalhesDialog");
+  const body = document.getElementById("detalhesBody");
+  const empty = document.getElementById("detalhesEmpty");
+  const mes = document.getElementById("detalhesMes")?.value || "";
+  const ano = document.getElementById("detalhesAno")?.value || "";
+  document.getElementById("detalhesTitulo").textContent = "Carregando transações...";
+  body.innerHTML = '<p class="empty-state">Carregando...</p>';
+  dialog.showModal();
+  document.getElementById("detalhesTitulo").textContent = `Transações${ano ? ` de ${ano}${mes ? `/${mes}` : ""}` : ""}`;
+
+  try {
+    const transacoes = await window.electronAPI.adminGetTransacoesCliente(id, mes || null, ano || null);
+
+    const tableBody = document.getElementById("detalhesBody");
+
+    if (!transacoes || transacoes.length === 0) {
+      body.innerHTML = '<p class="empty-state">Nenhum dado encontrado.</p>';
+      return;
+    }
+
+    empty.hidden = true;
+    tableBody.innerHTML = transacoes
+      .map(
+        (t) => `
+          <tr>
+            <td>${formatarData(t.data)}</td>
+            <td><span class="badge-status ${t.tipo}">${t.tipo}</span></td>
+            <td>R$ ${formatarMoeda(t.valor)}</td>
+            <td>${escapeHtml(t.categoria?.nome || "—")}</td>
+            <td><span class="badge-status ${t.status.toLowerCase()}">${t.status}</span></td>
+          </tr>`,
+      )
+      .join("");
+  } catch {
+    body.innerHTML = '<p class="empty-state">Erro ao carregar detalhes.</p>';
+  }
+}
+
+/* ---------- ABA 3 — CATEGORIAS GLOBAIS ---------- */
+
+function configurarCategoriasGlobais() {
+  document.getElementById("filtroCatGlobal").addEventListener("change", renderCatGlobais);
+  document.getElementById("novaCatGlobalBtn").addEventListener("click", () => {
+    document.getElementById("inlineCatGlobal").hidden = false;
+    document.getElementById("newCatGlobalNome").value = "";
+    document.getElementById("newCatGlobalTipo").value = "RECEITA";
+    document.getElementById("newCatGlobalNome").focus();
+  });
+  document.getElementById("cancelarCatGlobal").addEventListener("click", () => {
+    document.getElementById("inlineCatGlobal").hidden = true;
+    document.getElementById("catGlobalMessage").textContent = "";
+  });
+  document.getElementById("salvarCatGlobal").addEventListener("click", salvarCatGlobal);
+  document.getElementById("newCatGlobalNome").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") salvarCatGlobal();
+  });
+}
+
+async function carregarCategoriasGlobais() {
+  try {
+    const data = await window.electronAPI.listCategorias();
+    if (data?.error) return;
+    categoriasGlobais = (data || []).filter((c) => c.eh_global);
+    renderCatGlobais();
+  } catch {
+    /* ignore */
+  }
+}
+
+function renderCatGlobais() {
+  const tipo = document.getElementById("filtroCatGlobal").value;
+  const filtered = tipo ? categoriasGlobais.filter((c) => c.tipo === tipo) : categoriasGlobais;
+  const body = document.getElementById("catGlobalBody");
+  const empty = document.getElementById("catGlobalEmpty");
+
+  if (filtered.length === 0) {
+    body.innerHTML = "";
+    empty.hidden = false;
+    return;
+  }
+
+  empty.hidden = true;
+  body.innerHTML = filtered
+    .map((c) =>
+      editingCatGlobalId === c.id
+        ? editingCatGlobalRow(c)
+        : `
+      <tr>
+        <td>${escapeHtml(c.nome)}</td>
+        <td><span class="badge-status ${c.tipo}">${escapeHtml(c.tipo)}</span></td>
+        <td><span class="${c.ativo ? "badge-ativo" : "badge-inativo"}">${c.ativo ? "Ativo" : "Inativo"}</span></td>
+        <td class="actions-cell">
+          <button type="button" class="btn-secondary btn-edit-cat-global" data-id="${c.id}">Editar</button>
+          <button type="button" class="${c.ativo ? "btn-danger" : "btn-primary"} btn-toggle-cat-global" data-id="${c.id}">
+            ${c.ativo ? "Desativar" : "Ativar"}
+          </button>
+        </td>
+      </tr>`,
+    )
+    .join("");
+
+  body.querySelectorAll(".btn-edit-cat-global").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      editingCatGlobalId = btn.dataset.id;
+      renderCatGlobais();
+    });
+  });
+
+  body.querySelectorAll(".btn-save-cat-global").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      const nome = document.getElementById(`editCatGlobalNome_${id}`).value.trim();
+      const tipo = document.getElementById(`editCatGlobalTipo_${id}`).value;
+      if (nome.length < 2 || nome.length > 40) return;
+      try {
+        const data = await window.electronAPI.updateCategoria(id, { nome, tipo });
+        if (data && !data.error) {
+          Object.assign(
+            categoriasGlobais.find((c) => c.id === id),
+            data,
+          );
+          editingCatGlobalId = null;
+          carregarCategoriasGlobais();
+        }
+      } catch {
+        /* ignore */
+      }
+    });
+  });
+
+  body.querySelectorAll(".btn-cancel-cat-global").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      editingCatGlobalId = null;
+      renderCatGlobais();
+    });
+  });
+
+  body.querySelectorAll(".btn-toggle-cat-global").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        const data = await window.electronAPI.toggleCategoriaAtivo(btn.dataset.id);
+        if (data && data.error) {
+          exibirToast(data.error, "error");
+          btn.disabled = false;
+          return;
+        }
+        if (data && !data.error) {
+          Object.assign(
+            categoriasGlobais.find((c) => c.id === btn.dataset.id),
+            data,
+          );
+          carregarCategoriasGlobais();
+        }
+      } catch {
+        /* ignore */
+      }
+    });
+  });
+}
+
+function editingCatGlobalRow(c) {
+  return `<tr>
+    <td>
+      <input id="editCatGlobalNome_${c.id}" type="text" value="${escapeHtml(c.nome)}" maxlength="40" style="padding:4px 8px;background:#0f172a;border:1px solid #334155;border-radius:4px;color:#e2e8f0;font-size:0.85rem;width:100%" />
+    </td>
+    <td>
+      <select id="editCatGlobalTipo_${c.id}" style="padding:4px 8px;background:#0f172a;border:1px solid #334155;border-radius:4px;color:#e2e8f0;font-size:0.85rem">
+        <option value="RECEITA" ${c.tipo === "RECEITA" ? "selected" : ""}>Receita</option>
+        <option value="DESPESA" ${c.tipo === "DESPESA" ? "selected" : ""}>Despesa</option>
+        <option value="TRANSFERENCIA" ${c.tipo === "TRANSFERENCIA" ? "selected" : ""}>Transferência</option>
+      </select>
+    </td>
+    <td><span class="${c.ativo ? "badge-ativo" : "badge-inativo"}">${c.ativo ? "Ativo" : "Inativo"}</span></td>
+    <td class="actions-cell">
+      <button type="button" class="btn-primary btn-save-cat-global" data-id="${c.id}">Salvar</button>
+      <button type="button" class="btn-secondary btn-cancel-cat-global" data-id="${c.id}">Cancelar</button>
+    </td>
+  </tr>`;
+}
+
+async function salvarCatGlobal() {
+  const nome = document.getElementById("newCatGlobalNome").value.trim();
+  const tipo = document.getElementById("newCatGlobalTipo").value;
+  if (nome.length < 2 || nome.length > 40) {
+    document.getElementById("catGlobalMessage").textContent = "Nome precisa ter entre 2 e 40 caracteres.";
+    return;
+  }
+  try {
+    const btn = document.getElementById("salvarCatGlobal");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Salvando...';
+    const data = await window.electronAPI.createCategoria({ nome, tipo, eh_global: true });
+    if (data?.error) {
+      document.getElementById("catGlobalMessage").textContent = data.error;
+      return;
+    }
+    categoriasGlobais.push(data);
+    carregarCategoriasGlobais();
+    document.getElementById("inlineCatGlobal").hidden = true;
+    document.getElementById("catGlobalMessage").textContent = "";
+  } catch (err) {
+    document.getElementById("catGlobalMessage").textContent = err.message;
+  } finally {
+    const btn = document.getElementById("salvarCatGlobal");
+    btn.disabled = false;
+    btn.textContent = "Salvar";
+  }
+}
+
+/* ---------- ABA 4 — REDEFINIÇÃO DE SENHAS ---------- */
+
+function configurarRedefinirSenha() {
+  document.getElementById("btnBuscarRedefinir").addEventListener("click", buscarParaRedefinir);
+  document.getElementById("buscaRedefinir").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") buscarParaRedefinir();
+  });
+}
+
+async function buscarParaRedefinir() {
+  const busca = document.getElementById("buscaRedefinir").value.trim().toLowerCase();
+  const results = document.getElementById("redefinirResults");
+  const empty = document.getElementById("redefinirEmpty");
+
+  if (!busca) {
+    empty.hidden = false;
+    results.innerHTML = "";
+    return;
+  }
+
+  try {
+    const data = await window.electronAPI.adminGetClientes();
+    if (data?.error) {
+      results.innerHTML = '<p class="empty-state">Erro na busca.</p>';
+      return;
+    }
+
+    const usuarios = (data || []).filter((u) => u.nome.toLowerCase().includes(busca) || u.email.toLowerCase().includes(busca));
+
+    if (usuarios.length === 0) {
+      results.innerHTML = '<p class="empty-state">Nenhum usuário encontrado.</p>';
+      empty.hidden = true;
+      return;
+    }
+
+    empty.hidden = true;
+    results.innerHTML = usuarios
+      .map(
+        (u) => `
+        <div class="user-card">
+          <div class="user-card-info">
+            <strong>${escapeHtml(u.nome)}</strong>
+            <span>${escapeHtml(u.email)} ${u.role === "admin" ? "· Admin" : ""}</span>
+          </div>
+          <div class="user-card-actions">
+            <button type="button" class="btn-primary" data-reset="${u.id}" data-nome="${escapeHtml(u.nome)}">Redefinir senha</button>
+          </div>
+        </div>`,
+      )
+      .join("");
+
+    results.querySelectorAll("[data-reset]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Redefinindo...';
+        try {
+          const result = await window.electronAPI.adminResetSenha(btn.dataset.reset);
+          if (result?.error) {
+            exibirToast("Erro ao redefinir senha.", "error");
+            btn.disabled = false;
+            btn.textContent = "Redefinir senha";
+            return;
+          }
+          exibirToast(`Email de recuperação enviado para ${btn.dataset.nome}.`, "success");
+        } catch {
+          exibirToast("Erro ao redefinir senha.", "error");
+        }
+        btn.disabled = false;
+        btn.textContent = "Redefinir senha";
+      });
+    });
+  } catch {
+    results.innerHTML = '<p class="empty-state">Erro na busca.</p>';
+  }
+}
+
+/* ---------- ABA 5 — CHAMADOS ---------- */
+
+function configurarChamados() {
+  document.getElementById("filtroStatusChamado").addEventListener("change", renderChamados);
+  document.getElementById("fecharChamado").addEventListener("click", () => {
+    document.getElementById("chamadoDialog").close();
+  });
+  document.getElementById("enviarRespostaChamado").addEventListener("click", enviarRespostaChamado);
+}
+
+async function carregarChamados() {
+  try {
+    const data = await window.electronAPI.adminGetChamados();
+    if (data?.error) return;
+    chamados = data || [];
+    atualizarBadgeChamados();
+    renderChamados();
+  } catch {
+    /* ignore */
+  }
+}
+
+function atualizarBadgeChamados() {
+  const abertos = chamados.filter((c) => c.status === "aberto" || c.status === "em_andamento").length;
+  const badge = document.getElementById("chamadosCount");
+  badge.textContent = abertos;
+  badge.hidden = abertos === 0;
+}
+
+function renderChamados() {
+  const filtro = document.getElementById("filtroStatusChamado").value;
+  const filtered = filtro ? chamados.filter((c) => c.status === filtro) : chamados;
+  const body = document.getElementById("chamadosBody");
+  const empty = document.getElementById("chamadosEmpty");
+
+  if (filtered.length === 0) {
+    body.innerHTML = "";
+    empty.hidden = false;
+    return;
+  }
+
+  empty.hidden = true;
+  body.innerHTML = filtered
+    .map(
+      (c) => `
+      <tr>
+        <td>${escapeHtml(c.usuario_nome)}<br/><span style="color:#64748b;font-size:0.75rem">${escapeHtml(c.usuario_email)}</span></td>
+        <td>${escapeHtml(c.titulo)}</td>
+        <td><span class="badge-status ${c.status}">${statusLabel(c.status)}</span></td>
+        <td>${formatarData(c.criado_em)}</td>
+        <td><button type="button" class="btn-secondary" data-atender="${c.id}">Atender</button></td>
+      </tr>`,
+    )
+    .join("");
+
+  body.querySelectorAll("[data-atender]").forEach((btn) => {
+    btn.addEventListener("click", () => abrirAtendimento(btn.dataset.atender));
+  });
+}
+
+function abrirAtendimento(id) {
+  const c = chamados.find((x) => x.id === id);
+  if (!c) return;
+
+  document.getElementById("chamadoUsuario").textContent = c.usuario_nome;
+  document.getElementById("chamadoEmail").textContent = c.usuario_email;
+  document.getElementById("chamadoTitulo").textContent = c.titulo;
+  const statusEl = document.getElementById("chamadoStatus");
+  statusEl.innerHTML = "";
+  const statusSpan = document.createElement("span");
+  statusSpan.className = `badge-status ${c.status}`;
+  statusSpan.textContent = statusLabel(c.status);
+  statusEl.appendChild(statusSpan);
+  document.getElementById("chamadoDescricao").textContent = c.descricao || "Sem descrição.";
+  document.getElementById("chamadoRespostaInput").value = "";
+  document.getElementById("chamadoNovoStatus").value = c.status === "resolvido" ? "resolvido" : "em_andamento";
+  document.getElementById("chamadoMessage").textContent = "";
+  document.getElementById("enviarRespostaChamado").dataset.id = id;
+
+  const respostas = c.respostas || [];
+  const historicoDiv = document.getElementById("chamadoHistorico");
+  const historicoLista = document.getElementById("chamadoHistoricoLista");
+  if (respostas.length > 0) {
+    historicoDiv.hidden = false;
+    historicoLista.innerHTML = respostas
+      .map(
+        (r) => `
+        <div class="historico-item">
+          <span class="admin-tag">${escapeHtml(r.admin_nome || "Admin")}</span>
+          <div class="msg">${escapeHtml(r.mensagem)}</div>
+          <div class="data">${formatarData(r.criado_em)}</div>
+        </div>`,
+      )
+      .join("");
+  } else {
+    historicoDiv.hidden = true;
+    historicoLista.innerHTML = "";
+  }
+
+  document.getElementById("chamadoDialog").showModal();
+}
+
+async function enviarRespostaChamado() {
+  const id = document.getElementById("enviarRespostaChamado").dataset.id;
+  const msg = document.getElementById("chamadoRespostaInput").value.trim();
+  const novoStatus = document.getElementById("chamadoNovoStatus").value;
+
+  if (!msg && novoStatus !== "resolvido") {
+    document.getElementById("chamadoMessage").textContent = "Escreva uma resposta ou marque como resolvido.";
+    return;
+  }
+
+  const btn = document.getElementById("enviarRespostaChamado");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Enviando...';
+
+  try {
+    if (msg) {
+      await window.electronAPI.adminResponderChamado(id, msg);
+    }
+    if (novoStatus) {
+      await window.electronAPI.adminUpdateChamado(id, novoStatus);
+    }
+    document.getElementById("chamadoDialog").close();
+    carregarChamados();
+  } catch {
+    document.getElementById("chamadoMessage").textContent = "Erro ao processar chamado.";
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "Enviar resposta";
+  }
+}
+
+/* ---------- NOVO USUÁRIO ---------- */
+
+function configurarNovoUsuario() {
+  const dialog = document.getElementById("novoUsuarioDialog");
+  const btnAbrir = document.getElementById("novoUsuarioBtn");
+  const btnFechar = document.getElementById("fecharNovoUsuario");
+  const btnCancelar = document.getElementById("cancelarNovoUsuario");
+  const btnSalvar = document.getElementById("salvarNovoUsuario");
+  const msg = document.getElementById("novoUsuarioMessage");
+
+  btnAbrir.addEventListener("click", () => {
+    document.getElementById("novoUsuarioNome").value = "";
+    document.getElementById("novoUsuarioEmail").value = "";
+    document.getElementById("novoUsuarioSenha").value = "";
+    document.getElementById("novoUsuarioConfirmar").value = "";
+    msg.textContent = "";
+    dialog.showModal();
+  });
+
+  btnFechar.addEventListener("click", () => dialog.close());
+  btnCancelar.addEventListener("click", () => dialog.close());
+
+  btnSalvar.addEventListener("click", async () => {
+    const nome = document.getElementById("novoUsuarioNome").value.trim();
+    const email = document.getElementById("novoUsuarioEmail").value.trim();
+    const senha = document.getElementById("novoUsuarioSenha").value;
+    const confirmar = document.getElementById("novoUsuarioConfirmar").value;
+
+    if (!nome || !email || !senha) {
+      msg.textContent = "Preencha todos os campos.";
+      return;
+    }
+
+    if (senha.length < 8) {
+      msg.textContent = "Senha deve ter no mínimo 8 caracteres.";
+      return;
+    }
+
+    if (senha !== confirmar) {
+      msg.textContent = "Senhas não conferem.";
+      return;
+    }
+
+    btnSalvar.disabled = true;
+    btnSalvar.innerHTML = '<span class="spinner"></span>Criando...';
+
+    try {
+      const result = await window.electronAPI.adminCriarUsuario(nome, email, senha);
+      if (result?.error) {
+        msg.textContent = result.error;
+        return;
+      }
+      dialog.close();
+      exibirToast(`Usuário ${nome} criado com sucesso.`, "success");
+      carregarClientes();
+    } catch (err) {
+      msg.textContent = err.message || "Erro ao criar usuário.";
+    } finally {
+      btnSalvar.disabled = false;
+      btnSalvar.textContent = "Criar usuário";
+    }
+  });
+}
+
+/* ---------- HELPERS ---------- */
+
+/**
+ * @param {string} status
+ * @returns {string}
+ */
+function statusLabel(status) {
+  const map = { aberto: "Aberto", em_andamento: "Em andamento", resolvido: "Resolvido" };
+  return map[status] || status;
+}
+
+/**
+ * @param {string} iso
+ * @returns {string}
+ */
+function formatarData(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
+export { formatarData, preencherSelectsFiltro, statusLabel };

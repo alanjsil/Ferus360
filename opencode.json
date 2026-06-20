@@ -1,0 +1,98 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  "lsp": true,
+
+  "default_agent": "plan",
+
+  "mcp": {
+    "supabase": {
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp?project_ref=lsjoopdtjjadfoqsaasu",
+      "enabled": true
+    }
+  },
+
+  "permission": {
+    "read": {
+      "*": "allow",
+      "*.env": "deny"
+    },
+
+    "bash": {
+      // fallback primeiro (último a casar vence)
+      "*": "ask",
+
+      // ===== DEV FLOW SEM PROMPTS =====
+      "npm test": "allow",
+      "npm test *": "allow",
+      "npm run test": "allow",
+      "npm run test *": "allow",
+      "npx vitest run 2>&1": "allow",
+      "npx vitest run 2>&1 *": "allow",
+
+      "npm lint": "allow",
+      "npm lint *": "allow",
+      "npm run lint": "allow",
+      "npm run lint *": "allow",
+      "npm run lint 2>&1": "allow",
+
+      "npm build": "allow",
+      "npm build *": "allow",
+      "npm run build": "allow",
+      "npm run build *": "allow",
+
+      // ferramentas genéricas (vitest/jest/eslint/etc)
+      "npx *": "allow",
+      "npm * test *": "allow",
+      "npm * lint *": "allow",
+      "npm * build *": "allow",
+
+      "python *": "allow",
+
+      "git *": "allow",
+      "git diff *": "allow",
+      "git status *": "allow",
+
+      // destrutivos continuam bloqueados
+      "rm *": "deny",
+      "del *": "deny",
+      "format *": "deny"
+    },
+
+    "edit": {
+      "*.sql": "ask",
+      "*.js": "allow",
+      "*.ts": "allow",
+      "*.py": "allow",
+      "*.md": "allow",
+      "*.json": "ask",
+      "*.yml": "allow",
+      "*.html": "allow",
+      "*.toml": "allow"
+    },
+
+    "task": "deny",
+    "webfetch": "ask",
+    "external_directory": "deny"
+  },
+
+  "agent": {
+    "code-reviewer": {
+      "description": "Revisa código para melhores práticas e potenciais problemas",
+      "model": "google/gemini-3.5-flash",
+      "prompt": "Você é um revisor de código. Foque em segurança, performance e manutenibilidade.",
+      "tools": {
+        // Desabilitar ferramentas de modificação de arquivo para agente de apenas revisão
+        "write": false,
+        "edit": false
+      }
+    }
+  },
+
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 12000
+  }
+}

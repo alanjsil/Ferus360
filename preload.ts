@@ -1,0 +1,113 @@
+import { contextBridge, ipcRenderer } from "electron";
+
+function getStoredRefreshToken(): string | null {
+  try {
+    return localStorage.getItem("financas.refresh_token");
+  } catch {
+    return null;
+  }
+}
+
+const api = {
+  // ==================== LOGGER ====================
+  logError: (context: string, message: string, err?: unknown) => ipcRenderer.invoke("log:error", context, message, err),
+  logWarn: (context: string, message: string, err?: unknown) => ipcRenderer.invoke("log:warn", context, message, err),
+
+  // ==================== AUTH ====================
+  login: (email: string, senha: string) => ipcRenderer.invoke("auth:login", email, senha),
+  logout: () => ipcRenderer.invoke("auth:logout"),
+  verificarAuth: (token: string) => {
+    const refreshToken = getStoredRefreshToken();
+    return ipcRenderer.invoke("auth:verificar", token, refreshToken);
+  },
+  renovarAuth: (refreshToken: string) => ipcRenderer.invoke("auth:renovar", refreshToken),
+  solicitarRecuperacao: (email: string) => ipcRenderer.invoke("auth:recuperar", email),
+  confirmarRecuperacao: (email: string, token: string, novaSenha: string) => ipcRenderer.invoke("auth:confirmar-recuperacao", email, token, novaSenha),
+  temTokenRecuperacao: () => ipcRenderer.invoke("auth:tem-token-recuperacao"),
+  redefinirSenha: (novaSenha: string) => ipcRenderer.invoke("auth:redefinir-senha", novaSenha),
+  trocarSenha: (usuarioId: string, novaSenha: string) => ipcRenderer.invoke("auth:trocar-senha", usuarioId, novaSenha),
+
+  // ==================== DASHBOARD ====================
+  getDashboard: (mes: string) => ipcRenderer.invoke("dashboard:get", mes),
+  getDashboardDados: (ano: string, mes: string, categoria: string) => ipcRenderer.invoke("dashboard:dados", ano, mes, categoria),
+  getAnosDisponiveis: () => ipcRenderer.invoke("dashboard:anos"),
+
+  // ==================== CATEGORIAS ====================
+  getCategorias: (tipo?: string) => ipcRenderer.invoke("categorias:get", tipo),
+  listCategorias: () => ipcRenderer.invoke("cat:list"),
+  createCategoria: (payload: any) => ipcRenderer.invoke("cat:create", payload),
+  updateCategoria: (id: string, patch: any) => ipcRenderer.invoke("cat:update", id, patch),
+  toggleCategoriaAtivo: (id: string) => ipcRenderer.invoke("cat:toggleAtivo", id),
+
+  // ==================== SUBCATEGORIAS ====================
+  getSubcategorias: (categoriaId?: string) => ipcRenderer.invoke("subcategorias:get", categoriaId),
+  createSubcategoria: (payload: any) => ipcRenderer.invoke("subcat:create", payload),
+  updateSubcategoria: (id: string, patch: any) => ipcRenderer.invoke("subcat:update", id, patch),
+  deleteSubcategoria: (id: string) => ipcRenderer.invoke("subcat:delete", id),
+
+  // ==================== CONTAS ====================
+  getContas: () => ipcRenderer.invoke("contas:get"),
+  createConta: (payload: any) => ipcRenderer.invoke("conta:create", payload),
+  updateConta: (id: string, patch: any) => ipcRenderer.invoke("conta:update", id, patch),
+  deleteConta: (id: string) => ipcRenderer.invoke("conta:delete", id),
+
+  // ==================== PESSOAS ====================
+  getPessoas: () => ipcRenderer.invoke("pessoas:get"),
+  createPessoa: (payload: any) => ipcRenderer.invoke("pessoa:create", payload),
+  updatePessoa: (id: string, patch: any) => ipcRenderer.invoke("pessoa:update", id, patch),
+  deletePessoa: (id: string) => ipcRenderer.invoke("pessoa:delete", id),
+
+  // ==================== LANÇAMENTOS ====================
+  getLancamentos: (mes: string) => ipcRenderer.invoke("lancamentos:get", mes),
+  createLancamento: (payload: any) => ipcRenderer.invoke("lancamentos:create", payload),
+  updateLancamento: (id: string, payload: any) => ipcRenderer.invoke("lancamentos:update", id, payload),
+  deleteLancamento: (id: string) => ipcRenderer.invoke("lancamentos:delete", id),
+
+  // ==================== TRANSFERÊNCIAS ====================
+  createTransferencia: (payload: any) => ipcRenderer.invoke("transferencia:create", payload),
+  updateTransferencia: (grupoId: string, payload: any) => ipcRenderer.invoke("transferencia:update", grupoId, payload),
+  deleteTransferencia: (grupoId: string) => ipcRenderer.invoke("transferencia:delete", grupoId),
+
+  // ==================== ORÇAMENTO ====================
+  getOrcamento: (mes: string) => ipcRenderer.invoke("orcamento:get", mes),
+  importarOrcamento: (itens: any[]) => ipcRenderer.invoke("orcamento:importar", itens),
+
+  // ==================== CONFIGURAÇÕES / PERFIL ====================
+  getPerfil: () => ipcRenderer.invoke("config:getPerfil"),
+  updatePerfil: (payload: any) => ipcRenderer.invoke("config:updatePerfil", payload),
+  getSessoes: () => ipcRenderer.invoke("config:getSessoes"),
+  encerrarSessao: (sessaoId: string) => ipcRenderer.invoke("config:encerrar-sessao", sessaoId),
+  revogarOutrasSessoes: () => ipcRenderer.invoke("config:encerrar-outras-sessoes"),
+  exportarDados: () => ipcRenderer.invoke("config:exportarDados"),
+  excluirConta: () => ipcRenderer.invoke("config:excluir-conta"),
+
+  // ==================== TRIAL ====================
+  getTrialStatus: () => ipcRenderer.invoke("trial:status"),
+
+  // ==================== SYNC ====================
+  forceSync: () => ipcRenderer.invoke("sync:force"),
+  getConflitos: () => ipcRenderer.invoke("sync:conflitos"),
+  resolverConflito: (id: string, decisao: string, payloadMesclado: any) => ipcRenderer.invoke("sync:resolver-conflito", id, decisao, payloadMesclado),
+  onSyncStatus: (callback: (data: any) => void) => ipcRenderer.on("sync:status", (_e: any, data: any) => callback(data)),
+  limparCache: () => ipcRenderer.invoke("sync:limpar-cache"),
+
+  // ==================== ADMIN ====================
+  adminGetDashboard: () => ipcRenderer.invoke("admin:getDashboard"),
+  adminGetClientes: () => ipcRenderer.invoke("admin:getClientes"),
+  adminToggleCliente: (id: string) => ipcRenderer.invoke("admin:toggleCliente", id),
+  adminGetChamados: () => ipcRenderer.invoke("admin:getChamados"),
+  adminResponderChamado: (id: string, msg: string) => ipcRenderer.invoke("admin:responderChamado", id, msg),
+  adminUpdateChamado: (id: string, status: string) => ipcRenderer.invoke("admin:updateChamado", id, status),
+  adminResetSenha: (id: string) => ipcRenderer.invoke("admin:resetSenha", id),
+  adminCriarUsuario: (nome: string, email: string, senha: string) => ipcRenderer.invoke("admin:criarUsuario", nome, email, senha),
+  adminGetAuditoria: (filtros: any) => ipcRenderer.invoke("admin:getAuditoria", filtros),
+  adminGetResumoCliente: (id: string) => ipcRenderer.invoke("admin:getResumoCliente", id),
+  adminGetTransacoesCliente: (id: string, mes: string, ano: string) => ipcRenderer.invoke("admin:getTransacoesCliente", id, mes, ano),
+  adminGetOrcamentoCliente: (id: string) => ipcRenderer.invoke("admin:getOrcamentoCliente", id),
+  adminGetContasCliente: (id: string) => ipcRenderer.invoke("admin:getContasCliente", id),
+  adminGetAnosDisponiveisCliente: (usuarioId: string) => ipcRenderer.invoke("admin:getAnosDisponiveisCliente", usuarioId),
+  adminGetDashboardDadosCliente: (usuarioId: string, ano: string, mes: string, categoria: string) => ipcRenderer.invoke("admin:getDashboardDadosCliente", usuarioId, ano, mes, categoria),
+};
+
+contextBridge.exposeInMainWorld("electronAPI", api);
+export type ElectronAPI = typeof api;

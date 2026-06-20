@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://lsjoopdtjjadfoqsaasu.supabase.co"
+    />
+    <title>Administração - Finanças</title>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+    <link rel="stylesheet" href="css/toast.css" />
+    <link rel="stylesheet" href="fontawesome/css/all.min.css" />
+  </head>
+  <body>
+    <div class="admin-header">
+      <h1>Administração</h1>
+      <div class="header-actions">
+        <button type="button" class="btn-secondary" id="logoutBtn">Sair</button>
+      </div>
+    </div>
+
+    <nav class="admin-nav" id="adminNav">
+      <button type="button" class="nav-item active" data-tab="dashboard">Dashboard</button>
+      <button type="button" class="nav-item" data-tab="clientes">Clientes</button>
+      <button type="button" class="nav-item" data-tab="categorias">Categorias Globais</button>
+      <button type="button" class="nav-item" data-tab="senhas">Redefinição de Senhas</button>
+      <button type="button" class="nav-item" data-tab="chamados">Chamados <span class="nav-count badge-open" id="chamadosCount">0</span></button>
+    </nav>
+
+    <main class="admin-content">
+      <!-- ABA 1 — DASHBOARD -->
+      <section id="tab-dashboard" class="admin-tab active">
+        <h2>Dashboard Consolidado</h2>
+        <div class="dashboard-cards" id="dashboardCards">
+          <div class="dash-card">
+            <div class="dash-card-label">Receitas totais</div>
+            <div class="dash-card-value" id="dashReceitas">—</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-label">Despesas totais</div>
+            <div class="dash-card-value" id="dashDespesas">—</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-label">Saldo consolidado</div>
+            <div class="dash-card-value" id="dashSaldo">—</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-label">Usuários ativos</div>
+            <div class="dash-card-value" id="dashUsuarios">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABA 2 — CLIENTES -->
+      <section id="tab-clientes" class="admin-tab">
+        <h2>Clientes</h2>
+        <div class="tab-toolbar">
+          <div class="filtro-group">
+            <label>Status</label>
+            <select id="filtroStatusCliente">
+              <option value="">Todos</option>
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
+            </select>
+          </div>
+          <div class="filtro-group">
+            <label>Busca</label>
+            <input id="buscaCliente" type="text" placeholder="Nome ou email..." />
+          </div>
+          <button type="button" class="btn-primary" id="novoUsuarioBtn">+ Novo usuário</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="clientesTable">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Criado em</th>
+                <th>Último login</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="clientesBody"></tbody>
+          </table>
+          <p class="empty-state" id="clientesEmpty">Nenhum cliente encontrado.</p>
+        </div>
+
+        <!-- Modal resumo cliente (duas visões) -->
+        <dialog id="resumoDialog" class="dialog dialog-wide">
+          <div class="dialog-header">
+            <h2 id="resumoTitulo">Resumo do cliente</h2>
+            <button type="button" class="btn-close" id="fecharResumo">&times;</button>
+          </div>
+          <div class="dialog-body" id="resumoBody">
+            <p class="empty-state">Carregando...</p>
+          </div>
+          <div class="dialog-footer" id="resumoFooter" hidden></div>
+        </dialog>
+
+        <!-- Modal detalhes do cliente -->
+        <dialog id="detalhesDialog" class="dialog dialog-wide">
+          <div class="dialog-header">
+            <h2 id="detalhesTitulo">Transações do cliente</h2>
+            <button type="button" class="btn-close" id="fecharDetalhes">&times;</button>
+          </div>
+          <div class="dialog-body" id="detalhesBody">
+            <div class="detalhes-filtros">
+              <select id="detalhesMes">
+                <option value="">Mês</option>
+              </select>
+              <select id="detalhesAno">
+                <option value="">Ano</option>
+              </select>
+              <button type="button" class="btn-primary" id="btnFiltrarDetalhes">Filtrar</button>
+            </div>
+            <div class="table-wrapper" style="margin-top: 12px">
+              <table class="data-table" id="detalhesTable">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Valor</th>
+                    <th>Categoria</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="detalhesBody"></tbody>
+              </table>
+              <p class="empty-state" id="detalhesEmpty">Nenhuma transação encontrada.</p>
+            </div>
+          </div>
+        </dialog>
+
+        <!-- Modal novo usuário -->
+        <dialog id="novoUsuarioDialog" class="dialog">
+          <div class="dialog-header">
+            <h2>Novo usuário</h2>
+            <button type="button" class="btn-close" id="fecharNovoUsuario">&times;</button>
+          </div>
+          <div class="dialog-body">
+            <div class="inline-form" style="border: none; padding: 0">
+              <div class="inline-fields" style="flex-direction: column; gap: 12px">
+                <input id="novoUsuarioNome" type="text" placeholder="Nome completo" maxlength="100" />
+                <input id="novoUsuarioEmail" type="email" placeholder="Email" />
+                <input id="novoUsuarioSenha" type="password" placeholder="Senha (mín. 8 caracteres)" minlength="8" />
+                <input id="novoUsuarioConfirmar" type="password" placeholder="Confirmar senha" minlength="8" />
+              </div>
+              <p class="message" id="novoUsuarioMessage" role="alert"></p>
+              <div style="display: flex; gap: 8px; margin-top: 8px">
+                <button type="button" class="btn-primary" id="salvarNovoUsuario">Criar usuário</button>
+                <button type="button" class="btn-secondary" id="cancelarNovoUsuario">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </dialog>
+      </section>
+
+      <!-- ABA 3 — CATEGORIAS GLOBAIS -->
+      <section id="tab-categorias" class="admin-tab">
+        <h2>Categorias Globais</h2>
+        <p class="tab-hint">Categorias globais ficam visíveis para todos os usuários.</p>
+        <div class="tab-toolbar">
+          <div class="filtro-group">
+            <label>Tipo</label>
+            <select id="filtroCatGlobal">
+              <option value="">Todos</option>
+              <option value="RECEITA">Receita</option>
+              <option value="DESPESA">Despesa</option>
+            </select>
+          </div>
+          <button type="button" class="btn-primary" id="novaCatGlobalBtn">+ Nova categoria global</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="catGlobalTable">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Ativo</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="catGlobalBody"></tbody>
+          </table>
+          <p class="empty-state" id="catGlobalEmpty">Nenhuma categoria global.</p>
+        </div>
+
+        <div class="inline-form" id="inlineCatGlobal" hidden>
+          <h3>Nova categoria global</h3>
+          <div class="inline-fields">
+            <input id="newCatGlobalNome" type="text" placeholder="Nome (2-40 caracteres)" maxlength="40" />
+            <select id="newCatGlobalTipo">
+              <option value="RECEITA">Receita</option>
+              <option value="DESPESA">Despesa</option>
+            </select>
+            <button type="button" class="btn-primary" id="salvarCatGlobal">Salvar</button>
+            <button type="button" class="btn-secondary" id="cancelarCatGlobal">Cancelar</button>
+          </div>
+          <p class="message" id="catGlobalMessage" role="alert"></p>
+        </div>
+      </section>
+
+      <!-- ABA 4 — REDEFINIÇÃO DE SENHAS -->
+      <section id="tab-senhas" class="admin-tab">
+        <h2>Redefinição de Senhas</h2>
+        <div class="tab-toolbar">
+          <div class="filtro-group">
+            <label>Buscar usuário</label>
+            <input id="buscaRedefinir" type="text" placeholder="Nome ou email..." />
+          </div>
+          <button type="button" class="btn-primary" id="btnBuscarRedefinir">Buscar</button>
+        </div>
+        <div id="redefinirResults" class="card-list"></div>
+        <p class="empty-state" id="redefinirEmpty">Busque por um usuário para redefinir a senha.</p>
+      </section>
+
+      <!-- ABA 5 — CHAMADOS -->
+      <section id="tab-chamados" class="admin-tab">
+        <h2>Chamados de Suporte</h2>
+        <div class="tab-toolbar">
+          <div class="filtro-group">
+            <label>Status</label>
+            <select id="filtroStatusChamado">
+              <option value="">Todos</option>
+              <option value="aberto">Aberto</option>
+              <option value="em_andamento">Em andamento</option>
+              <option value="resolvido">Resolvido</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="chamadosTable">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Título</th>
+                <th>Status</th>
+                <th>Criado em</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="chamadosBody"></tbody>
+          </table>
+          <p class="empty-state" id="chamadosEmpty">Nenhum chamado encontrado.</p>
+        </div>
+
+        <!-- Modal atendimento chamado (com email) -->
+        <dialog id="chamadoDialog" class="dialog dialog-wide">
+          <div class="dialog-header">
+            <h2 id="chamadoDialogTitle">Atendimento</h2>
+            <button type="button" class="btn-close" id="fecharChamado">&times;</button>
+          </div>
+          <div class="dialog-body">
+            <div class="chamado-info">
+              <p><strong>Usuário:</strong> <span id="chamadoUsuario"></span></p>
+              <p><strong>Email:</strong> <span id="chamadoEmail"></span></p>
+              <p><strong>Título:</strong> <span id="chamadoTitulo"></span></p>
+              <p><strong>Status:</strong> <span id="chamadoStatus"></span></p>
+              <p><strong>Descrição:</strong></p>
+              <p id="chamadoDescricao" class="chamado-desc"></p>
+            </div>
+            <div class="chamado-historico" id="chamadoHistorico" hidden>
+              <h3>Histórico de respostas</h3>
+              <div id="chamadoHistoricoLista"></div>
+            </div>
+            <div class="chamado-resposta">
+              <label for="chamadoRespostaInput">Responder (enviado por email ao usuário)</label>
+              <textarea id="chamadoRespostaInput" rows="4" placeholder="Digite sua resposta..."></textarea>
+              <div class="chamado-actions">
+                <select id="chamadoNovoStatus">
+                  <option value="em_andamento">Em andamento</option>
+                  <option value="resolvido">Resolvido</option>
+                </select>
+                <button type="button" class="btn-primary" id="enviarRespostaChamado">Enviar resposta</button>
+              </div>
+            </div>
+            <p class="message" id="chamadoMessage" role="alert"></p>
+          </div>
+        </dialog>
+      </section>
+    </main>
+
+    <script type="module" src="js/admin.js"></script>
+  </body>
+</html>

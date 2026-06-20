@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+coverage/
+
+# Arquivos sensiveis
+.env
+
+# Logs
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+
+# Build
+dist/
+dist-ts/
+
+# Trial config (gerado pelo build:trial)
+trial-config.json

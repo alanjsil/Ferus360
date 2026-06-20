@@ -1,0 +1,102 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://lsjoopdtjjadfoqsaasu.supabase.co"
+    />
+    <title>Entrar - Finanças</title>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/login.css" />
+    <link rel="stylesheet" href="fontawesome/css/all.min.css" />
+  </head>
+  <body>
+    <div id="splashScreen">
+      <div class="splash-content">
+        <div style="--i: 0" class="splash-money">💰</div>
+        <div style="--i: 1" class="splash-money">💵</div>
+        <div style="--i: 2" class="splash-money">💸</div>
+        <p class="splash-text">Carregando...</p>
+      </div>
+    </div>
+    <main class="login-shell">
+      <section class="login-card">
+        <div class="brand">
+          <div class="logo-pill">F</div>
+          <div>
+            <h1>FERUS 360º</h1>
+            <p>Área restrita do sistema</p>
+          </div>
+        </div>
+
+        <div id="trialBanner" class="trial-banner"></div>
+
+        <form id="loginForm" class="login-form">
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" required />
+          </div>
+
+          <div class="field">
+            <label for="senha">Senha</label>
+            <div class="password-wrapper">
+              <input id="senha" name="senha" type="password" autocomplete="current-password" required />
+              <button type="button" class="toggle-password" data-target="senha" aria-label="Mostrar senha" tabindex="-1">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="field inline">
+            <label class="checkbox">
+              <input id="lembrarMe" name="lembrarMe" type="checkbox" />
+              <span>Lembrar-me</span>
+            </label>
+            <button type="button" class="link-button" id="abrirRecuperacao">Esqueci minha senha</button>
+          </div>
+
+          <div class="captcha" id="captchaBox" hidden>
+            <label for="captchaResposta" id="captchaPergunta">Captcha</label>
+            <input id="captchaResposta" name="captchaResposta" type="text" inputmode="numeric" />
+          </div>
+
+          <div class="actions">
+            <button type="submit" id="loginSubmit">Entrar</button>
+          </div>
+
+          <p class="message" id="loginMessage" role="alert" aria-live="polite"></p>
+        </form>
+      </section>
+      <img src="img/adnreiahuid.webp" alt="" class="login-mascote" />
+    </main>
+
+    <dialog id="recuperacaoDialog" class="dialog">
+      <form method="dialog" id="recuperacaoForm">
+        <h2>Recuperar senha</h2>
+        <label for="recuperacaoEmail">Email</label>
+        <input id="recuperacaoEmail" type="email" required />
+        <div class="dialog-actions">
+          <button value="cancel" type="button" id="fecharRecuperacao">Cancelar</button>
+          <button type="submit">Enviar</button>
+        </div>
+        <p class="message" id="recuperacaoMessage" aria-live="polite"></p>
+        <a href="redefinir.html" id="irRedefinir" class="link-button" style="text-align: center"> Ir para redefinição </a>
+      </form>
+    </dialog>
+
+    <footer class="login-footer">
+      <span>Getsu Automações. Desenvolvimentos de sistemas, Excel e Powerbi</span>
+      <span class="footer-contact">
+        <span class="footer-contact-trigger" role="button" tabindex="0" id="contatoTrigger"> <i class="fa-regular fa-circle-question"></i> Contato </span>
+        <div class="footer-popover" id="contatoPopover" hidden>
+          <a href="mailto:iniciative2013@gmail.com" class="popover-item"> <i class="fa-regular fa-envelope"></i> iniciative2013@gmail.com </a>
+          <a href="https://wa.me/5554984128447" target="_blank" rel="noopener" class="popover-item"> <i class="fa-brands fa-whatsapp"></i> (54) 98412-8447 </a>
+        </div>
+      </span>
+    </footer>
+
+    <script type="module" src="js/login.js"></script>
+  </body>
+</html>

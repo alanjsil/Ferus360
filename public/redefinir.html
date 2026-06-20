@@ -1,0 +1,92 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://lsjoopdtjjadfoqsaasu.supabase.co"
+    />
+    <title>Redefinir senha - Finanças</title>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/login.css" />
+    <link rel="stylesheet" href="fontawesome/css/all.min.css" />
+  </head>
+  <body>
+    <main class="login-shell">
+      <section class="login-card">
+        <div class="brand">
+          <div class="logo-pill">F</div>
+          <div>
+            <h1>Finanças</h1>
+            <p>Redefinir senha</p>
+          </div>
+        </div>
+
+        <form id="redefinirForm" class="login-form" novalidate>
+          <div id="redefinirDeepInfo" style="color: #94a3b8; text-align: center; margin-bottom: 12px; display: none">Token de recuperação detectado automaticamente.</div>
+
+          <div id="redefinirFallback" class="fallback-fields">
+            <p style="color: #94a3b8; text-align: center; margin-bottom: 12px">Cole abaixo o link do email de recuperação ou apenas o token.</p>
+            <div class="field">
+              <label for="redefinirEmail">Email</label>
+              <input id="redefinirEmail" name="redefinirEmail" type="email" autocomplete="email" required />
+            </div>
+            <div class="field">
+              <label for="redefinirToken">Link ou token de recuperação</label>
+              <input id="redefinirToken" name="redefinirToken" type="text" placeholder="https://lsjoopdtjjadfoqsaasu.supabase.co/auth/v1/verify?token=..." required />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="senha">Nova senha</label>
+            <div class="password-wrapper">
+              <input id="senha" name="senha" type="password" autocomplete="new-password" minlength="8" required />
+              <button type="button" class="toggle-password" data-target="senha" aria-label="Mostrar senha" tabindex="-1">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+            <ul class="password-requirements" id="senhaRequisitos">
+              <li data-req="length">Mínimo de 8 caracteres</li>
+              <li data-req="uppercase">Pelo menos 1 letra maiúscula</li>
+              <li data-req="number">Pelo menos 1 número</li>
+            </ul>
+          </div>
+
+          <div class="field">
+            <label for="confirmacao">Confirmar senha</label>
+            <div class="password-wrapper">
+              <input id="confirmacao" name="confirmacao" type="password" autocomplete="new-password" minlength="8" required />
+              <button type="button" class="toggle-password" data-target="confirmacao" aria-label="Mostrar senha" tabindex="-1">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="submit" id="redefinirSubmit">Redefinir senha</button>
+          </div>
+
+          <p class="message" id="redefinirMessage" role="alert" aria-live="polite"></p>
+
+          <div style="text-align: center; margin-top: 8px">
+            <a href="login.html" class="link-button">Voltar para o login</a>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer class="login-footer">
+      <span>Getsu Automações. Desenvolvimentos de sistemas, Excel e Powerbi</span>
+      <span class="footer-contact">
+        <span class="footer-contact-trigger" role="button" tabindex="0" id="contatoTrigger"> <i class="fa-regular fa-circle-question"></i> Contato </span>
+        <div class="footer-popover" id="contatoPopover" hidden>
+          <a href="mailto:iniciative2013@gmail.com" class="popover-item"> <i class="fa-regular fa-envelope"></i> iniciative2013@gmail.com </a>
+          <a href="https://wa.me/5554984128447" target="_blank" rel="noopener" class="popover-item"> <i class="fa-brands fa-whatsapp"></i> (54) 98412-8447 </a>
+        </div>
+      </span>
+    </footer>
+
+    <script type="module" src="js/redefinir.js"></script>
+  </body>
+</html>
