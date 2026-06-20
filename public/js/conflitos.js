@@ -392,7 +392,7 @@ function configurarEventos() {
  */
 function atualizarBadge(count) {
   try {
-    localStorage.setItem("conflitos_count", String(count));
+    localStorage.setItem("fnc:v1:conflitos_count", String(count));
   } catch {
     /* storage indisponível */
   }

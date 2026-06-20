@@ -130,7 +130,7 @@ describe("conflitos (página de conflitos de sincronia)", () => {
 
       atualizarBadge(5);
 
-      expect(localStorage.getItem("conflitos_count")).toBe("5");
+      expect(localStorage.getItem("fnc:v1:conflitos_count")).toBe("5");
     });
   });
 

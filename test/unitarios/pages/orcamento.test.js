@@ -333,7 +333,7 @@ describe("orcamento (página de lançamentos)", () => {
 
       orcamento.salvarEstadoFiltros();
 
-      const estado = JSON.parse(localStorage.getItem("filtro_estado_geral"));
+      const estado = JSON.parse(localStorage.getItem("fnc:v1:filtro_estado"));
       expect(estado.filtroAno).toBe("2026");
       expect(estado.filtroMes).toBe("06");
       expect(estado.filtroTipo).toBe("RECEITA");
@@ -343,7 +343,7 @@ describe("orcamento (página de lançamentos)", () => {
     it("salva com all quando nenhum filtro ativo", () => {
       orcamento.salvarEstadoFiltros();
 
-      const estado = JSON.parse(localStorage.getItem("filtro_estado_geral"));
+      const estado = JSON.parse(localStorage.getItem("fnc:v1:filtro_estado"));
       expect(estado.filtroAno).toBe("all");
       expect(estado.filtroMes).toBe("all");
       expect(estado.filtroTipo).toBe("all");
@@ -351,7 +351,7 @@ describe("orcamento (página de lançamentos)", () => {
     });
 
     it("carregarEstadoFiltros retorna valores salvos", () => {
-      localStorage.setItem("filtro_estado_geral", JSON.stringify({
+      localStorage.setItem("fnc:v1:filtro_estado", JSON.stringify({
         filtroAno: "2026", filtroMes: "06", filtroTipo: "RECEITA", filtroStatus: "PAGO",
       }));
 
@@ -416,7 +416,7 @@ describe("orcamento (página de lançamentos)", () => {
       opt.value = "06";
       document.getElementById("filtroMes").appendChild(opt);
 
-      localStorage.setItem("filtro_estado_geral", JSON.stringify({
+      localStorage.setItem("fnc:v1:filtro_estado", JSON.stringify({
         filtroAno: "2026", filtroMes: "06", filtroTipo: "RECEITA", filtroStatus: "PAGO",
       }));
 
@@ -647,7 +647,7 @@ describe("orcamento (página de lançamentos)", () => {
         { id: 1, data: "2026-06-15" },
         { id: 2, data: "2026-07-01" },
       ]);
-      localStorage.setItem("filtro_estado_geral", JSON.stringify({
+      localStorage.setItem("fnc:v1:filtro_estado", JSON.stringify({
         filtroAno: "all", filtroMes: "06", filtroTipo: "all", filtroStatus: "all",
       }));
 
@@ -660,7 +660,7 @@ describe("orcamento (página de lançamentos)", () => {
       orcamento.setLancamentos([
         { id: 1, data: "2026-07-01" },
       ]);
-      localStorage.setItem("filtro_estado_geral", JSON.stringify({
+      localStorage.setItem("fnc:v1:filtro_estado", JSON.stringify({
         filtroAno: "all", filtroMes: "06", filtroTipo: "all", filtroStatus: "all",
       }));
 
