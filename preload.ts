@@ -81,6 +81,18 @@ const api = {
   exportarDados: () => ipcRenderer.invoke("config:exportarDados"),
   excluirConta: () => ipcRenderer.invoke("config:excluir-conta"),
 
+  // ==================== TIPO PESSOA ====================
+  setTipoPessoa: (tipoPessoa: string) => ipcRenderer.invoke("tipo-pessoa:set", tipoPessoa),
+  onTipoPessoaChanged: (callback: (data: any) => void) => ipcRenderer.on("state:updated", (_e: any, data: any) => {
+    if (data.key === "tipoPessoaAtivo") callback(data.value);
+  }),
+
+  // ==================== COMPARTILHAR CATEGORIAS ====================
+  setCompartilharCategorias: (compartilhar: boolean) => ipcRenderer.invoke("compartilhar-categorias:set", compartilhar),
+  onCompartilharCategoriasChanged: (callback: (data: any) => void) => ipcRenderer.on("state:updated", (_e: any, data: any) => {
+    if (data.key === "compartilharCategorias") callback(data.value);
+  }),
+
   // ==================== TRIAL ====================
   getTrialStatus: () => ipcRenderer.invoke("trial:status"),
 
@@ -101,12 +113,12 @@ const api = {
   adminResetSenha: (id: string) => ipcRenderer.invoke("admin:resetSenha", id),
   adminCriarUsuario: (nome: string, email: string, senha: string) => ipcRenderer.invoke("admin:criarUsuario", nome, email, senha),
   adminGetAuditoria: (filtros: any) => ipcRenderer.invoke("admin:getAuditoria", filtros),
-  adminGetResumoCliente: (id: string) => ipcRenderer.invoke("admin:getResumoCliente", id),
-  adminGetTransacoesCliente: (id: string, mes: string, ano: string) => ipcRenderer.invoke("admin:getTransacoesCliente", id, mes, ano),
-  adminGetOrcamentoCliente: (id: string) => ipcRenderer.invoke("admin:getOrcamentoCliente", id),
-  adminGetContasCliente: (id: string) => ipcRenderer.invoke("admin:getContasCliente", id),
-  adminGetAnosDisponiveisCliente: (usuarioId: string) => ipcRenderer.invoke("admin:getAnosDisponiveisCliente", usuarioId),
-  adminGetDashboardDadosCliente: (usuarioId: string, ano: string, mes: string, categoria: string) => ipcRenderer.invoke("admin:getDashboardDadosCliente", usuarioId, ano, mes, categoria),
+  adminGetResumoCliente: (id: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getResumoCliente", id, tipoPessoa),
+  adminGetTransacoesCliente: (id: string, mes: string, ano: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getTransacoesCliente", id, mes, ano, tipoPessoa),
+  adminGetOrcamentoCliente: (id: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getOrcamentoCliente", id, tipoPessoa),
+  adminGetContasCliente: (id: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getContasCliente", id, tipoPessoa),
+  adminGetAnosDisponiveisCliente: (usuarioId: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getAnosDisponiveisCliente", usuarioId, tipoPessoa),
+  adminGetDashboardDadosCliente: (usuarioId: string, ano: string, mes: string, categoria: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getDashboardDadosCliente", usuarioId, ano, mes, categoria, tipoPessoa),
 };
 
 contextBridge.exposeInMainWorld("electronAPI", api);

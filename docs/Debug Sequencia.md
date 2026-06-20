@@ -29,6 +29,20 @@
 | [ ]     | `services/ipcHandlers.ts:469`—`handleConfigExportarDados`  | IPC exportar dados JSON                                 |
 | [ ]     | `services/ipcHandlers.ts:475`—`handleConfigExcluirConta`   | IPC deletar conta (RLS-protected)                       |
 | [ ]     | `services/ipcHandlers.ts:447`—`handleConfigEncerrarSessao` | IPC encerrar sessão específica                          |
+| [ ]     | `services/ipcHandlers.ts:383`—`handleAdminGetResumoCliente` | IPC resumo cliente (aceita `tipoPessoa` opcional)      |
+| [ ]     | `services/ipcHandlers.ts:403`—`handleAdminGetTransacoesCliente` | IPC transações cliente (aceita `tipoPessoa` opcional) |
+| [ ]     | `services/ipcHandlers.ts:410`—`handleAdminGetOrcamentoCliente` | IPC orçamento cliente (aceita `tipoPessoa` opcional)  |
+| [ ]     | `services/ipcHandlers.ts:417`—`handleAdminGetContasCliente` | IPC contas cliente (aceita `tipoPessoa` opcional)      |
+| [ ]     | `services/ipcHandlers.ts:424`—`handleAdminGetAnosDisponiveisCliente` | IPC anos disponíveis (aceita `tipoPessoa` opcional) |
+| [ ]     | `services/ipcHandlers.ts:431`—`handleAdminGetDashboardDadosCliente` | IPC dashboard cliente (aceita `tipoPessoa` opcional) |
+| [ ]     | `services/admin.ts:42`—`getResumoCliente()`                | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/admin.ts:59`—`getTransacoesCliente()`            | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/admin.ts:76`—`getOrcamentoCliente()`             | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/admin.ts:91`—`getDashboardDadosCliente()`        | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/admin.ts:104`—`getAnosDisponiveisCliente()`      | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/admin.ts:113`—`getContasCliente()`               | Service admin com filtro `tipoPessoa` opcional          |
+| [ ]     | `services/repository/admin.ts:36`—`getTransacoesCliente()` | Repository filtra `.eq("tipo_pessoa")` se passado       |
+| [ ]     | `services/repository/admin.ts:46`—`getResumoCliente()`     | Repository filtra `.eq("tipo_pessoa")` se passado       |
 | [ ]     | `services/state.ts:37/42`—`setState/getState`              | State mirror (fonte da verdade)                         |
 
 ### 🧭 Pontos de Parada Sugeridos (Renderer)
@@ -37,6 +51,10 @@
 | ------- | ----------------------------------------------------------- | --------------------------------------- |
 | [ ]     | public/js/admin.js:76`—`carregarDashboard()                 | Dashboard admin (cards totais)          |
 | [ ]     | public/js/admin.js:118`—`carregarClientes()                 | Listagem + filtro de clientes           |
+| [ ]     | public/js/admin.js:204`—`configurarTipoPessoaToggle()       | Toggle PF/PJ no resumo cliente          |
+| [ ]     | public/js/admin.js:220`—`configurarTipoPessoaToggleDetalhes()| Toggle PF/PJ nos detalhes transações    |
+| [ ]     | public/js/visualizar-cliente.js:98`—`configurarTipoPessoaToggle() | Toggle PF/PJ na página do cliente  |
+| [ ]     | public/js/visualizar-dashboard-cliente.js:99`—`configurarTipoPessoaToggle() | Toggle PF/PJ no dashboard do cliente |
 | [ ]     | public/js/admin.js:456`—`configurarRedefinirSenha()         | Busca + redefinição de senha            |
 | [ ]     | public/js/admin.js:540`—`carregarChamados()                 | Carregar chamados + badge               |
 | [ ]     | public/js/admin.js:590`—`abrirAtendimento()                 | Dialog de atendimento com histórico     |
@@ -131,6 +149,10 @@
 - [ ] 1.10 Edição inline — botões Salvar/Cancelar na actions-cell (não embaixo do input)
 - [ ] 1.11 Categoria global — botões Editar/Ativar ocultos para não-admin
 - [ ] 1.12 Categoria global — bloqueio no backend (update/toggle rejeita se não admin)
+- [ ] 1.13 Categorias compartilhadas PF↔PJ (toggle em configurações `compartilharCategorias`)
+  - Quando ativo: categorias/subcategorias ignoram filtro `tipo_pessoa`
+  - Contas/pessoas/lançamentos/orçamento continuam filtrados por `tipo_pessoa`
+  - **Breakpoint:** `services/repository/admin.ts:36` — `getTransacoesCliente()` pula `.eq("tipo_pessoa")` em categorias se compartilhado
 
 #### Toast / Notificações
 
@@ -233,11 +255,19 @@
 
 - [ ] 6.5 Visualizar resumo cliente (dialog com receitas/despesas/lançamentos/orçamento)
   - **Breakpoint:** `admin.js:189` `visualizarCliente()`
+- [ ] 6.5.1 Toggle PF/PJ no resumo cliente (filtra dados por tipo de pessoa)
+  - **Breakpoint:** `admin.js:204` `configurarTipoPessoaToggle()`
+  - **Estado:** `tipoPessoaResumo` (default `"PF"`) recarrega resumo ao trocar
+  - **IPC:** `adminGetResumoCliente(id, tipoPessoaResumo)`
 
 #### 6.6 Detalhes Transações
 
 - [ ] 6.6 Ver detalhes transações (dialog com transações + metas)
   - **Breakpoint:** `admin.js:243` `abrirDetalhesCliente()`
+- [ ] 6.6.1 Toggle PF/PJ nos detalhes transações (filtra transações e metas)
+  - **Breakpoint:** `admin.js:220` `configurarTipoPessoaToggleDetalhes()`
+  - **Estado:** `tipoPessoaDetalhes` (default `"PF"`) recarrega detalhes ao trocar
+  - **IPC:** `adminGetTransacoesCliente(id, mes, ano, tipoPessoaDetalhes)`
 
 #### 6.7 Categorias Globais
 
@@ -292,11 +322,19 @@
 - [ ] 6.16 Visualizar cliente (`visualizar-cliente.html`) — admin vê transações, orçamento, comparativo do cliente
   - **Breakpoint:** `visualizar-cliente.js:126` `carregarLancamentos()`
   - **Breakpoint:** `visualizar-cliente.js:137` `carregarOrcamento()`
+- [ ] 6.16.1 Toggle PF/PJ na página do cliente (header, recarrega transações, orçamento, contas)
+  - **Breakpoint:** `visualizar-cliente.js:98` `configurarTipoPessoaToggle()`
+  - **Estado:** `tipoPessoa` (default `"PF"`) → `recarregarDados()` ao trocar
+  - **IPCs:** `adminGetContasCliente(id, tipoPessoa)`, `adminGetTransacoesCliente(id, mes, ano, tipoPessoa)`, `adminGetOrcamentoCliente(id, tipoPessoa)`
 
 #### 6.17 Dashboard do Cliente (Página Dedicada)
 
 - [ ] 6.17 Dashboard do cliente (`visualizar-dashboard-cliente.html`) — gráficos do cliente via admin
   - **Breakpoint:** `visualizar-dashboard-cliente.js` iniciais (carregamento de Chart.js)
+- [ ] 6.17.1 Toggle PF/PJ no dashboard do cliente (filtros, recarrega categorias, anos e dashboard)
+  - **Breakpoint:** `visualizar-dashboard-cliente.js:99` `configurarTipoPessoaToggle()`
+  - **Estado:** `tipoPessoa` (default `"PF"`) → recarrega dashboard ao trocar
+  - **IPCs:** `adminGetAnosDisponiveisCliente(id, tipoPessoa)`, `adminGetDashboardDadosCliente(id, ano, mes, categoria, tipoPessoa)`
 
 ---
 
@@ -330,7 +368,11 @@ Todos os eventos são registrados em `services/repository/auditoria.ts:35` via `
 - [ ] 7.4 Proteção de rotas (coberto em 0.21-0.22)
 - [ ] 7.5 Dialog nativo de senha (`dialog-senha-preload.ts` para troca/exclusão)
 - [ ] 7.6 Auditoria de autenticação (coberto em 0.24)
-- [ ] 7.7 Resolução de Conflitos (SQLite ↔ Supabase) — **NOVO**
+- [ ] 7.7 Categorias compartilhadas PF↔PJ (config `compartilharCategorias` no state)
+  - **Breakpoint:** `services/repository/admin.ts:46` `getResumoCliente()` lê `compartilharCategorias` do state para decidir se filtra por `tipo_pessoa` nas categorias
+  - **UI:** Toggle em `configuracoes.html` — altera `state.compartilharCategorias`
+  - **Impacto:** Categorias/subcategorias ignoram `tipo_pessoa` quando true; contas/pessoas sempre filtradas
+- [ ] 7.8 Resolução de Conflitos (SQLite ↔ Supabase) — **NOVO**
   - **Breakpoint:** `public/js/conflitos.js` — UI para resolver conflitos de sincronização
   - **Breakpoint:** `services/ipcHandlers.ts` — handler para aplicar resolução
   - **Auditoria:** Evento `CONFLITO_RESOLVIDO` registrado em `services/repository/auditoria.ts:35`

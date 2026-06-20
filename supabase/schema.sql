@@ -27,6 +27,7 @@ CREATE TABLE financas_categorias (
   usuario_id UUID REFERENCES financas_usuarios (id) ON DELETE CASCADE,
   eh_global BOOLEAN NOT NULL DEFAULT FALSE,
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
+  tipo_pessoa TEXT CHECK (tipo_pessoa IN ('PF', 'PJ')), -- NULL = compartilhada
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   version INTEGER DEFAULT 1,
@@ -41,6 +42,7 @@ CREATE TABLE financas_subcategorias (
   categoria_id UUID NOT NULL REFERENCES financas_categorias (id) ON DELETE CASCADE,
   nome TEXT NOT NULL CHECK (char_length(nome) BETWEEN 2 AND 40),
   usuario_id UUID NOT NULL REFERENCES financas_usuarios (id),
+  tipo_pessoa TEXT CHECK (tipo_pessoa IN ('PF', 'PJ')), -- NULL = compartilhada
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   version INTEGER DEFAULT 1,
@@ -54,6 +56,7 @@ CREATE TABLE financas_contas (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nome TEXT NOT NULL CHECK (char_length(nome) BETWEEN 2 AND 40),
   usuario_id UUID REFERENCES financas_usuarios (id) ON DELETE CASCADE,
+  tipo_pessoa TEXT NOT NULL DEFAULT 'PF' CHECK (tipo_pessoa IN ('PF', 'PJ')),
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   version INTEGER DEFAULT 1,
@@ -67,6 +70,7 @@ CREATE TABLE financas_pessoas (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nome TEXT NOT NULL CHECK (char_length(nome) BETWEEN 2 AND 40),
   usuario_id UUID REFERENCES financas_usuarios (id) ON DELETE CASCADE,
+  tipo_pessoa TEXT NOT NULL DEFAULT 'PF' CHECK (tipo_pessoa IN ('PF', 'PJ')),
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   version INTEGER DEFAULT 1,
@@ -106,6 +110,7 @@ CREATE TABLE financas_lancamentos (
   transferencia_grupo_id UUID,
   pessoa_id UUID REFERENCES financas_pessoas (id) ON DELETE SET NULL,
   descricao TEXT,
+  tipo_pessoa TEXT NOT NULL DEFAULT 'PF' CHECK (tipo_pessoa IN ('PF', 'PJ')),
   data_pagamento TIMESTAMPTZ,
   data_busca TEXT GENERATED ALWAYS AS (
     EXTRACT(
@@ -137,6 +142,7 @@ CREATE TABLE financas_orcamento (
   data DATE NOT NULL,
   tipo TEXT NOT NULL CHECK (tipo IN ('RECEITA', 'DESPESA')),
   descricao TEXT,
+  tipo_pessoa TEXT NOT NULL DEFAULT 'PF' CHECK (tipo_pessoa IN ('PF', 'PJ')),
   valor_planejado NUMERIC(12, 2) NOT NULL CHECK (valor_planejado >= 0),
   valor_realizado NUMERIC(12, 2) NOT NULL DEFAULT 0 CHECK (valor_realizado >= 0),
   categoria_id UUID REFERENCES financas_categorias (id) ON DELETE SET NULL,
@@ -202,6 +208,21 @@ CREATE INDEX idx_lancamentos_data_range ON financas_lancamentos (data, status);
 CREATE INDEX idx_lancamentos_usuario ON financas_lancamentos (usuario_id);
 
 CREATE INDEX idx_lancamentos_transferencia_grupo ON financas_lancamentos (transferencia_grupo_id);
+
+-- financas_categorias
+CREATE INDEX idx_categorias_tipo_pessoa ON financas_categorias (tipo_pessoa);
+
+-- financas_subcategorias
+CREATE INDEX idx_subcategorias_tipo_pessoa ON financas_subcategorias (tipo_pessoa);
+
+-- financas_contas
+CREATE INDEX idx_contas_tipo_pessoa ON financas_contas (tipo_pessoa);
+
+-- financas_pessoas
+CREATE INDEX idx_pessoas_tipo_pessoa ON financas_pessoas (tipo_pessoa);
+
+-- financas_lancamentos
+CREATE INDEX idx_lancamentos_tipo_pessoa ON financas_lancamentos (tipo_pessoa);
 
 -- financas_orcamento
 CREATE INDEX idx_orcamento_data ON financas_orcamento (data);

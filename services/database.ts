@@ -75,6 +75,18 @@ function migrar(): void {
     criarTabelas();
     db!.pragma("user_version = 2");
   }
+
+  if (v < 3) {
+    db!.exec(`
+      ALTER TABLE financas_categorias ADD COLUMN tipo_pessoa TEXT DEFAULT NULL;
+      ALTER TABLE financas_subcategorias ADD COLUMN tipo_pessoa TEXT DEFAULT NULL;
+      ALTER TABLE financas_contas ADD COLUMN tipo_pessoa TEXT DEFAULT 'PF';
+      ALTER TABLE financas_pessoas ADD COLUMN tipo_pessoa TEXT DEFAULT 'PF';
+      ALTER TABLE financas_lancamentos ADD COLUMN tipo_pessoa TEXT DEFAULT 'PF';
+      ALTER TABLE financas_orcamento ADD COLUMN tipo_pessoa TEXT DEFAULT 'PF';
+    `);
+    db!.pragma("user_version = 3");
+  }
 }
 
 function criarTabelas(): void {

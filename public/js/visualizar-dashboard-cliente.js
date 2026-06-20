@@ -7,6 +7,7 @@ import { clearAuthSession, ensureAuthenticated, getAccessToken } from "./auth-gu
 let chartMensal, chartCategorias, chartSaldo;
 let dadosDashboard = [];
 let usuarioIdCliente = null;
+let tipoPessoa = "PF";
 
 document.addEventListener("DOMContentLoaded", async function () {
   const auth = await ensureAuthenticated({ requireAdmin: true });
@@ -30,8 +31,24 @@ document.addEventListener("DOMContentLoaded", async function () {
   popularMeses();
 
   adicionarEventListeners();
+  configurarTipoPessoaToggle();
   configurarLogout();
 });
+
+function configurarTipoPessoaToggle() {
+  const toggle = document.getElementById("tipoPessoaToggle");
+  if (!toggle) return;
+  toggle.querySelectorAll(".pill-button").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      toggle.querySelectorAll(".pill-button").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      tipoPessoa = btn.dataset.tipo;
+      await carregarCategorias();
+      await popularAnos();
+      await carregarDashboard();
+    });
+  });
+}
 
 function configurarLogout() {
   const logoutBtn = document.getElementById("logoutBtn");
@@ -87,7 +104,7 @@ async function carregarCategorias() {
 
 async function popularAnos() {
   try {
-    const anos = await window.electronAPI.adminGetAnosDisponiveisCliente(usuarioIdCliente);
+    const anos = await window.electronAPI.adminGetAnosDisponiveisCliente(usuarioIdCliente, tipoPessoa);
     const select = document.getElementById("filtroAno");
     select.innerHTML = "";
     anos.forEach((ano) => {
@@ -145,6 +162,7 @@ async function carregarDashboard() {
       ano,
       mes !== "all" ? mes : undefined,
       categoria !== "all" ? categoria : undefined,
+      tipoPessoa,
     );
 
     dadosDashboard = dados;

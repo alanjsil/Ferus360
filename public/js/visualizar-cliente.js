@@ -14,6 +14,7 @@ let filtroAtualTipo = "all";
 let filtroAtualStatus = "all";
 let filtroAtualAno = "all";
 let filtroAtualMes = "all";
+let tipoPessoa = "PF";
 
 function formatCurrency(value) {
   return formatarMoeda(value);
@@ -74,6 +75,31 @@ function configurarEventListeners() {
   document.getElementById("logoutBtn")?.addEventListener("click", fazerLogout);
 }
 
+// ====== TIPO PESSOA ======
+/**
+ * @returns {void}
+ */
+function configurarTipoPessoaToggle() {
+  const toggle = document.getElementById("tipoPessoaToggle");
+  if (!toggle) return;
+  toggle.querySelectorAll(".pill-button").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      toggle.querySelectorAll(".pill-button").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      tipoPessoa = btn.dataset.tipo;
+      await recarregarDados();
+    });
+  });
+}
+
+async function recarregarDados() {
+  await carregarSubcategoriasCache();
+  await carregarContas();
+  await carregarCategorias();
+  await carregarLancamentos();
+  await carregarOrcamento();
+}
+
 /**
  * @returns {Promise<void>}
  */
@@ -114,7 +140,7 @@ async function carregarSubcategoriasCache() {
  */
 async function carregarContas() {
   try {
-    contasCache = await window.electronAPI.adminGetContasCliente(usuarioIdCliente);
+    contasCache = await window.electronAPI.adminGetContasCliente(usuarioIdCliente, tipoPessoa);
   } catch {
     contasCache = [];
   }
@@ -124,7 +150,7 @@ async function carregarContas() {
  * @returns {Promise<void>}
  */
 async function carregarLancamentos() {
-  lancamentos = await window.electronAPI.adminGetTransacoesCliente(usuarioIdCliente);
+  lancamentos = await window.electronAPI.adminGetTransacoesCliente(usuarioIdCliente, null, null, tipoPessoa);
   atualizarAnosFiltro();
   atualizarMesesFiltro();
   atualizarResumo();
@@ -136,7 +162,7 @@ async function carregarLancamentos() {
  */
 async function carregarOrcamento() {
   try {
-    const data = await window.electronAPI.adminGetOrcamentoCliente(usuarioIdCliente);
+    const data = await window.electronAPI.adminGetOrcamentoCliente(usuarioIdCliente, tipoPessoa);
     const totaisOrcamento = calcularTotaisOrcamento(data);
 
     const ano = document.getElementById("filtroAno").value;
@@ -411,6 +437,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await carregarOrcamento();
 
   configurarEventListeners();
+  configurarTipoPessoaToggle();
 
   const splash = document.getElementById("splashScreen");
   if (splash) {

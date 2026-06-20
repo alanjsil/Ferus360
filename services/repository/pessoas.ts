@@ -5,13 +5,17 @@ import * as logger from "../logger";
 import {
   supabase, _doSQLite, _popularCache, _atualizarLocal, _syncAposEscrita,
   _marcarPendente, _inserirLocal,
-  addUsuarioFilter, normalizarNome,
+  addUsuarioFilter, addTipoPessoaFilterStrict, addTipoPessoaWhere,
+  normalizarNome,
 } from "./utils";
 
-async function getPessoas(usuarioId?: string): Promise<Pessoa[]> {
+async function getPessoas(usuarioId?: string, tipoPessoa?: string): Promise<Pessoa[]> {
   if (database.getDb()) {
     try {
-      const data = database.query("SELECT * FROM financas_pessoas WHERE deleted_at IS NULL ORDER BY nome").map((r) => _doSQLite(r));
+      let where = "deleted_at IS NULL";
+      const params: Record<string, unknown> = {};
+      const r = addTipoPessoaWhere(where, params, tipoPessoa);
+      const data = database.query(`SELECT * FROM financas_pessoas WHERE ${r.where} ORDER BY nome`, r.params).map((r2) => _doSQLite(r2));
       if (data.length > 0) return data as unknown as Pessoa[];
     } catch {
       logger.warn("repository", "getPessoas cache local indisponível, fallback");
@@ -20,6 +24,7 @@ async function getPessoas(usuarioId?: string): Promise<Pessoa[]> {
 
   let query = supabase.from("financas_pessoas").select("*").order("nome") as any;
   query = addUsuarioFilter(query, usuarioId);
+  query = addTipoPessoaFilterStrict(query, tipoPessoa);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -34,7 +39,7 @@ async function createPessoa(usuarioId: string, payload: createPessoaPayload): Pr
   }
 
   const id = crypto.randomUUID();
-  const insertPayload = { id, nome: nomeNormalizado, usuario_id: usuarioId };
+  const insertPayload: Record<string, unknown> = { id, nome: nomeNormalizado, usuario_id: usuarioId, tipo_pessoa: payload.tipo_pessoa ?? "PF" };
   _syncAposEscrita("financas_pessoas", insertPayload);
 
   const { data, error } = await supabase.from("financas_pessoas").insert(insertPayload).select().single();

@@ -193,7 +193,7 @@ describe("admin (serviço de administração)", () => {
       await admin.getTransacoesCliente("00000000-0000-0000-0000-000000000001", 6, 2026);
 
       // Assert
-      expect(mockRepository.getTransacoesCliente).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", 6, 2026);
+      expect(mockRepository.getTransacoesCliente).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", 6, 2026, undefined);
     });
 
     it("funciona sem mes e ano", async () => {
@@ -205,7 +205,7 @@ describe("admin (serviço de administração)", () => {
       await admin.getTransacoesCliente("00000000-0000-0000-0000-000000000001");
 
       // Assert
-      expect(mockRepository.getTransacoesCliente).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", undefined, undefined);
+      expect(mockRepository.getTransacoesCliente).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", undefined, undefined, undefined);
     });
   });
 
@@ -221,7 +221,7 @@ describe("admin (serviço de administração)", () => {
       const result = await admin.getOrcamentoCliente("00000000-0000-0000-0000-000000000001");
 
       // Assert
-      expect(mockRepository.getOrcamento).toHaveBeenCalledWith(undefined, "00000000-0000-0000-0000-000000000001");
+      expect(mockRepository.getOrcamento).toHaveBeenCalledWith(undefined, "00000000-0000-0000-0000-000000000001", undefined, undefined);
       expect(result).toHaveLength(1);
       expect(result[0].valor_planejado).toBe(1000);
     });
@@ -248,7 +248,7 @@ describe("admin (serviço de administração)", () => {
       const result = await admin.getDashboardDadosCliente("00000000-0000-0000-0000-000000000001", 2026, 6, "cat-1");
 
       // Assert
-      expect(mockRepository.getDashboardDados).toHaveBeenCalledWith(2026, 6, "cat-1", "00000000-0000-0000-0000-000000000001");
+      expect(mockRepository.getDashboardDados).toHaveBeenCalledWith(2026, 6, "cat-1", "00000000-0000-0000-0000-000000000001", undefined);
       expect(result).toHaveProperty("lancamentos");
     });
 
@@ -261,7 +261,7 @@ describe("admin (serviço de administração)", () => {
       await admin.getDashboardDadosCliente("00000000-0000-0000-0000-000000000001", 2026);
 
       // Assert
-      expect(mockRepository.getDashboardDados).toHaveBeenCalledWith(2026, undefined, undefined, "00000000-0000-0000-0000-000000000001");
+      expect(mockRepository.getDashboardDados).toHaveBeenCalledWith(2026, undefined, undefined, "00000000-0000-0000-0000-000000000001", undefined);
     });
 
     it("lança UNAUTHORIZED se não é admin", async () => {
@@ -286,7 +286,7 @@ describe("admin (serviço de administração)", () => {
       const result = await admin.getAnosDisponiveisCliente("00000000-0000-0000-0000-000000000001");
 
       // Assert
-      expect(mockRepository.getAnosDisponiveis).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001");
+      expect(mockRepository.getAnosDisponiveis).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", undefined);
       expect(result).toEqual([2025, 2026]);
     });
 
@@ -312,7 +312,7 @@ describe("admin (serviço de administração)", () => {
       const result = await admin.getContasCliente("00000000-0000-0000-0000-000000000001");
 
       // Assert
-      expect(mockRepository.getContas).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001");
+      expect(mockRepository.getContas).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", undefined);
       expect(result).toHaveLength(1);
       expect(result[0].nome).toBe("Conta Corrente");
     });

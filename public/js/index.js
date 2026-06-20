@@ -35,6 +35,35 @@ function configurarSyncStatus() {
   });
 }
 
+function configurarTipoPessoaToggle() {
+  const container = document.getElementById("tipoPessoaToggle");
+  if (!container) return;
+
+  container.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-tp]");
+    if (!btn) return;
+
+    const tp = btn.dataset.tp;
+    container.querySelectorAll("[data-tp]").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    await window.electronAPI.setTipoPessoa(tp);
+    await recarregarTudo();
+  });
+
+  window.electronAPI.onTipoPessoaChanged(async () => {
+    await recarregarTudo();
+  });
+}
+
+async function recarregarTudo() {
+  await carregarSubcategoriasCache();
+  await carregarContas();
+  await carregarPessoas();
+  await carregarCategorias();
+  await aplicarFiltrosSalvos();
+}
+
 let categoriasCache = [];
 let subcategoriasCache = [];
 let contasCache = [];
@@ -1321,7 +1350,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // 5. Sync status badge
+  // 5. Tipo Pessoa toggle
+  configurarTipoPessoaToggle();
+
+  // 6. Sync status badge
   configurarSyncStatus();
 
   // 6. Forçar reativação do input
