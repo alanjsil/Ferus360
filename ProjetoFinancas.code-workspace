@@ -11,36 +11,31 @@
     // =========================================================
     "files.exclude": {
       //Pastas
-      "build": false, // Somente o icon do APP
-      ".github": false, // Somente o teste de CI
-      "_old.rar": false, // Pasta com a versão em JS funcionando, somente referencia.
-      "dist-ts": false, // Pasta com os maps do ts
+      ".github": true, // Somente o teste de CI
+      "build": true, // Somente o icon do APP
+      "dist-ts": true, // Pasta com os maps do ts
 
       // Arquivos
-      ".env": false,
-      ".gitignore": false,
-      "opencode.json": false,
-      ".gitattributes": false,
-      "package-lock.json": false,
+      ".env": true,
+      ".gitignore": true,
+      "opencode.json": true,
+      ".gitattributes": true,
+      "package-lock.json": true,
 
       // Arquivos de configuração
-      "tsconfig.json": false,
-      "vitest.config.js": false,
-      "eslint.config.mjs": false,
-      "vitest.config.integrado.js": false,
+      "tsconfig.json": true,
+      "vitest.config.js": true,
+      "eslint.config.mjs": true,
+      "vitest.config.integrado.js": true,
 
       // Documentos
-      "README.md": false, // ATIVAR
-      "LICENSE.md": false,
-      "CHANGELOG.md": false, // ATIVAR
-      "CODE_OF_CONDUCT.md": false,
-      "THIRD-PARTY-NOTICES.md": false,
+      "README.md": true, // ATIVAR
+      "LICENSE.md": true,
 
-      "bugs": false, // ATIVAR
-      "scripts": false, // ATIVAR
+      "scripts": true, // ATIVAR
 
-      "AGENTS.md": false, // ATIVAR
-      "node_modules": false,
+      "AGENTS.md": true, // ATIVAR
+      "node_modules": true,
     },
 
     // =========================================================

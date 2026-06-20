@@ -642,6 +642,9 @@ describe("clearAuthSession", () => {
 /* ─────────── logAuditoria ─────────── */
 
 describe("logAuditoria", () => {
+  beforeEach(() => {
+    repo.__setSupabaseAdmin(null);
+  });
   it("insere registro de auditoria com metadados completos", async () => {
     resetData({ id: 1, acao: "LOGIN", usuario_id: "user-1" });
     const result = await repo.logAuditoria("user-1", "LOGIN", {

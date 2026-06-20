@@ -160,7 +160,9 @@ const MESES_RETER_LANCAMENTOS = 6;
 
 function _limparCacheEviccao(entidade: string): void {
   try {
-    database.run(`DELETE FROM ${entidade} WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-${DIAS_RETER_SOFT_DELETED} days')`);
+    if (entidade !== "financas_auditoria") {
+      database.run(`DELETE FROM ${entidade} WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-${DIAS_RETER_SOFT_DELETED} days')`);
+    }
 
     if (entidade === "financas_lancamentos") {
       database.run(

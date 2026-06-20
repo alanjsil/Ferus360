@@ -3,7 +3,7 @@ import crypto from "crypto";
 import * as database from "../database";
 import * as logger from "../logger";
 import {
-  supabase, _doSQLite, _syncAposEscrita, _marcarPendente,
+  supabase, supabaseAdminInstance, _doSQLite, _syncAposEscrita, _marcarPendente,
   _inserirLocal,
 } from "./utils";
 
@@ -63,29 +63,44 @@ async function logAuditoria(
 
   _syncAposEscrita("financas_auditoria", payload);
 
-  const { data, error } = await supabase
+  const insertPayload = {
+    usuario_id: usuarioId,
+    acao,
+    entidade: metadados.entidade || "auth",
+    entidade_id: metadados.entidade_id || null,
+    dados_anteriores: metadados.dados_anteriores || null,
+    dados_novos: metadados.dados_novos || null,
+    ip: metadados.ip || null,
+    user_agent: metadados.user_agent || null,
+    contexto: metadados.contexto || "user",
+  };
+
+  let result = await supabase
     .from("financas_auditoria")
-    .insert({
-      usuario_id: usuarioId,
-      acao,
-      entidade: metadados.entidade || "auth",
-      entidade_id: metadados.entidade_id || null,
-      dados_anteriores: metadados.dados_anteriores || null,
-      dados_novos: metadados.dados_novos || null,
-      ip: metadados.ip || null,
-      user_agent: metadados.user_agent || null,
-      contexto: metadados.contexto || "user",
-    })
+    .insert(insertPayload)
     .select()
     .single();
 
-  if (error) {
-    _marcarPendente("financas_auditoria", id);
-    throw error;
+  if (result.error && supabaseAdminInstance) {
+    logger.warn("repository", "logAuditoria: fallback para supabaseAdmin", result.error);
+    try {
+      result = await supabaseAdminInstance
+        .from("financas_auditoria")
+        .insert(insertPayload)
+        .select()
+        .single();
+    } catch (fallbackErr) {
+      logger.error("repository", "logAuditoria: fallback supabaseAdmin também falhou", fallbackErr);
+    }
   }
 
-  _inserirLocal("financas_auditoria", { ...data, device_id: metadados.device_id }, "synced");
-  return data;
+  if (result.error) {
+    _marcarPendente("financas_auditoria", id);
+    throw result.error;
+  }
+
+  _inserirLocal("financas_auditoria", { ...result.data, device_id: metadados.device_id }, "synced");
+  return result.data;
 }
 
 export { getAuditoria, logAuditoria };

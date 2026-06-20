@@ -150,7 +150,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
       // Act
       const result = await handlers.handleAuthLogin(null, "email@t.com", "senha");
 
-      expect(mockAuth.login).toHaveBeenCalledWith("email@t.com", "senha");
+      expect(mockAuth.login).toHaveBeenCalledWith("email@t.com", "senha", expect.any(Object));
       expect(mockSetState).toHaveBeenCalledWith("usuarioAtual", {
         id: "user-1", nome: "User", role: "user",
       });
@@ -168,7 +168,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
       // Act
       const result = await handlers.handleAuthLogout();
 
-      expect(mockAuth.logout).toHaveBeenCalled();
+      expect(mockAuth.logout).toHaveBeenCalledWith(expect.any(Object));
       expect(mockResetStateFn).toHaveBeenCalled();
       expect(mockSetState).toHaveBeenCalledWith("usuarioAtual", null);
       expect(result).toEqual({ success: true });
@@ -188,7 +188,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
       const result = await handlers.handleAuthRecuperar(null, "email@t.com");
 
-      expect(mockAuth.solicitarRecuperacao).toHaveBeenCalledWith("email@t.com");
+      expect(mockAuth.solicitarRecuperacao).toHaveBeenCalledWith("email@t.com", expect.any(Object));
       expect(result).toEqual({ success: true });
     });
 
@@ -197,7 +197,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
       const result = await handlers.handleAuthConfirmarRecuperacao(null, "email@t.com", "123456", "NovaSenha1");
 
-      expect(mockAuth.confirmarRecuperacao).toHaveBeenCalledWith("email@t.com", "123456", "NovaSenha1");
+      expect(mockAuth.confirmarRecuperacao).toHaveBeenCalledWith("email@t.com", "123456", "NovaSenha1", expect.any(Object));
       expect(result).toEqual({ success: true });
     });
 
@@ -242,7 +242,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
       const result = await handlers.handleAuthTrocarSenha(null, "user-1", "NovaSenha1");
 
       expect(mockPromptSenha).toHaveBeenCalledWith("Digite sua senha atual para confirmar a troca");
-      expect(mockAuth.trocarSenha).toHaveBeenCalledWith("user-1", "senha-atual-dialog", "NovaSenha1");
+      expect(mockAuth.trocarSenha).toHaveBeenCalledWith("user-1", "senha-atual-dialog", "NovaSenha1", expect.any(Object));
       expect(result).toEqual({ success: true });
     });
   });

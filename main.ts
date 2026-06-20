@@ -153,7 +153,7 @@ async function handleDeepLink(url: string) {
       try {
         await auth.verificarToken(accessToken);
       } catch {
-        logger.warn("deep-link", "token de recuperação inválido — possível ataque", url);
+        logger.warn("deep-link", "token de recuperação falhou na verificação direta, prosseguindo com setSession", url);
       }
       auth.setRecoveryTokens(accessToken, refreshToken);
     }

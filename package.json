@@ -24,8 +24,7 @@
     "build_mac": "electron-builder --mac --publish never",
     "build_win": "electron-builder --win --publish never",
     "build:trial": "node -e \"require('fs').writeFileSync('trial-config.json',JSON.stringify({dias:15})+'\\n')\" && electron-builder --publish never",
-    "check": "npm run lint && npm run test",
-    "conecta": "tsx scripts/list-tables.mts"
+    "check": "npm run lint && npm run test"
   },
   "engines": {
     "node": ">=22",

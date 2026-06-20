@@ -1,6 +1,26 @@
 import type { Usuario, Categoria, Conta, Pessoa, Lancamento, Orcamento } from "../src/types";
+import type { IpcMainInvokeEvent } from "electron";
 import { AuthError } from "./auth";
 import * as logger from "./logger";
+
+let _ipCache: string | undefined;
+let _ipPromise: Promise<string | undefined> | undefined;
+
+async function _obterIpPublico(): Promise<string | undefined> {
+  if (_ipCache) return _ipCache;
+  if (_ipPromise) return _ipPromise;
+  _ipPromise = (async () => {
+    try {
+      const res = await fetch("https://api.ipify.org?format=json", { signal: AbortSignal.timeout(5000) });
+      const data = await res.json() as { ip: string };
+      _ipCache = data.ip;
+      return _ipCache;
+    } catch {
+      return undefined;
+    }
+  })();
+  return _ipPromise;
+}
 
 function createHandlers(
   repository: Record<string, Function>,
@@ -16,6 +36,13 @@ function createHandlers(
     const usuario = getState("usuarioAtual") as { id: string } | null;
     return usuario?.id || null;
   }
+
+  async function _extrairMetadados(event?: IpcMainInvokeEvent): Promise<{ ip?: string; user_agent?: string }> {
+    const user_agent = (event as any)?.sender?.session?.getUserAgent() || undefined;
+    const ip = await _obterIpPublico();
+    return { ip, user_agent };
+  }
+
   return {
     handleLogError: async (_event: unknown, context: string, message: string, err?: unknown) => {
       logger.error(context, message, err);
@@ -25,21 +52,22 @@ function createHandlers(
       logger.warn(context, message, err);
       return { success: true };
     },
-    handleAuthLogin: async (_event: unknown, email: string, senha: string) => {
+    handleAuthLogin: async (event: IpcMainInvokeEvent, email: string, senha: string) => {
       try {
-        const data = await auth.login(email, senha);
+        const metadados = await _extrairMetadados(event);
+        const data = await auth.login(email, senha, metadados);
         setState("usuarioAtual", data.usuario);
         return data;
       } catch (err) {
-        // FIX: propaga o code do AuthError em vez da mensagem genérica
         const code = (err as { code?: string }).code || (err as Error).message || "ERRO_INTERNO";
         logger.warn("ipcHandlers", `login falhou: ${code}`, err);
         return { error: code };
       }
     },
 
-    handleAuthLogout: async () => {
-      const data = await auth.logout();
+    handleAuthLogout: async (event: IpcMainInvokeEvent) => {
+      const metadados = await _extrairMetadados(event);
+      const data = await auth.logout(metadados);
       resetStateFn();
       setState("usuarioAtual", null);
       return data;
@@ -54,9 +82,15 @@ function createHandlers(
       return usuario;
     },
 
-    handleAuthRecuperar: async (_event: unknown, email: string) => auth.solicitarRecuperacao(email),
+    handleAuthRecuperar: async (event: IpcMainInvokeEvent, email: string) => {
+      const metadados = await _extrairMetadados(event);
+      return auth.solicitarRecuperacao(email, metadados);
+    },
 
-    handleAuthConfirmarRecuperacao: async (_event: unknown, email: string, token: string, novaSenha: string) => auth.confirmarRecuperacao(email, token, novaSenha),
+    handleAuthConfirmarRecuperacao: async (event: IpcMainInvokeEvent, email: string, token: string, novaSenha: string) => {
+      const metadados = await _extrairMetadados(event);
+      return auth.confirmarRecuperacao(email, token, novaSenha, metadados);
+    },
 
     handleAuthRedefinirSenha: async (_event: unknown, novaSenha: string) => {
       const recoveryTokens = auth.getRecoveryTokens();
@@ -77,10 +111,11 @@ function createHandlers(
       }
     },
 
-    handleAuthTrocarSenha: async (_event: unknown, usuarioId: string, novaSenha: string) => {
+    handleAuthTrocarSenha: async (event: IpcMainInvokeEvent, usuarioId: string, novaSenha: string) => {
       try {
+        const metadados = await _extrairMetadados(event);
         const senhaAtual = await promptSenha!("Digite sua senha atual para confirmar a troca");
-        return await auth.trocarSenha(usuarioId, senhaAtual, novaSenha);
+        return await auth.trocarSenha(usuarioId, senhaAtual, novaSenha, metadados);
       } catch {
         return { error: "USUARIO_CANCELOU" };
       }

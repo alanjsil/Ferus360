@@ -9,6 +9,11 @@ interface RecTokens {
   refreshToken: string;
 }
 
+interface MetadadosRequisicao {
+  ip?: string;
+  user_agent?: string;
+}
+
 let pendingRecoveryTokens: RecTokens | null = null;
 let _recoveryTimer: ReturnType<typeof setTimeout> | null = null;
 const TEMPO_EXPIRACAO_RECUPERACAO_MS = 5 * 60 * 1000;
@@ -42,13 +47,13 @@ interface AuthDependencies {
 }
 
 interface AuthService {
-  login: (email: string, senha: string, _options?: unknown) => Promise<AuthResult>;
-  logout: () => Promise<{ success: boolean }>;
+  login: (email: string, senha: string, metadados?: MetadadosRequisicao) => Promise<AuthResult>;
+  logout: (metadados?: MetadadosRequisicao) => Promise<{ success: boolean }>;
   verificarToken: (token: string) => Promise<Usuario>;
   verificarSessao: () => Promise<Usuario>;
-  trocarSenha: (usuarioId: string, senhaAtual: string, novaSenha: string) => Promise<{ success: boolean }>;
-  solicitarRecuperacao: (email: string) => Promise<{ success: boolean }>;
-  confirmarRecuperacao: (email: string, token: string, novaSenha: string) => Promise<{ success: boolean }>;
+  trocarSenha: (usuarioId: string, senhaAtual: string, novaSenha: string, metadados?: MetadadosRequisicao) => Promise<{ success: boolean }>;
+  solicitarRecuperacao: (email: string, metadados?: MetadadosRequisicao) => Promise<{ success: boolean }>;
+  confirmarRecuperacao: (email: string, token: string, novaSenha: string, metadados?: MetadadosRequisicao) => Promise<{ success: boolean }>;
   redefinirSenha: (accessToken: string, refreshToken: string, novaSenha: string) => Promise<{ success: boolean }>;
   renovarSessao: (refreshToken: string) => Promise<AuthResult>;
   verificarSenha: (usuarioId: string, senha: string) => Promise<{ success: boolean }>;
@@ -71,7 +76,7 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
     return data as Usuario;
   }
 
-  async function login(email: string, senha: string, _options?: unknown): Promise<AuthResult> {
+  async function login(email: string, senha: string, metadados?: MetadadosRequisicao): Promise<AuthResult> {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password: senha,
@@ -79,6 +84,8 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
     if (error) {
       await _logAuditoria(null, "LOGIN_FAILED", {
         dados_novos: { email },
+        ip: metadados?.ip,
+        user_agent: metadados?.user_agent,
       }).catch((err: unknown) => logger.error("auth", "auditoria LOGIN_FAILED falhou", err));
       throw new AuthError(mapSupabaseError(error) || "CREDENCIAIS_INVALIDAS");
     }
@@ -91,7 +98,10 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
 
     await onLogin(data.session.access_token, data.session.refresh_token);
 
-    await _logAuditoria(perfil.id, "LOGIN").catch((err: unknown) => logger.error("auth", "auditoria LOGIN falhou", err));
+    await _logAuditoria(perfil.id, "LOGIN", {
+      ip: metadados?.ip,
+      user_agent: metadados?.user_agent,
+    }).catch((err: unknown) => logger.error("auth", "auditoria LOGIN falhou", err));
 
     return {
       token: data.session.access_token,
@@ -100,7 +110,7 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
     };
   }
 
-  async function logout(): Promise<{ success: boolean }> {
+  async function logout(metadados?: MetadadosRequisicao): Promise<{ success: boolean }> {
     let sessionResult: { data: { session: { user: { id: string } } | null } | null };
     try {
       sessionResult = await supabase.auth.getSession();
@@ -109,7 +119,10 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
     }
     const usuarioId = sessionResult?.data?.session?.user?.id;
     if (usuarioId) {
-      await _logAuditoria(usuarioId, "LOGOUT").catch((err: unknown) => logger.error("auth", "auditoria LOGOUT falhou", err));
+      await _logAuditoria(usuarioId, "LOGOUT", {
+        ip: metadados?.ip,
+        user_agent: metadados?.user_agent,
+      }).catch((err: unknown) => logger.error("auth", "auditoria LOGOUT falhou", err));
     }
     await onLogout();
     await supabase.auth.signOut().catch((err: unknown) => logger.error("auth", "signOut falhou", err));
@@ -126,11 +139,14 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
     return perfil;
   }
 
-  async function trocarSenha(_usuarioId: string, senhaAtual: string, novaSenha: string): Promise<{ success: boolean }> {
+  async function trocarSenha(_usuarioId: string, senhaAtual: string, novaSenha: string, metadados?: MetadadosRequisicao): Promise<{ success: boolean }> {
     await verificarSenha(_usuarioId, senhaAtual);
     const { error } = await supabase.auth.updateUser({ password: novaSenha });
     if (error) throw new AuthError(mapSupabaseError(error) || "ERRO_INTERNO");
-    await _logAuditoria(_usuarioId, "SENHA_TROCADA").catch((err: unknown) => logger.error("auth", "auditoria SENHA_TROCADA falhou", err));
+    await _logAuditoria(_usuarioId, "SENHA_TROCADA", {
+      ip: metadados?.ip,
+      user_agent: metadados?.user_agent,
+    }).catch((err: unknown) => logger.error("auth", "auditoria SENHA_TROCADA falhou", err));
     return { success: true };
   }
 
@@ -165,12 +181,14 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
     pendingRecoveryTokens = null;
   }
 
-  async function solicitarRecuperacao(email: string): Promise<{ success: boolean }> {
+  async function solicitarRecuperacao(email: string, metadados?: MetadadosRequisicao): Promise<{ success: boolean }> {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: "financasapp://recuperar-senha",
     });
     await _logAuditoria(null, "RECUPERACAO_SOLICITADA", {
       dados_novos: { email },
+      ip: metadados?.ip,
+      user_agent: metadados?.user_agent,
     }).catch((err: unknown) => logger.error("auth", "auditoria RECUPERACAO_SOLICITADA falhou", err));
     if (error && !error.message?.includes("rate limit")) {
       logger.error("auth", "Erro ao solicitar recuperação", error);
@@ -178,7 +196,7 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
     return { success: true };
   }
 
-  async function confirmarRecuperacao(email: string, token: string, novaSenha: string): Promise<{ success: boolean }> {
+  async function confirmarRecuperacao(email: string, token: string, novaSenha: string, metadados?: MetadadosRequisicao): Promise<{ success: boolean }> {
     const { error: verifyError } = await supabase.auth.verifyOtp({
       email,
       token,
@@ -191,6 +209,8 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
 
     await _logAuditoria(null, "RECUPERACAO_CONFIRMADA", {
       dados_novos: { email },
+      ip: metadados?.ip,
+      user_agent: metadados?.user_agent,
     }).catch((err: unknown) => logger.error("auth", "auditoria RECUPERACAO_CONFIRMADA falhou", err));
     return { success: true };
   }

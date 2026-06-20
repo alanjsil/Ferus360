@@ -52,7 +52,7 @@ describe("auditoria (spec-11)", () => {
       await auth.login("a@t.com", "pw");
 
       // Assert
-      expect(logSpy).toHaveBeenCalledWith("user-1", "LOGIN");
+      expect(logSpy).toHaveBeenCalledWith("user-1", "LOGIN", expect.any(Object));
     });
 
     it("chama logAuditoria no LOGIN_FAILED", async () => {
@@ -77,9 +77,9 @@ describe("auditoria (spec-11)", () => {
 
       // Act & Assert
       await expect(auth.login("wrong@t.com", "badpw")).rejects.toThrow("CREDENCIAIS_INVALIDAS");
-      expect(logSpy).toHaveBeenCalledWith(null, "LOGIN_FAILED", {
+      expect(logSpy).toHaveBeenCalledWith(null, "LOGIN_FAILED", expect.objectContaining({
         dados_novos: { email: "wrong@t.com" },
-      });
+      }));
     });
 
     it("chama logAuditoria no LOGOUT", async () => {
@@ -155,7 +155,7 @@ describe("auditoria (spec-11)", () => {
       await auth.trocarSenha("user-1", "old", "new");
 
       // Assert
-      expect(logSpy).toHaveBeenCalledWith("user-1", "SENHA_TROCADA");
+      expect(logSpy).toHaveBeenCalledWith("user-1", "SENHA_TROCADA", expect.any(Object));
     });
   });
 
