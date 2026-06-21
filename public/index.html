@@ -46,6 +46,10 @@
           </div>
 
           <div class="header-controls">
+            <div class="pill-tipo-pessoa" id="tipoPessoaToggle" data-tp="PF">
+              <span>Pessoa Física</span>
+              <i class="fa-solid fa-right-left"></i>
+            </div>
             <div class="pill-select">
               <span>Ano:</span>
               <select id="filtroAno">
@@ -58,16 +62,12 @@
                 <option value="all">Todos</option>
               </select>
             </div>
-            <div class="pill-tipo-pessoa" id="tipoPessoaToggle">
-              <button class="pill-button active" data-tp="PF" type="button">PF</button>
-              <button class="pill-button" data-tp="PJ" type="button">PJ</button>
-            </div>
             <button class="pill-button" id="btnImportar" type="button">📤 Importar Orçamento</button>
             <button class="pill-button primary" id="btnDashboard" type="button">
               <span class="icon">📊</span>
               <span>Dashboard</span>
             </button>
-            <a href="conflitos.html" class="pill-button" id="btnConflitos">
+            <a href="conflitos.html" class="pill-button" id="btnConflitos" hidden>
               <i class="fa-solid fa-code-branch"></i>
               <span>Conflitos</span>
               <span class="badge-danger" id="conflitosBadge" hidden>0</span>
@@ -160,9 +160,6 @@
               <div class="form-row form-field full">
                 <label for="descricao">Descrição</label>
                 <textarea id="descricao" name="descricao" placeholder="Ex: Mercado da semana, gasolina, conta de luz..."></textarea>
-                <div class="tag-row">
-                  <span class="tag">Dica:__________</span>
-                </div>
               </div>
 
               <div class="form-row full submit-row">

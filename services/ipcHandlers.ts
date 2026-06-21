@@ -38,6 +38,7 @@ function createHandlers(
   }
 
   function obterTipoPessoaAtivo(): string {
+    if (!getState("usarPjAtivo")) return "PF";
     return (getState("tipoPessoaAtivo") as string) || "PF";
   }
 
@@ -65,6 +66,7 @@ function createHandlers(
         const metadados = await _extrairMetadados(event);
         const data = await auth.login(email, senha, metadados);
         setState("usuarioAtual", data.usuario);
+        setState("usarPjAtivo", data.usuario?.usar_pj === true);
         return data;
       } catch (err) {
         const code = (err as { code?: string }).code || (err as Error).message || "ERRO_INTERNO";
@@ -86,7 +88,10 @@ function createHandlers(
       if (refreshToken) {
         await repository.setAuthSession(token, refreshToken).catch((err: unknown) => logger.error("ipcHandlers", "setAuthSession falhou", err));
       }
-      if (usuario) setState("usuarioAtual", usuario);
+      if (usuario) {
+        setState("usuarioAtual", usuario);
+        setState("usarPjAtivo", usuario.usar_pj === true);
+      }
       return usuario;
     },
 
@@ -113,6 +118,7 @@ function createHandlers(
         const result = await auth.renovarSessao(refreshToken);
         await repository.setAuthSession(result.token, result.refreshToken);
         setState("usuarioAtual", result.usuario);
+        setState("usarPjAtivo", result.usuario?.usar_pj === true);
         return result;
       } catch (err) {
         return { error: err instanceof AuthError ? err.code : "ERRO_INTERNO" };
@@ -687,8 +693,31 @@ function createHandlers(
       }
     },
 
+    handleTipoPessoaGet: async () => {
+      return obterTipoPessoaAtivo();
+    },
+
     handleTipoPessoaSet: async (_event: unknown, tipoPessoa: string) => {
+      if (!getState("usarPjAtivo") && tipoPessoa === "PJ") {
+        return { success: false };
+      }
       setState("tipoPessoaAtivo", tipoPessoa);
+      return { success: true };
+    },
+
+    handleUsarPjGet: async () => {
+      return !!getState("usarPjAtivo");
+    },
+
+    handleUsarPjSet: async (_event: unknown, value: boolean) => {
+      setState("usarPjAtivo", value);
+      if (!value) {
+        setState("tipoPessoaAtivo", "PF");
+      }
+      const usuarioId = obterUsuarioId();
+      if (usuarioId) {
+        await repository.updatePerfil(usuarioId, { usar_pj: value });
+      }
       return { success: true };
     },
 
@@ -790,7 +819,10 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("admin:updateChamado", handlers.handleAdminUpdateChamado);
   ipcMain.handle("admin:getAuditoria", handlers.handleAdminGetAuditoria);
   ipcMain.handle("admin:criarUsuario", handlers.handleAdminCriarUsuario);
+  ipcMain.handle("tipo-pessoa:get", handlers.handleTipoPessoaGet);
   ipcMain.handle("tipo-pessoa:set", handlers.handleTipoPessoaSet);
+  ipcMain.handle("usar-pj:get", handlers.handleUsarPjGet);
+  ipcMain.handle("usar-pj:set", handlers.handleUsarPjSet);
   ipcMain.handle("compartilhar-categorias:set", handlers.handleCompartilharCategoriasSet);
   ipcMain.handle("sync:force", handlers.handleSyncForce);
   ipcMain.handle("sync:conflitos", handlers.handleSyncConflitos);

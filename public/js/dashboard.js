@@ -54,27 +54,52 @@ function configurarTipoPessoaToggle() {
   const container = document.getElementById("tipoPessoaToggle");
   if (!container) return;
 
-  container.addEventListener("click", async (e) => {
-    const btn = e.target.closest("[data-tp]");
-    if (!btn) return;
-
-    const tp = btn.dataset.tp;
-    container.querySelectorAll("[data-tp]").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-
-    await window.electronAPI.setTipoPessoa(tp);
+  container.addEventListener("click", async () => {
+    const atual = container.dataset.tp;
+    const novoTp = atual === "PF" ? "PJ" : "PF";
+    atualizarToggle(container, novoTp);
+    await window.electronAPI.setTipoPessoa(novoTp);
     await carregarCategorias();
     await popularAnos();
     await carregarDashboard();
     popularMeses();
   });
 
-  window.electronAPI.onTipoPessoaChanged(async () => {
+  window.electronAPI.onTipoPessoaChanged(async (value) => {
+    if (value) atualizarToggle(container, value);
     await carregarCategorias();
     await popularAnos();
     await carregarDashboard();
     popularMeses();
   });
+
+  window.electronAPI.getTipoPessoa().then((value) => {
+    if (value) atualizarToggle(container, value);
+  });
+
+  if (typeof window.electronAPI?.onUsarPjChanged === "function") {
+    window.electronAPI.onUsarPjChanged(async (value) => {
+      container.hidden = !value;
+      if (!value) {
+        await carregarCategorias();
+        await popularAnos();
+        await carregarDashboard();
+        popularMeses();
+      }
+    });
+  }
+
+  if (typeof window.electronAPI?.getUsarPj === "function") {
+    window.electronAPI.getUsarPj().then((value) => {
+      container.hidden = !value;
+    });
+  }
+}
+
+function atualizarToggle(container, tp) {
+  container.dataset.tp = tp;
+  const span = container.querySelector("span");
+  if (span) span.textContent = tp === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
 }
 
 // Adicionar event listeners para atualização automática

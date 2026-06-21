@@ -11,6 +11,7 @@ interface State {
   dashboard: DashboardData | null;
   usuarioAtual: Usuario | null;
   tipoPessoaAtivo: TipoPessoa;
+  usarPjAtivo: boolean;
   compartilharCategorias: boolean;
 }
 
@@ -24,6 +25,7 @@ let state: State = {
   dashboard: null,
   usuarioAtual: null,
   tipoPessoaAtivo: "PF",
+  usarPjAtivo: false,
   compartilharCategorias: false,
 };
 
@@ -60,6 +62,7 @@ function resetState(): void {
     dashboard: null,
     usuarioAtual: null,
     tipoPessoaAtivo: "PF",
+    usarPjAtivo: false,
     compartilharCategorias: false,
   };
 }

@@ -185,25 +185,38 @@ header {
 
 .pill-tipo-pessoa {
   display: inline-flex;
-  gap: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
   border-radius: 999px;
-  overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.4);
+  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.7));
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+  white-space: nowrap;
+  user-select: none;
 }
 
-.pill-tipo-pessoa .pill-button {
-  border: none;
-  border-radius: 0;
-  min-width: 36px;
-  justify-content: center;
-  font-weight: 600;
+.pill-tipo-pessoa:hover {
+  border-color: rgba(99, 102, 241, 0.6);
+  background: rgba(99, 102, 241, 0.15);
+  color: #e2e8f0;
+}
+
+.pill-tipo-pessoa i {
   font-size: 12px;
+  opacity: 0.7;
 }
 
-.pill-tipo-pessoa .pill-button.active {
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-  color: #fff;
-  border-color: transparent;
+.pill-tipo-pessoa[hidden] {
+  display: none !important;
+}
+
+#btnConflitos[hidden] {
+  display: none !important;
 }
 
 /* Botões gerais */
@@ -483,13 +496,6 @@ input[type="month"]:focus {
 /* ==========================================================================
    TAGS E BADGES
    ========================================================================== */
-.tag-row {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 6px;
-}
-
 .tag {
   font-size: 11px;
   padding: 3px 7px;

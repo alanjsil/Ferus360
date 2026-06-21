@@ -36,18 +36,58 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 function configurarTipoPessoaToggle() {
-  const toggle = document.getElementById("tipoPessoaToggle");
-  if (!toggle) return;
-  toggle.querySelectorAll(".pill-button").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      toggle.querySelectorAll(".pill-button").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      tipoPessoa = btn.dataset.tipo;
-      await carregarCategorias();
-      await popularAnos();
-      await carregarDashboard();
-    });
+  const container = document.getElementById("tipoPessoaToggle");
+  if (!container) return;
+
+  container.addEventListener("click", async () => {
+    const novoTp = tipoPessoa === "PF" ? "PJ" : "PF";
+    tipoPessoa = novoTp;
+    container.dataset.tp = novoTp;
+    const span = container.querySelector("span");
+    if (span) span.textContent = novoTp === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+    await window.electronAPI.setTipoPessoa(novoTp);
+    await carregarCategorias();
+    await popularAnos();
+    await carregarDashboard();
   });
+
+  if (typeof window.electronAPI?.onTipoPessoaChanged === "function") {
+    window.electronAPI.onTipoPessoaChanged((value) => {
+      if (!value) return;
+      tipoPessoa = value;
+      container.dataset.tp = value;
+      const span = container.querySelector("span");
+      if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+    });
+  }
+
+  if (typeof window.electronAPI?.getTipoPessoa === "function") {
+    window.electronAPI.getTipoPessoa().then((value) => {
+      if (!value) return;
+      tipoPessoa = value;
+      container.dataset.tp = value;
+      const span = container.querySelector("span");
+      if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+    });
+  }
+
+  if (typeof window.electronAPI?.onUsarPjChanged === "function") {
+    window.electronAPI.onUsarPjChanged((value) => {
+      container.hidden = !value;
+      if (!value) {
+        tipoPessoa = "PF";
+        container.dataset.tp = "PF";
+        const span = container.querySelector("span");
+        if (span) span.textContent = "Pessoa Física";
+      }
+    });
+  }
+
+  if (typeof window.electronAPI?.getUsarPj === "function") {
+    window.electronAPI.getUsarPj().then((value) => {
+      container.hidden = !value;
+    });
+  }
 }
 
 function configurarLogout() {

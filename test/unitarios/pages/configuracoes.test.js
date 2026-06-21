@@ -71,7 +71,7 @@ describe("configurações (página de perfil)", () => {
 
     window.electronAPI = {
       getPerfil: vi.fn().mockResolvedValue({
-        nome: "Teste", email: "teste@t.com",
+        nome: "Teste", email: "teste@t.com", usar_pj: true,
       }),
       updatePerfil: vi.fn().mockResolvedValue({}),
       verificarAuth: vi.fn().mockResolvedValue({ id: "user-1" }),
@@ -98,6 +98,12 @@ describe("configurações (página de perfil)", () => {
       updateSubcategoria: vi.fn(),
       deleteSubcategoria: vi.fn(),
       logout: vi.fn(),
+      getTipoPessoa: vi.fn().mockResolvedValue("PF"),
+      setTipoPessoa: vi.fn().mockResolvedValue({ success: true }),
+      onTipoPessoaChanged: vi.fn(),
+      getUsarPj: vi.fn().mockResolvedValue(true),
+      setUsarPj: vi.fn().mockResolvedValue({ success: true }),
+      onUsarPjChanged: vi.fn(),
     };
 
     vi.useFakeTimers();

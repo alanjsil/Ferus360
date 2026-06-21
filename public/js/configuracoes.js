@@ -37,6 +37,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   configurarExportar();
   configurarExcluirConta();
   configurarCompartilharCategorias();
+  configurarUsarPj();
+  configurarTipoPessoaToggle();
   configurarCategorias();
 });
 
@@ -90,6 +92,10 @@ async function carregarPerfil() {
 
     if (perfil.avatar_url) {
       document.getElementById("avatarPreview").src = perfil.avatar_url;
+    }
+    const usarPjToggle = document.getElementById("usarPjToggle");
+    if (usarPjToggle) {
+      usarPjToggle.checked = perfil.usar_pj !== false;
     }
     if (usuarioAuth?.role === "admin") {
       emailInput.removeAttribute("readonly");
@@ -371,6 +377,80 @@ function configurarCompartilharCategorias() {
   toggle.addEventListener("change", async () => {
     await window.electronAPI.setCompartilharCategorias(toggle.checked);
   });
+}
+
+function configurarUsarPj() {
+  const toggle = document.getElementById("usarPjToggle");
+  if (!toggle) return;
+
+  toggle.addEventListener("change", async () => {
+    await window.electronAPI.setUsarPj(toggle.checked);
+  });
+}
+
+function configurarTipoPessoaToggle() {
+  const container = document.getElementById("tipoPessoaToggle");
+  if (!container) return;
+
+  container.addEventListener("click", async () => {
+    const atual = container.dataset.tp;
+    const novoTp = atual === "PF" ? "PJ" : "PF";
+    container.dataset.tp = novoTp;
+    const span = container.querySelector("span");
+    if (span) span.textContent = novoTp === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+    await window.electronAPI.setTipoPessoa(novoTp);
+    await recarregarCadastros();
+  });
+
+  if (typeof window.electronAPI?.onTipoPessoaChanged === "function") {
+    window.electronAPI.onTipoPessoaChanged(async (value) => {
+      if (value) {
+        container.dataset.tp = value;
+        const span = container.querySelector("span");
+        if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+      }
+      await recarregarCadastros();
+    });
+  }
+
+  if (typeof window.electronAPI?.getTipoPessoa === "function") {
+    window.electronAPI.getTipoPessoa().then((value) => {
+      if (!value) return;
+      container.dataset.tp = value;
+      const span = container.querySelector("span");
+      if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+    });
+  }
+
+  if (typeof window.electronAPI?.onUsarPjChanged === "function") {
+    window.electronAPI.onUsarPjChanged(async (value) => {
+      container.hidden = !value;
+      if (!value) {
+        await recarregarCadastros();
+      }
+    });
+  }
+
+  if (typeof window.electronAPI?.getUsarPj === "function") {
+    window.electronAPI.getUsarPj().then((value) => {
+      container.hidden = !value;
+    });
+  }
+}
+
+async function recarregarCadastros() {
+  const catBody = document.getElementById("catBody");
+  const catEmpty = document.getElementById("catEmpty");
+  const contasBody = document.getElementById("contasBody");
+  const contasEmpty = document.getElementById("contasEmpty");
+  const pessoasBody = document.getElementById("pessoasBody");
+  const pessoasEmpty = document.getElementById("pessoasEmpty");
+
+  await Promise.all([
+    loadCategorias(catBody, catEmpty),
+    loadContas(contasBody, contasEmpty),
+    loadPessoas(pessoasBody, pessoasEmpty),
+  ]);
 }
 
 /* ===== Categorias ===== */

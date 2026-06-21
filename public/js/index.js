@@ -11,13 +11,17 @@ import { formatarMoeda } from "./helper.js";
  */
 function configurarSyncStatus() {
   const badge = document.getElementById("conflitosBadge");
+  const btn = document.getElementById("btnConflitos");
   if (!badge) return;
+
+  if (btn) btn.hidden = true;
 
   try {
     const salvo = localStorage.getItem(STORAGE_KEYS.CONFLITOS_COUNT);
     if (salvo && salvo !== "0") {
       badge.hidden = false;
       badge.textContent = salvo;
+      if (btn) btn.hidden = false;
     }
   } catch {
     /* ok */
@@ -27,6 +31,7 @@ function configurarSyncStatus() {
     const count = status.conflitos || 0;
     badge.hidden = count === 0;
     badge.textContent = count;
+    if (btn) btn.hidden = count === 0;
     try {
       localStorage.setItem(STORAGE_KEYS.CONFLITOS_COUNT, String(count));
     } catch {
@@ -35,25 +40,45 @@ function configurarSyncStatus() {
   });
 }
 
+function atualizarToggle(container, tp) {
+  container.dataset.tp = tp;
+  const span = container.querySelector("span");
+  if (span) span.textContent = tp === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+}
+
 function configurarTipoPessoaToggle() {
   const container = document.getElementById("tipoPessoaToggle");
   if (!container) return;
 
-  container.addEventListener("click", async (e) => {
-    const btn = e.target.closest("[data-tp]");
-    if (!btn) return;
-
-    const tp = btn.dataset.tp;
-    container.querySelectorAll("[data-tp]").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-
-    await window.electronAPI.setTipoPessoa(tp);
+  container.addEventListener("click", async () => {
+    const atual = container.dataset.tp;
+    const novoTp = atual === "PF" ? "PJ" : "PF";
+    atualizarToggle(container, novoTp);
+    await window.electronAPI.setTipoPessoa(novoTp);
     await recarregarTudo();
   });
 
-  window.electronAPI.onTipoPessoaChanged(async () => {
+  window.electronAPI.onTipoPessoaChanged(async (value) => {
+    if (value) atualizarToggle(container, value);
     await recarregarTudo();
   });
+
+  window.electronAPI.getTipoPessoa().then((value) => {
+    if (value) atualizarToggle(container, value);
+  });
+
+  if (typeof window.electronAPI?.onUsarPjChanged === "function") {
+    window.electronAPI.onUsarPjChanged(async (value) => {
+      container.hidden = !value;
+      if (!value) await recarregarTudo();
+    });
+  }
+
+  if (typeof window.electronAPI?.getUsarPj === "function") {
+    window.electronAPI.getUsarPj().then((value) => {
+      container.hidden = !value;
+    });
+  }
 }
 
 async function recarregarTudo() {

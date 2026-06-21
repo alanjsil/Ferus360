@@ -16,7 +16,12 @@
 
   <body>
     <div class="dashboard-header">
-      <h1><i class="fa-solid fa-chart-line"></i> <span id="dashboardTitulo">Dashboard do Cliente</span></h1>
+      <h1><i class="fa-solid fa-chart-line"></i> <span id="dashboardTitulo">Dashboard do Cliente</span>
+        <span class="pill-tipo-pessoa" id="tipoPessoaToggle" data-tp="PF">
+          <span>Pessoa Física</span>
+          <i class="fa-solid fa-right-left"></i>
+        </span>
+      </h1>
       <div class="header-actions">
         <a href="admin.html" class="voltar-btn" id="btnVoltarDashboard"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
         <button type="button" class="voltar-btn" id="logoutBtn">Sair</button>
@@ -41,14 +46,6 @@
         <select id="filtroCategoria">
           <option value="all">Todas</option>
         </select>
-      </div>
-
-      <div class="filtro-group">
-        <label>PF / PJ</label>
-        <div class="pill-tipo-pessoa" id="tipoPessoaToggle">
-          <button type="button" class="pill-button active" data-tipo="PF">PF</button>
-          <button type="button" class="pill-button" data-tipo="PJ">PJ</button>
-        </div>
       </div>
 
       <div class="filtro-group">

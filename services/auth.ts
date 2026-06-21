@@ -71,7 +71,7 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
   const _logAuditoria = dependencies.logAuditoria || (() => Promise.resolve());
 
   async function getPerfilById(userId: string): Promise<Usuario | null> {
-    const { data, error } = await supabase.from("financas_usuarios").select("id, nome, email, role, ativo").eq("id", userId).single();
+    const { data, error } = await supabase.from("financas_usuarios").select("id, nome, email, role, ativo, usar_pj").eq("id", userId).single();
     if (error || !data) return null;
     return data as Usuario;
   }

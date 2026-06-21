@@ -49,6 +49,7 @@ const mockSetState = vi.fn();
 const mockGetState = vi.fn((key) => {
   if (key === "usuarioAtual") return { id: "user-123" };
   if (key === "tipoPessoaAtivo") return "PF";
+  if (key === "usarPjAtivo") return true;
   if (key === "compartilharCategorias") return false;
   return [];
 });

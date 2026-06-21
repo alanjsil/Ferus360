@@ -15,7 +15,12 @@
   </head>
   <body>
     <div class="config-header">
-      <h1>Configurações</h1>
+      <h1>Configurações
+        <span class="pill-tipo-pessoa" id="tipoPessoaToggle" data-tp="PF">
+          <span>Pessoa Física</span>
+          <i class="fa-solid fa-right-left"></i>
+        </span>
+      </h1>
       <div class="header-actions">
         <a href="index.html" class="btn-secondary">Voltar</a>
         <button type="button" class="btn-secondary" id="logoutBtn">Sair</button>
@@ -102,6 +107,16 @@
       <section id="section-conta" class="config-section">
         <h2>Conta</h2>
         <div class="conta-actions">
+          <div class="conta-action">
+            <div>
+              <strong>Usar Pessoa Jurídica</strong>
+              <p>Quando ativo, permite alternar entre Pessoa Física e Pessoa Jurídica no aplicativo.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="usarPjToggle" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
           <div class="conta-action">
             <div>
               <strong>Compartilhar categorias entre PF e PJ</strong>

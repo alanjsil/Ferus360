@@ -30,6 +30,11 @@ const mockElectronAPI = {
   deleteLancamento: vi.fn(),
   updateLancamento: vi.fn(),
   importarOrcamento: vi.fn(),
+  getTipoPessoa: vi.fn().mockResolvedValue("PF"),
+  setTipoPessoa: vi.fn().mockResolvedValue({ success: true }),
+  onTipoPessoaChanged: vi.fn(),
+  getUsarPj: vi.fn().mockResolvedValue(true),
+  onUsarPjChanged: vi.fn(),
 };
 
 HTMLDialogElement.prototype.showModal = vi.fn(function () {

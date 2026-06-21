@@ -21,6 +21,10 @@ const mockElectronAPI = {
   getCategorias: vi.fn(),
   getDashboardDados: vi.fn(),
   getAnosDisponiveis: vi.fn(),
+  getTipoPessoa: vi.fn().mockResolvedValue("PF"),
+  onTipoPessoaChanged: vi.fn(),
+  getUsarPj: vi.fn().mockResolvedValue(true),
+  onUsarPjChanged: vi.fn(),
 };
 
 class MockChart {

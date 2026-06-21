@@ -82,9 +82,17 @@ const api = {
   excluirConta: () => ipcRenderer.invoke("config:excluir-conta"),
 
   // ==================== TIPO PESSOA ====================
+  getTipoPessoa: () => ipcRenderer.invoke("tipo-pessoa:get"),
   setTipoPessoa: (tipoPessoa: string) => ipcRenderer.invoke("tipo-pessoa:set", tipoPessoa),
   onTipoPessoaChanged: (callback: (data: any) => void) => ipcRenderer.on("state:updated", (_e: any, data: any) => {
     if (data.key === "tipoPessoaAtivo") callback(data.value);
+  }),
+
+  // ==================== USAR PJ ====================
+  getUsarPj: () => ipcRenderer.invoke("usar-pj:get"),
+  setUsarPj: (value: boolean) => ipcRenderer.invoke("usar-pj:set", value),
+  onUsarPjChanged: (callback: (data: any) => void) => ipcRenderer.on("state:updated", (_e: any, data: any) => {
+    if (data.key === "usarPjAtivo") callback(data.value);
   }),
 
   // ==================== COMPARTILHAR CATEGORIAS ====================

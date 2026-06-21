@@ -4,7 +4,7 @@ import { supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionR
 import { logAuditoria } from "./auditoria";
 
 async function getPerfil(usuarioId: string): Promise<Usuario | null> {
-  const { data, error } = await supabase.from("financas_usuarios").select("id, nome, email, avatar_url, role").eq("id", usuarioId).single();
+  const { data, error } = await supabase.from("financas_usuarios").select("id, nome, email, avatar_url, role, usar_pj").eq("id", usuarioId).single();
 
   if (error) throw error;
   return data as Usuario | null;
@@ -21,8 +21,9 @@ async function updatePerfil(usuarioId: string, payload: UpdatePerfilPayload): Pr
   }
   if (payload.email !== undefined) allowedFields.email = payload.email;
   if (payload.avatar_url !== undefined) allowedFields.avatar_url = payload.avatar_url;
+  if (payload.usar_pj !== undefined) allowedFields.usar_pj = payload.usar_pj;
 
-  const { data, error } = await supabase.from("financas_usuarios").update(allowedFields).eq("id", usuarioId).select("id, nome, email, avatar_url, role").single();
+  const { data, error } = await supabase.from("financas_usuarios").update(allowedFields).eq("id", usuarioId).select("id, nome, email, avatar_url, role, usar_pj").single();
 
   if (error) throw error;
   return data as Usuario | null;

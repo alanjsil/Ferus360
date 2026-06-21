@@ -7,6 +7,7 @@ export interface Usuario {
   role: "admin" | "user";
   ativo: boolean;
   avatar_url?: string | null;
+  usar_pj?: boolean;
   criado_em?: string;
   ultimo_login?: string | null;
 }
@@ -280,6 +281,7 @@ export interface UpdatePerfilPayload {
   nome?: string;
   email?: string;
   avatar_url?: string;
+  usar_pj?: boolean;
 }
 
 export interface ImportarOrcamentoItem {

@@ -40,6 +40,11 @@ function baseMocks() {
     logout: vi.fn(),
     logError: vi.fn(),
     logWarn: vi.fn(),
+    getTipoPessoa: vi.fn().mockResolvedValue("PF"),
+    setTipoPessoa: vi.fn().mockResolvedValue({ success: true }),
+    onTipoPessoaChanged: vi.fn(),
+    getUsarPj: vi.fn().mockResolvedValue(true),
+    onUsarPjChanged: vi.fn(),
   };
 }
 
