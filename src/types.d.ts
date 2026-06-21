@@ -6,7 +6,6 @@ export interface Usuario {
   email: string;
   role: "admin" | "user";
   ativo: boolean;
-  email_recuperacao?: string | null;
   avatar_url?: string | null;
   criado_em?: string;
   ultimo_login?: string | null;
@@ -280,7 +279,6 @@ export interface CreateTransferenciaPayload {
 export interface UpdatePerfilPayload {
   nome?: string;
   email?: string;
-  email_recuperacao?: string;
   avatar_url?: string;
 }
 

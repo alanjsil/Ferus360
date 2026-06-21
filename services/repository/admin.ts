@@ -2,7 +2,7 @@ import type { Lancamento, Orcamento, Chamado, AdminDashboard, Usuario } from "..
 import * as logger from "../logger";
 import {
   supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionResult,
-  _marcarPendente, descriptografar,
+  _marcarPendente,
 } from "./utils";
 
 async function getAdminDashboard(): Promise<AdminDashboard> {
@@ -90,15 +90,11 @@ async function updateChamado(id: string, patch: Record<string, unknown>): Promis
 }
 
 async function getClientes(): Promise<Usuario[]> {
-  const { data, error } = await supabase.from("financas_usuarios").select("id, nome, email, role, ativo, criado_em, email_recuperacao").order("criado_em", { ascending: false }).limit(5000);
+  const { data, error } = await supabase.from("financas_usuarios").select("id, nome, email, role, ativo, criado_em").order("criado_em", { ascending: false }).limit(5000);
 
   if (error) throw error;
 
-  const result = data as (Usuario & { email_recuperacao?: string })[];
-
-  for (const c of result) {
-    c.email_recuperacao = descriptografar(c.email_recuperacao);
-  }
+  const result = data as Usuario[];
 
   const { data: logins, error: err2 } = await supabase.from("financas_auditoria").select("usuario_id, criado_em").eq("acao", "LOGIN").order("criado_em", { ascending: false });
 

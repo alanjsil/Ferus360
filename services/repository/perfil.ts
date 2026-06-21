@@ -1,19 +1,13 @@
 import type { Usuario, Lancamento, Sessao, UpdatePerfilPayload } from "../../src/types";
 import * as logger from "../logger";
-import {
-  supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionResult,
-  criptografar, descriptografar, normalizarNome,
-} from "./utils";
+import { supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionResult, normalizarNome } from "./utils";
 import { logAuditoria } from "./auditoria";
 
 async function getPerfil(usuarioId: string): Promise<Usuario | null> {
-  const { data, error } = await supabase.from("financas_usuarios").select("id, nome, email, email_recuperacao, avatar_url, role").eq("id", usuarioId).single();
+  const { data, error } = await supabase.from("financas_usuarios").select("id, nome, email, avatar_url, role").eq("id", usuarioId).single();
 
   if (error) throw error;
-  if (data) {
-    data.email_recuperacao = descriptografar(data.email_recuperacao);
-  }
-  return data as unknown as Usuario | null;
+  return data as Usuario | null;
 }
 
 async function updatePerfil(usuarioId: string, payload: UpdatePerfilPayload): Promise<Usuario | null> {
@@ -26,10 +20,9 @@ async function updatePerfil(usuarioId: string, payload: UpdatePerfilPayload): Pr
     allowedFields.nome = nomeNormalizado;
   }
   if (payload.email !== undefined) allowedFields.email = payload.email;
-  if (payload.email_recuperacao !== undefined) allowedFields.email_recuperacao = criptografar(payload.email_recuperacao);
   if (payload.avatar_url !== undefined) allowedFields.avatar_url = payload.avatar_url;
 
-  const { data, error } = await supabase.from("financas_usuarios").update(allowedFields).eq("id", usuarioId).select("id, nome, email, email_recuperacao, avatar_url, role").single();
+  const { data, error } = await supabase.from("financas_usuarios").update(allowedFields).eq("id", usuarioId).select("id, nome, email, avatar_url, role").single();
 
   if (error) throw error;
   return data as Usuario | null;
@@ -82,7 +75,9 @@ async function deleteSessao(sessaoId: string): Promise<{ success: boolean }> {
 async function exportarDados(usuarioId: string): Promise<{ lancamentos: Lancamento[] }> {
   const { data: lancamentos, error: err1 } = await supabase
     .from("financas_lancamentos")
-    .select("*, categoria:financas_categorias(nome), subcategoria:financas_subcategorias(nome), conta_origem:financas_contas!conta_origem_id(nome), conta_destino:financas_contas!conta_destino_id(nome), pessoa:financas_pessoas(nome)")
+    .select(
+      "*, categoria:financas_categorias(nome), subcategoria:financas_subcategorias(nome), conta_origem:financas_contas!conta_origem_id(nome), conta_destino:financas_contas!conta_destino_id(nome), pessoa:financas_pessoas(nome)",
+    )
     .eq("usuario_id", usuarioId)
     .order("data", { ascending: false });
 

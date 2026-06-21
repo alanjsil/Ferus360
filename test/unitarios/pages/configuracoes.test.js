@@ -71,7 +71,7 @@ describe("configurações (página de perfil)", () => {
 
     window.electronAPI = {
       getPerfil: vi.fn().mockResolvedValue({
-        nome: "Teste", email: "teste@t.com", email_recuperacao: "",
+        nome: "Teste", email: "teste@t.com",
       }),
       updatePerfil: vi.fn().mockResolvedValue({}),
       verificarAuth: vi.fn().mockResolvedValue({ id: "user-1" }),

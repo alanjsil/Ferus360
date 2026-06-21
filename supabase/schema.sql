@@ -13,7 +13,6 @@ CREATE TABLE financas_usuarios (
   email TEXT NOT NULL UNIQUE,
   role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
-  email_recuperacao TEXT, -- criptografado via aes-256-gcm no app layer (repository.js)
   avatar_url TEXT,
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()

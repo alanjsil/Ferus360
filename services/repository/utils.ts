@@ -10,7 +10,6 @@ import type {
 } from "../../src/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase as defaultSupabase, supabaseAdmin, SUPABASE_URL } from "../conexao";
-import crypto from "crypto";
 import * as database from "../database";
 import * as logger from "../logger";
 
@@ -209,40 +208,6 @@ function _syncAposEscrita(entidade: string, dados: Record<string, unknown>): voi
   _inserirLocal(entidade, dados, "pending");
 }
 
-const ENCRYPTION_KEY: Buffer = crypto
-  .createHash("sha256")
-  .update(process.env.ENCRYPTION_KEY || process.env.SUPABASE_URL || "financas-pessoais-key")
-  .digest();
-const ENC_PREFIX = "enc:";
-
-function criptografar(texto?: string): string | undefined {
-  if (!texto) return texto;
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv("aes-256-gcm", ENCRYPTION_KEY, iv);
-  let encrypted = cipher.update(texto, "utf8", "hex");
-  encrypted += cipher.final("hex");
-  const authTag = cipher.getAuthTag().toString("hex");
-  return ENC_PREFIX + iv.toString("hex") + ":" + authTag + ":" + encrypted;
-}
-
-function descriptografar(texto?: string): string | undefined {
-  if (!texto || !texto.startsWith(ENC_PREFIX)) return texto;
-  try {
-    const parts = texto.slice(ENC_PREFIX.length).split(":");
-    if (parts.length !== 3) return texto;
-    const iv = Buffer.from(parts[0], "hex");
-    const authTag = Buffer.from(parts[1], "hex");
-    const encrypted = parts[2];
-    const decipher = crypto.createDecipheriv("aes-256-gcm", ENCRYPTION_KEY, iv);
-    decipher.setAuthTag(authTag);
-    let decrypted = decipher.update(encrypted, "hex", "utf8");
-    decrypted += decipher.final("utf8");
-    return decrypted;
-  } catch {
-    return texto;
-  }
-}
-
 async function setAuthSession(accessToken: string, refreshToken: string): Promise<void> {
   await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
 }
@@ -332,8 +297,6 @@ export {
   limparCacheGeral,
   _marcarPendente,
   _syncAposEscrita,
-  criptografar,
-  descriptografar,
   setAuthSession,
   clearAuthSession,
   addUsuarioFilter,

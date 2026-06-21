@@ -7,8 +7,6 @@ export {
   validarUUID,
   validarMes,
   normalizarNome,
-  criptografar,
-  descriptografar,
   limparCacheGeral,
   addUsuarioFilter,
   addTipoPessoaFilterStrict,

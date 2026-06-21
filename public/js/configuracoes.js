@@ -87,7 +87,7 @@ async function carregarPerfil() {
     const emailInput = document.getElementById("perfilEmail");
     document.getElementById("perfilNome").value = perfil.nome || "";
     emailInput.value = perfil.email || "";
-    document.getElementById("perfilEmailRecuperacao").value = perfil.email_recuperacao || "";
+
     if (perfil.avatar_url) {
       document.getElementById("avatarPreview").src = perfil.avatar_url;
     }
@@ -133,7 +133,6 @@ function configurarFormPerfil() {
     try {
       const payload = {
         nome: document.getElementById("perfilNome").value.trim(),
-        email_recuperacao: document.getElementById("perfilEmailRecuperacao").value.trim() || null,
       };
       if (usuarioAuth?.role === "admin") {
         payload.email = document.getElementById("perfilEmail").value.trim();
