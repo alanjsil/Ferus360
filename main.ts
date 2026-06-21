@@ -45,6 +45,17 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, "..", "public", "login.html"));
 
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details: any, callback: any) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [
+          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://lsjoopdtjjadfoqsaasu.supabase.co",
+        ],
+      },
+    });
+  });
+
   if (isDev) {
     //mainWindow.webContents.openDevTools();
   }
