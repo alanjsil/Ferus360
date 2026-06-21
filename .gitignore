@@ -22,6 +22,9 @@ dist-ts/
 # Trial config (gerado pelo build:trial)
 trial-config.json
 
+# Vendor (Chart.js copiado)
+public/vendor/
+
 # Playwright
 /test-results/
 /playwright-report/

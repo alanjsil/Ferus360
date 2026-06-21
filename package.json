@@ -12,7 +12,8 @@
   },
   "scripts": {
     "start": "npm run build:ts && electron .",
-    "build:ts": "rimraf dist-ts && tsc",
+    "copy:vendor": "tsx scripts/copy-vendor.mts",
+    "build:ts": "rimraf dist-ts && tsc && npm run copy:vendor",
     "postinstall": "npx @electron/rebuild -f -w better-sqlite3 && npm run build:ts",
     "pretest": "npm rebuild better-sqlite3",
     "posttest": "npx @electron/rebuild -f -w better-sqlite3",
