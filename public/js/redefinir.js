@@ -4,20 +4,11 @@
 
 import { iniciarToggleSenha, avaliarRequisitos } from "./password-utils.js";
 
-let recoveryAccessToken = null;
 let modoManual = false;
 
-/**
- * @returns {Promise<{ accessToken: string | boolean } | null>}
- */
 async function obterTokenRecuperacao() {
   const temToken = await window.electronAPI.temTokenRecuperacao();
   if (temToken) return { accessToken: true };
-  if (window.location.hash) {
-    const params = new URLSearchParams(window.location.hash.slice(1));
-    const accessToken = params.get("access_token");
-    if (accessToken) return { accessToken };
-  }
   return null;
 }
 
@@ -146,8 +137,7 @@ async function redefinir(event) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   const tokens = await obterTokenRecuperacao();
-  recoveryAccessToken = tokens?.accessToken || null;
-  if (recoveryAccessToken) {
+  if (tokens?.accessToken) {
     modoManual = false;
     document.getElementById("redefinirDeepInfo").style.display = "block";
     document.getElementById("redefinirFallback").style.display = "none";

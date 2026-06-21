@@ -137,18 +137,18 @@
 
 ### 1. Categorias (`categorias.html`)
 
-- [ ] 1.1 Criar categoria (nome 2-40 chars, salva, aparece na tabela)
-- [ ] 1.2 Criar categoria duplicada (mesmo nome + tipo → erro NOME_DUPLICADO)
-- [ ] 1.3 Criar categoria nome inválido (<2 ou >40 chars → block no front)
-- [ ] 1.4 Editar categoria (inline aparece, salva, tabela atualiza)
-- [ ] 1.5 Editar categoria — cancelar (Esc ou Cancelar → volta)
+- [x] 1.1 Criar categoria (nome 2-40 chars, salva, aparece na tabela)
+- [x] 1.2 Criar categoria duplicada (mesmo nome + tipo → erro NOME_DUPLICADO) | Existe um bug, se eu colocar o nome salvar, depois trocar a categoria, ele ignora duplicadas.
+- [x] 1.3 Criar categoria nome inválido (<2 ou >40 chars → block no front)
+- [x] 1.4 Editar categoria (inline aparece, salva, tabela atualiza)
+- [x] 1.5 Editar categoria — cancelar (Esc ou Cancelar → volta)
 - [ ] 1.6 Ativar/Desativar categoria (toggle, badge verde/vermelho)
 - [ ] 1.7 Desativar c/ lançamentos no mês → erro CATEGORIA_COM_LANCAMENTOS
 - [ ] 1.8 Filtrar por tipo (Todos/Receita/Despesa/Transferência)
 - [ ] 1.9 Categoria global (badge "Global" exibido)
 - [ ] 1.10 Edição inline — botões Salvar/Cancelar na actions-cell (não embaixo do input)
-- [ ] 1.11 Categoria global — botões Editar/Ativar ocultos para não-admin
-- [ ] 1.12 Categoria global — bloqueio no backend (update/toggle rejeita se não admin)
+- [x] 1.11 Categoria global — botões Editar/Ativar ocultos para não-admin
+- [x] 1.12 Categoria global — bloqueio no backend (update/toggle rejeita se não admin)
 - [ ] 1.13 Categorias compartilhadas PF↔PJ (toggle em configurações `compartilharCategorias`)
   - Quando ativo: categorias/subcategorias ignoram filtro `tipo_pessoa`
   - Contas/pessoas/lançamentos/orçamento continuam filtrados por `tipo_pessoa`
@@ -156,8 +156,8 @@
 
 #### Toast / Notificações
 
-- [ ] 1.13 Toast substitui alert() em categorias, configurações, admin, orçamento
-- [ ] 1.14 Toast empilha, emerge do canto direito, persiste até clique
+- [x] 1.13 Toast substitui alert() em categorias, configurações, admin, orçamento
+- [x] 1.14 Toast empilha, emerge do canto direito, persiste até clique
 
 #### Subcategorias
 

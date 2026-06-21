@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   configurarChamados();
   configurarNovoUsuario();
   configurarTipoPessoaToggle();
+  configurarAuditoria();
 });
 
 /**
@@ -743,6 +744,62 @@ function configurarNovoUsuario() {
       btnSalvar.textContent = "Criar usuário";
     }
   });
+}
+
+/* ---------- ABA 6 — AUDITORIA ---------- */
+
+function configurarAuditoria() {
+  document.getElementById("btnFiltrarAuditoria").addEventListener("click", carregarAuditoria);
+  document.getElementById("filtroAuditoriaAcao").addEventListener("change", carregarAuditoria);
+}
+
+async function carregarAuditoria() {
+  const tbody = document.getElementById("auditoriaBody");
+  const empty = document.getElementById("auditoriaEmpty");
+  const filtros = {
+    acao: document.getElementById("filtroAuditoriaAcao").value || undefined,
+    usuarioId: document.getElementById("filtroAuditoriaUsuario").value.trim() || undefined,
+    de: document.getElementById("filtroAuditoriaDe").value || undefined,
+    ate: document.getElementById("filtroAuditoriaAte").value || undefined,
+    limite: 100,
+  };
+
+  try {
+    const data = await window.electronAPI.adminGetAuditoria(filtros);
+    if (data?.error) {
+      tbody.innerHTML = "";
+      empty.hidden = false;
+      empty.textContent = "Erro ao carregar auditoria.";
+      return;
+    }
+
+    if (!data?.length) {
+      tbody.innerHTML = "";
+      empty.hidden = false;
+      empty.textContent = "Nenhum registro de auditoria encontrado.";
+      return;
+    }
+
+    empty.hidden = true;
+    tbody.innerHTML = data
+      .map(
+        (r) =>
+          `<tr>
+            <td>${formatarData(r.criado_em)}</td>
+            <td>${r.usuario?.nome ? escapeHtml(r.usuario.nome) + " (" + escapeHtml(r.usuario.email) + ")" : "—"}</td>
+            <td><span class="tag tag-${r.acao.toLowerCase()}">${escapeHtml(r.acao)}</span></td>
+            <td>${escapeHtml(r.entidade || "—")}</td>
+            <td style="font-size:11px;font-family:monospace">${escapeHtml(r.entidade_id?.slice(0, 8) || "—")}</td>
+            <td>${escapeHtml(r.ip || "—")}</td>
+            <td>${escapeHtml(r.contexto || "—")}</td>
+          </tr>`,
+      )
+      .join("");
+  } catch {
+    tbody.innerHTML = "";
+    empty.hidden = false;
+    empty.textContent = "Erro ao carregar auditoria.";
+  }
 }
 
 /* ---------- HELPERS ---------- */

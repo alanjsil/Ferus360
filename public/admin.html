@@ -27,6 +27,7 @@
       <button type="button" class="nav-item" data-tab="categorias">Categorias Globais</button>
       <button type="button" class="nav-item" data-tab="senhas">Redefinição de Senhas</button>
       <button type="button" class="nav-item" data-tab="chamados">Chamados <span class="nav-count badge-open" id="chamadosCount">0</span></button>
+      <button type="button" class="nav-item" data-tab="auditoria">Auditoria</button>
     </nav>
 
     <main class="admin-content">
@@ -288,6 +289,55 @@
             <p class="message" id="chamadoMessage" role="alert"></p>
           </div>
         </dialog>
+      </section>
+
+      <!-- ABA 6 — AUDITORIA -->
+      <section id="tab-auditoria" class="admin-tab">
+        <h2>Auditoria</h2>
+        <div class="tab-toolbar">
+          <div class="filtro-group">
+            <label>Ação</label>
+            <select id="filtroAuditoriaAcao">
+              <option value="">Todas</option>
+              <option value="CREATE">CREATE</option>
+              <option value="UPDATE">UPDATE</option>
+              <option value="DELETE">DELETE</option>
+              <option value="LOGIN">LOGIN</option>
+              <option value="LOGOUT">LOGOUT</option>
+              <option value="TROCAR_SENHA">TROCAR_SENHA</option>
+            </select>
+          </div>
+          <div class="filtro-group">
+            <label>Usuário</label>
+            <input id="filtroAuditoriaUsuario" type="text" placeholder="ID do usuário..." />
+          </div>
+          <div class="filtro-group">
+            <label>De</label>
+            <input id="filtroAuditoriaDe" type="date" />
+          </div>
+          <div class="filtro-group">
+            <label>Até</label>
+            <input id="filtroAuditoriaAte" type="date" />
+          </div>
+          <button type="button" class="btn-primary" id="btnFiltrarAuditoria">Filtrar</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="auditoriaTable">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Usuário</th>
+                <th>Ação</th>
+                <th>Entidade</th>
+                <th>ID Entidade</th>
+                <th>IP</th>
+                <th>Contexto</th>
+              </tr>
+            </thead>
+            <tbody id="auditoriaBody"></tbody>
+          </table>
+          <p class="empty-state" id="auditoriaEmpty">Nenhum registro de auditoria encontrado.</p>
+        </div>
       </section>
     </main>
 

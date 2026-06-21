@@ -307,6 +307,42 @@ body {
   font-size: 0.75rem;
   font-weight: 600;
 }
+/* ==========================================================================
+   TAGS (auditoria)
+   ========================================================================== */
+.tag {
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px dashed rgba(148, 163, 184, 0.6);
+  color: #94a3b8;
+}
+.tag-create {
+  border-color: #22c55e;
+  color: #bbf7d0;
+}
+.tag-update {
+  border-color: #eab308;
+  color: #fef08a;
+}
+.tag-delete {
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+.tag-login {
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+.tag-logout {
+  border-color: #a855f7;
+  color: #d8b4fe;
+}
+.tag-trocar_senha {
+  border-color: #f97316;
+  color: #fdba74;
+}
+
 .historico-item .msg {
   color: #cbd5e1;
   margin-top: 4px;
