@@ -214,6 +214,20 @@ async function setAuthSession(accessToken: string, refreshToken: string): Promis
 
 async function limparSessaoAuth(): Promise<void> {
   await supabase.auth.signOut();
+  if (database.getDb()) {
+    try {
+      const tabelas = [
+        "financas_lancamentos", "financas_orcamento", "financas_contas",
+        "financas_pessoas", "financas_categorias", "financas_subcategorias",
+        "financas_chamados",
+      ];
+      for (const tabela of tabelas) {
+        database.run(`DELETE FROM ${tabela}`);
+      }
+    } catch (err) {
+      logger.warn("repository", "Falha ao limpar cache local no logout", err);
+    }
+  }
 }
 
 function adicionarFiltroUsuario(query: any, usuarioId: string | null | undefined): any {

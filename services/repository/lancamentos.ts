@@ -53,6 +53,10 @@ async function getOrcamento(mes?: string, usuarioId?: string, tipoPessoa?: strin
     try {
       let where = "1=1";
       const params: Record<string, unknown> = {};
+      if (usuarioId) {
+        where += " AND usuario_id = @usuarioId";
+        params.usuarioId = usuarioId;
+      }
       if (mes) {
         where += " AND data_busca LIKE @mes";
         params.mes = mes + "%";
@@ -88,6 +92,12 @@ async function getAnosDisponiveis(usuarioId?: string, tipoPessoa?: string): Prom
       let oWhere = "deleted_at IS NULL";
       const lParams: Record<string, unknown> = {};
       const oParams: Record<string, unknown> = {};
+      if (usuarioId) {
+        lWhere += " AND usuario_id = @usuarioId";
+        lParams.usuarioId = usuarioId;
+        oWhere += " AND usuario_id = @usuarioIdO";
+        oParams.usuarioIdO = usuarioId;
+      }
       const lr = adicionarWhereTipoPessoa(lWhere, lParams, tipoPessoa);
       const or = adicionarWhereTipoPessoa(oWhere, oParams, tipoPessoa);
       const lancamentos = database.query(`SELECT DISTINCT substr(data, 1, 4) as ano FROM financas_lancamentos WHERE ${lr.where}`, lr.params).map((r: Record<string, unknown>) => Number(r.ano));
@@ -124,6 +134,10 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
     try {
       let lWhere = "deleted_at IS NULL AND status = 'PAGO' AND data >= @anoInicio AND data <= @anoFim";
       const params: Record<string, unknown> = { anoInicio: `${ano}-01-01`, anoFim: `${ano}-12-31` };
+      if (usuarioId) {
+        lWhere += " AND usuario_id = @usuarioId";
+        params.usuarioId = usuarioId;
+      }
       if (mes && mes !== "all") {
         const mesF = mes.toString().padStart(2, "0");
         lWhere += " AND data >= @mesInicio AND data <= @mesFim";
@@ -139,6 +153,10 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
 
       let oWhere = "deleted_at IS NULL AND data >= @anoInicio2 AND data <= @anoFim2";
       const oParams: Record<string, unknown> = { anoInicio2: `${ano}-01-01`, anoFim2: `${ano}-12-31` };
+      if (usuarioId) {
+        oWhere += " AND usuario_id = @usuarioIdO";
+        oParams.usuarioIdO = usuarioId;
+      }
       if (mes && mes !== "all") {
         oWhere += " AND mes = @mesN";
         oParams.mesN = parseInt(mes.toString());
@@ -210,6 +228,12 @@ async function getDashboard(mes?: string, usuarioId?: string, tipoPessoa?: strin
       const lParams: Record<string, unknown> = {};
       let oWhere = "deleted_at IS NULL";
       const oParams: Record<string, unknown> = {};
+      if (usuarioId) {
+        lWhere += " AND usuario_id = @usuarioId";
+        lParams.usuarioId = usuarioId;
+        oWhere += " AND usuario_id = @usuarioIdO";
+        oParams.usuarioIdO = usuarioId;
+      }
       if (mes) {
         lWhere += " AND data_busca LIKE @mes";
         lParams.mes = mes + "%";

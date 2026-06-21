@@ -448,8 +448,8 @@ async function recarregarCadastros() {
 
   await Promise.all([
     carregarCategorias(catBody, catEmpty),
-    loadContas(contasBody, contasEmpty),
-    loadPessoas(pessoasBody, pessoasEmpty),
+    carregarContas(contasBody, contasEmpty),
+    carregarPessoas(pessoasBody, pessoasEmpty),
   ]);
 }
 
@@ -473,7 +473,7 @@ function configurarCategorias() {
   const catEmpty = document.getElementById("catEmpty");
   const inlineForm = document.getElementById("inlineForm");
 
-  filtroTipo.addEventListener("change", () => renderizarCategorias);
+  filtroTipo.addEventListener("change", () => renderizarCategorias(catBody, catEmpty));
 
   novaCategoriaBtn.addEventListener("click", () => {
     inlineForm.hidden = false;
@@ -504,7 +504,7 @@ function configurarCategorias() {
         return;
       }
       categorias.push(data);
-      renderizarCategorias;
+      renderizarCategorias(catBody, catEmpty);
       inlineForm.hidden = true;
     } catch (err) {
       newCatMessage.textContent = err.message;
@@ -846,7 +846,7 @@ async function carregarCategorias(catBody, catEmpty) {
     const data = await window.electronAPI.listarCategorias();
     if (data && data.error) return;
     categorias = data || [];
-    renderizarCategorias;
+    renderizarCategorias(catBody, catEmpty);
   } catch {
     // ignore
   }
@@ -902,7 +902,7 @@ function renderizarCategorias(catBody, catEmpty) {
   catBody.querySelectorAll(".btn-edit-cat").forEach((btn) => {
     btn.addEventListener("click", () => {
       editingCatId = btn.dataset.id;
-      renderizarCategorias;
+      renderizarCategorias(catBody, catEmpty);
       const nomeInput = document.getElementById(`editNome_${editingCatId}`);
       if (nomeInput) {
         nomeInput.focus();
@@ -926,7 +926,7 @@ function renderizarCategorias(catBody, catEmpty) {
           data,
         );
         editingCatId = null;
-        renderizarCategorias;
+        renderizarCategorias(catBody, catEmpty);
       } catch {
         // ignore
       }
@@ -936,7 +936,7 @@ function renderizarCategorias(catBody, catEmpty) {
   catBody.querySelectorAll(".btn-cancel-edit").forEach((btn) => {
     btn.addEventListener("click", () => {
       editingCatId = null;
-      renderizarCategorias;
+      renderizarCategorias(catBody, catEmpty);
     });
   });
 
@@ -953,7 +953,7 @@ function renderizarCategorias(catBody, catEmpty) {
           categorias.find((c) => c.id === id),
           data,
         );
-        renderizarCategorias;
+        renderizarCategorias(catBody, catEmpty);
       } catch {
         // ignore
       }
@@ -969,7 +969,7 @@ function renderizarCategorias(catBody, catEmpty) {
       }
       if (e.key === "Escape") {
         editingCatId = null;
-        renderizarCategorias;
+        renderizarCategorias(catBody, catEmpty);
       }
     });
   });

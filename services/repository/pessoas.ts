@@ -14,6 +14,10 @@ async function getPessoas(usuarioId?: string, tipoPessoa?: string): Promise<Pess
     try {
       let where = "deleted_at IS NULL";
       const params: Record<string, unknown> = {};
+      if (usuarioId) {
+        where += " AND usuario_id = @usuarioId";
+        params.usuarioId = usuarioId;
+      }
       const r = adicionarWhereTipoPessoa(where, params, tipoPessoa);
       const data = database.query(`SELECT * FROM financas_pessoas WHERE ${r.where} ORDER BY nome`, r.params).map((r2) => _doSQLite(r2));
       if (data.length > 0) return data as unknown as Pessoa[];
