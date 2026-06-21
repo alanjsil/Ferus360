@@ -27,6 +27,7 @@
       "tsconfig.json": true,
       "vitest.config.js": true,
       "eslint.config.mjs": true,
+      "playwright.config.ts": true,
       "vitest.config.integrado.js": true,
 
       // Documentos

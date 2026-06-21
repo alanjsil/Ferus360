@@ -16,6 +16,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createMockSupabase, createAndLoginUser, createLancamentoPayload, createContaPayload } from "./helpers.js";
 import * as repo from "../../services/repository.js";
+import { buildAuthService } from "../../services/auth.js";
 
 describe("Fluxo Integrado: Login → Conta → Lançamentos", () => {
   let _auth;
@@ -23,14 +24,10 @@ describe("Fluxo Integrado: Login → Conta → Lançamentos", () => {
   let usuario;
 
   beforeEach(async () => {
-    vi.resetModules();
-
     mockSupabase = createMockSupabase();
     repo.__setSupabase(mockSupabase);
 
-    const authModule = await import("../../services/auth.js");
-
-    _auth = authModule.buildAuthService({
+    _auth = buildAuthService({
       supabase: mockSupabase,
       createClient: vi.fn(() => mockSupabase),
       onLogin: vi.fn(),

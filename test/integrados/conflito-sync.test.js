@@ -17,6 +17,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import Database from "better-sqlite3";
 import { createMockSupabase, createAndLoginUser } from "./helpers.js";
+import * as repo from "../../services/repository.js";
 import * as syncModule from "../../services/sync.js";
 import * as databaseModule from "../../services/database.js";
 
@@ -100,8 +101,6 @@ describe("Conflito de Sincronia (offline → push → CONFLICT)", () => {
   let usuario;
 
   beforeEach(async () => {
-    vi.resetModules();
-
     // SQLite em memória
     db = new Database(":memory:");
     criarSchema(db);
@@ -110,7 +109,6 @@ describe("Conflito de Sincronia (offline → push → CONFLICT)", () => {
 
     // Mock Supabase (com suporte a sync_upsert/sync_insert/sync_delete)
     mockSupabase = createMockSupabase();
-    const repo = await import("../../services/repository.js");
     repo.__setSupabase(mockSupabase);
 
     // Mock conexão para o sync engine

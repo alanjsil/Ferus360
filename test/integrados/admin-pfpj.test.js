@@ -27,8 +27,6 @@ describe("Fluxo Integrado: Admin → Filtro PF/PJ", () => {
   const CAT_PJ_RECEITA = 2;
 
   beforeEach(async () => {
-    vi.resetModules();
-
     mockSupabase = createMockSupabase();
     repo.__setSupabase(mockSupabase);
 
