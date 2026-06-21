@@ -47,7 +47,7 @@ describe("admin (serviço de administração)", () => {
       getChamados: vi.fn(),
       getChamadoById: vi.fn(),
       updateChamado: vi.fn(),
-      createChamado: vi.fn(),
+      criarChamado: vi.fn(),
       logAuditoria: vi.fn().mockResolvedValue({}),
       getAuditoria: vi.fn().mockResolvedValue([]),
     };
@@ -59,7 +59,7 @@ describe("admin (serviço de administração)", () => {
     };
 
     const mod = await import("../../../services/admin.js");
-    admin = mod.buildAdminService({
+    admin = mod.construirAdminService({
       repository: mockRepository,
       auth: mockAuth,
       crypto: { randomBytes: vi.fn() },
@@ -556,20 +556,20 @@ describe("admin (serviço de administração)", () => {
     });
   });
 
-  describe("createChamado", () => {
+  describe("criarChamado", () => {
     it("cria chamado via repository", async () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({ id: "admin-1", role: "admin" });
       const payload = { usuario_id: "00000000-0000-0000-0000-000000000001", titulo: "Problema", descricao: "Ajuda" };
-      mockRepository.createChamado.mockResolvedValue({
+      mockRepository.criarChamado.mockResolvedValue({
         id: "00000000-0000-0000-0000-000000000002", ...payload,
       });
 
       // Act
-      const result = await admin.createChamado(payload);
+      const result = await admin.criarChamado(payload);
 
       // Assert
-      expect(mockRepository.createChamado).toHaveBeenCalledWith(payload);
+      expect(mockRepository.criarChamado).toHaveBeenCalledWith(payload);
       expect(result.titulo).toBe("Problema");
     });
   });

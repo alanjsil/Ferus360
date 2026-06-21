@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createMockSupabase, createAndLoginUser } from "./helpers.js";
 import * as repo from "../../services/repository.js";
-import { buildAuthService } from "../../services/auth.js";
+import { construirAuthService } from "../../services/auth.js";
 
 describe("Fluxo Integrado: Login → Criar Lançamento → Validar Dashboard", () => {
   let auth;
@@ -26,7 +26,7 @@ describe("Fluxo Integrado: Login → Criar Lançamento → Validar Dashboard", (
     mockSupabase = createMockSupabase();
     repo.__setSupabase(mockSupabase);
 
-    auth = buildAuthService({
+    auth = construirAuthService({
       supabase: mockSupabase,
       createClient: vi.fn(() => mockSupabase),
       onLogin: vi.fn(),
@@ -69,7 +69,7 @@ describe("Fluxo Integrado: Login → Criar Lançamento → Validar Dashboard", (
   /* ─────────────────────────────────────────────────────────── */
 
   it("Step 2: Criar lançamento DESPESA com sucesso", async () => {
-    const lancamento = await repo.createLancamento(
+    const lancamento = await repo.criarLancamento(
       {
         tipo: "DESPESA",
         valor: 150.5,
@@ -94,7 +94,7 @@ describe("Fluxo Integrado: Login → Criar Lançamento → Validar Dashboard", (
   /* ─────────────────────────────────────────────────────────── */
 
   it("Step 3: Criar lançamento RECEITA com sucesso", async () => {
-    const receita = await repo.createLancamento(
+    const receita = await repo.criarLancamento(
       {
         tipo: "RECEITA",
         valor: 3000,
@@ -124,18 +124,18 @@ describe("Fluxo Integrado: Login → Criar Lançamento → Validar Dashboard", (
     });
 
     // Usuário 1 cria 2 lançamentos
-    await repo.createLancamento(
+    await repo.criarLancamento(
       { tipo: "DESPESA", valor: 100, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 },
       usuario.id,
     );
 
-    await repo.createLancamento(
+    await repo.criarLancamento(
       { tipo: "DESPESA", valor: 200, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 },
       usuario.id,
     );
 
     // Usuário 2 cria 1 lançamento
-    await repo.createLancamento(
+    await repo.criarLancamento(
       { tipo: "DESPESA", valor: 500, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 },
       outroUser.user.id,
     );
@@ -162,19 +162,19 @@ describe("Fluxo Integrado: Login → Criar Lançamento → Validar Dashboard", (
     const userId = loginResult.usuario.id;
 
     // Step 2: Criar receita de R$ 3000
-    const receita = await repo.createLancamento(
+    const receita = await repo.criarLancamento(
       { tipo: "RECEITA", valor: 3000, status: "PAGO", data: "2026-06-01", data_busca: "2026-06", categoria_id: 2 },
       userId,
     );
     expect(receita.id).toBeTruthy();
 
     // Step 3: Criar despesas
-    await repo.createLancamento(
+    await repo.criarLancamento(
       { tipo: "DESPESA", valor: 500, status: "PAGO", descricao: "Alimentação", data: "2026-06-15", data_busca: "2026-06", categoria_id: 1 },
       userId,
     );
 
-    await repo.createLancamento(
+    await repo.criarLancamento(
       { tipo: "DESPESA", valor: 300, status: "PAGO", descricao: "Transporte", data: "2026-06-15", data_busca: "2026-06", categoria_id: 1 },
       userId,
     );
@@ -196,7 +196,7 @@ describe("Fluxo Integrado: Login → Criar Lançamento → Validar Dashboard", (
     const userId = usuario.id;
 
     // Criar lançamento inicial
-    const lancamento = await repo.createLancamento(
+    const lancamento = await repo.criarLancamento(
       { tipo: "DESPESA", valor: 100, status: "PENDENTE", data: "2026-06-15", data_busca: "2026-06", categoria_id: 1 },
       userId,
     );
@@ -227,7 +227,7 @@ describe("Fluxo Integrado: Login → Criar Lançamento → Validar Dashboard", (
     const userId = usuario.id;
 
     // Criar lançamento
-    const lancamento = await repo.createLancamento(
+    const lancamento = await repo.criarLancamento(
       { tipo: "DESPESA", valor: 150, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 },
       userId,
     );
@@ -239,7 +239,7 @@ describe("Fluxo Integrado: Login → Criar Lançamento → Validar Dashboard", (
     expect(lancamentos.some((l) => l.id === lancamentoId)).toBe(true);
 
     // Deletar
-    await repo.deleteLancamento(lancamentoId, userId);
+    await repo.deletarLancamento(lancamentoId, userId);
 
     // Validar que foi deletado
     const lancamentosApos = await repo.getLancamentos("2026-06", userId);
@@ -254,13 +254,13 @@ describe("Fluxo Integrado: Login → Criar Lançamento → Validar Dashboard", (
     const userId = usuario.id;
 
     // Criar lançamento em junho
-    await repo.createLancamento(
+    await repo.criarLancamento(
       { tipo: "DESPESA", data: "2026-06-15", valor: 100, status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 },
       userId,
     );
 
     // Criar lançamento em julho
-    await repo.createLancamento(
+    await repo.criarLancamento(
       { tipo: "DESPESA", data: "2026-07-15", valor: 200, status: "PENDENTE", data_busca: "2026-07", categoria_id: 1 },
       userId,
     );

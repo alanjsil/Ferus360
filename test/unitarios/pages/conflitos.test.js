@@ -34,7 +34,7 @@ function baseMocks() {
   return {
     getConflitos: vi.fn().mockResolvedValue([]),
     resolverConflito: vi.fn().mockResolvedValue({ success: true }),
-    forceSync: vi.fn().mockResolvedValue({}),
+    forcarSync: vi.fn().mockResolvedValue({}),
     logError: vi.fn(),
     logWarn: vi.fn(),
   };
@@ -150,7 +150,7 @@ describe("conflitos (página de conflitos de sincronia)", () => {
 
       await resolver("local", conflito, null);
 
-      expect(window.electronAPI.forceSync).toHaveBeenCalled();
+      expect(window.electronAPI.forcarSync).toHaveBeenCalled();
     });
 
     it("remove card com animação ao resolver", async () => {

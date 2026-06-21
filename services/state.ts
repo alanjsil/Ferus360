@@ -51,7 +51,7 @@ function getState(key?: keyof State): State | State[keyof State] {
   return key ? state[key] : state;
 }
 
-function resetState(): void {
+function reiniciarState(): void {
   state = {
     categorias: [],
     subcategorias: [],
@@ -67,4 +67,4 @@ function resetState(): void {
   };
 }
 
-export { getState, setState, resetState };
+export { getState, setState, reiniciarState };

@@ -111,7 +111,7 @@ function createHandlers(
       return await auth.redefinirSenha(recoveryTokens.accessToken, recoveryTokens.refreshToken, novaSenha);
     },
 
-    handleAuthTemTokenRecuperacao: async () => auth.hasRecoveryTokens(),
+    handleAuthTemTokenRecuperacao: async () => auth.temTokenRecuperacao(),
 
     handleAuthRenovar: async (_event: unknown, refreshToken: string) => {
       try {
@@ -169,7 +169,7 @@ function createHandlers(
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
         if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
-        const data = await repository.createConta(usuarioId, payload);
+        const data = await repository.criarConta(usuarioId, payload);
         const current = (getState("contas") as unknown[]) || [];
         setState("contas", [...current, data]);
         return data;
@@ -198,7 +198,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
-        const data = await repository.deleteConta(usuarioId, id);
+        const data = await repository.deletarConta(usuarioId, id);
         const current = (getState("contas") as { id: string }[]) || [];
         setState(
           "contas",
@@ -224,7 +224,7 @@ function createHandlers(
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
         if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
-        const data = await repository.createPessoa(usuarioId, payload);
+        const data = await repository.criarPessoa(usuarioId, payload);
         const current = (getState("pessoas") as unknown[]) || [];
         setState("pessoas", [...current, data]);
         return data;
@@ -253,7 +253,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
-        const data = await repository.deletePessoa(usuarioId, id);
+        const data = await repository.deletarPessoa(usuarioId, id);
         const current = (getState("pessoas") as { id: string }[]) || [];
         setState(
           "pessoas",
@@ -312,7 +312,7 @@ function createHandlers(
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
         if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
-        const data = await repository.createLancamento(payload, usuarioId);
+        const data = await repository.criarLancamento(payload, usuarioId);
         const current = (getState("lancamentos") as unknown[]) || [];
         setState("lancamentos", [...current, data]);
         return data;
@@ -328,7 +328,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
-        const data = await repository.deleteLancamento(id, usuarioId);
+        const data = await repository.deletarLancamento(id, usuarioId);
         const current = (getState("lancamentos") as { id: string }[]) || [];
         setState(
           "lancamentos",
@@ -373,7 +373,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
-      const data = await repository.createTransferencia(payload, usuarioId);
+        const data = await repository.criarTransferencia(payload, usuarioId);
       const current = (getState("lancamentos") as unknown[]) || [];
       setState("lancamentos", [...current, ...(data as unknown[])]);
       return data;
@@ -382,7 +382,7 @@ function createHandlers(
     handleTransferenciaDelete: async (_event: unknown, grupoId: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const data = await repository.deleteTransferencia(grupoId, usuarioId);
+      const data = await repository.deletarTransferencia(grupoId, usuarioId);
       const current = (getState("lancamentos") as { transferencia_grupo_id: string }[]) || [];
       setState(
         "lancamentos",
@@ -416,7 +416,7 @@ function createHandlers(
       try {
         const ehGlobal = payload.eh_global ?? payload.ehGlobal ?? false;
         if (!payload.tipo_pessoa && !ehGlobal) payload.tipo_pessoa = obterTipoPessoaAtivo();
-        const data = await repository.createCategoria({
+        const data = await repository.criarCategoria({
           ...payload,
           ...(ehGlobal ? {} : { usuarioId }),
         });
@@ -465,7 +465,7 @@ function createHandlers(
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
         if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
-        const data = await repository.createSubcategoria(usuarioId, payload);
+        const data = await repository.criarSubcategoria(usuarioId, payload);
         return data;
       } catch (err) {
         return { error: (err as Error).message };
@@ -487,7 +487,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
-        const data = await repository.deleteSubcategoria(id);
+        const data = await repository.deletarSubcategoria(id);
         return data;
       } catch (err) {
         return { error: (err as Error).message };
@@ -516,7 +516,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
-        return await repository.deleteSessao(sessaoId);
+        return await repository.deletarSessao(sessaoId);
       } catch (err) {
         logger.error("ipcHandlers", "Erro ao encerrar sessão", err);
         return { error: "FALHA_AO_ENCERRAR_SESSAO" };
@@ -674,7 +674,7 @@ function createHandlers(
 
     handleSyncForce: async () => {
       if (!sync) return { error: "SYNC_NAO_INICIALIZADO" };
-      await sync.forceSync();
+      await sync.forcarSync();
       return { success: true };
     },
 
@@ -751,11 +751,11 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   }
 
   const repository = require("./repository");
-  const { setState, getState, resetState } = require("./state");
+  const { setState, getState, reiniciarState } = require("./state");
   const auth = require("./auth");
   const admin = require("./admin");
   const sync = require("./sync");
-  const handlers = createHandlers(repository, setState, getState, resetState, auth, admin, promptSenha, sync);
+  const handlers = createHandlers(repository, setState, getState, reiniciarState, auth, admin, promptSenha, sync);
 
   ipcMain.handle("log:error", handlers.handleLogError);
   ipcMain.handle("log:warn", handlers.handleLogWarn);

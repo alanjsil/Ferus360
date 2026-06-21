@@ -232,7 +232,7 @@ describe("createLancamento", () => {
       valor: 100,
     };
     resetData({ id: 1, ...payload });
-    const result = await repo.createLancamento(payload);
+    const result = await repo.criarLancamento(payload);
     expect(mockSupabase.from).toHaveBeenCalledWith("financas_lancamentos");
     expect(result).toEqual({ id: 1, ...payload });
   });
@@ -245,41 +245,41 @@ describe("createLancamento", () => {
       status: "PAGO",
     };
     resetData({ id: 1, data_pagamento: expect.any(String), ...payload });
-    const result = await repo.createLancamento(payload);
+    const result = await repo.criarLancamento(payload);
     expect(result.data_pagamento).toBeDefined();
     expect(result.data_pagamento).toEqual(expect.any(String));
   });
 
   it("rejeita tipo inválido", async () => {
     // Act / Assert
-    await expect(repo.createLancamento({ data: "2026-06-01", tipo: "INVALIDA", valor: 100 })).rejects.toThrow("Tipo inválido");
+    await expect(repo.criarLancamento({ data: "2026-06-01", tipo: "INVALIDA", valor: 100 })).rejects.toThrow("Tipo inválido");
   });
 
   it("rejeita valor não positivo", async () => {
     // Act / Assert
-    await expect(repo.createLancamento({ data: "2026-06-01", tipo: "DESPESA", valor: 0 })).rejects.toThrow("Valor deve ser um número positivo");
+    await expect(repo.criarLancamento({ data: "2026-06-01", tipo: "DESPESA", valor: 0 })).rejects.toThrow("Valor deve ser um número positivo");
   });
 
   it("rejeita valor negativo", async () => {
     // Act / Assert
-    await expect(repo.createLancamento({ data: "2026-06-01", tipo: "DESPESA", valor: -50 })).rejects.toThrow("Valor deve ser um número positivo");
+    await expect(repo.criarLancamento({ data: "2026-06-01", tipo: "DESPESA", valor: -50 })).rejects.toThrow("Valor deve ser um número positivo");
   });
 
   it("rejeita descrição muito longa", async () => {
     // Arrange
     const descricaoLonga = "A".repeat(501);
     // Act / Assert
-    await expect(repo.createLancamento({ data: "2026-06-01", tipo: "DESPESA", valor: 100, descricao: descricaoLonga })).rejects.toThrow("Descrição deve ter no máximo 500 caracteres");
+    await expect(repo.criarLancamento({ data: "2026-06-01", tipo: "DESPESA", valor: 100, descricao: descricaoLonga })).rejects.toThrow("Descrição deve ter no máximo 500 caracteres");
   });
 
   it("rejeita status inválido", async () => {
     // Act / Assert
-    await expect(repo.createLancamento({ data: "2026-06-01", tipo: "RECEITA", valor: 100, status: "FATURADO" })).rejects.toThrow("Status inválido");
+    await expect(repo.criarLancamento({ data: "2026-06-01", tipo: "RECEITA", valor: 100, status: "FATURADO" })).rejects.toThrow("Status inválido");
   });
 
   it("rejeita data ausente", async () => {
     // Act / Assert
-    await expect(repo.createLancamento({ tipo: "RECEITA", valor: 100 })).rejects.toThrow("Data é obrigatória");
+    await expect(repo.criarLancamento({ tipo: "RECEITA", valor: 100 })).rejects.toThrow("Data é obrigatória");
   });
 });
 
@@ -287,7 +287,7 @@ describe("createLancamento", () => {
 
 describe("deleteLancamento", () => {
   it("deletes by id", async () => {
-    const result = await repo.deleteLancamento(42);
+    const result = await repo.deletarLancamento(42);
     expect(result).toEqual({ success: true });
     expect(mockSupabase.from).toHaveBeenCalledWith("financas_lancamentos");
   });
@@ -472,7 +472,7 @@ describe("deleteSessao", () => {
       json: async () => ({ success: true }),
     });
 
-    const result = await repo.deleteSessao("sessao-1");
+    const result = await repo.deletarSessao("sessao-1");
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
       expect.stringContaining("/functions/v1/delete-user-session"),
@@ -485,7 +485,7 @@ describe("deleteSessao", () => {
     globalThis.fetch.mockRejectedValue(new Error("network error"));
     mockSupabaseAdmin.rpc.mockResolvedValue({ data: null, error: null });
 
-    const result = await repo.deleteSessao("sessao-1");
+    const result = await repo.deletarSessao("sessao-1");
 
     expect(mockSupabaseAdmin.rpc).toHaveBeenCalledWith("delete_user_session", {
       p_session_id: "sessao-1",
@@ -494,15 +494,15 @@ describe("deleteSessao", () => {
   });
 
   it("lança erro se sessaoId é vazio", async () => {
-    await expect(repo.deleteSessao()).rejects.toThrow("SESSAO_ID_AUSENTE");
-    await expect(repo.deleteSessao("")).rejects.toThrow("SESSAO_ID_AUSENTE");
+    await expect(repo.deletarSessao()).rejects.toThrow("SESSAO_ID_AUSENTE");
+    await expect(repo.deletarSessao("")).rejects.toThrow("SESSAO_ID_AUSENTE");
   });
 
   it("lança erro se edge function e RPC falham", async () => {
     globalThis.fetch.mockRejectedValue(new Error("network error"));
     mockSupabaseAdmin.rpc.mockResolvedValue({ data: null, error: new Error("RPC error") });
 
-    await expect(repo.deleteSessao("sessao-1")).rejects.toThrow("RPC error");
+    await expect(repo.deletarSessao("sessao-1")).rejects.toThrow("RPC error");
   });
 });
 
@@ -537,7 +537,7 @@ describe("createCategoria", () => {
     resetData(null); // maybeSingle → activeExisting = null
     pushResult(null); // maybeSingle → inactiveExisting = null
     pushResult({ id: "cat-1", nome: "Salário", tipo: "RECEITA", usuario_id: "user-1" }); // insert result
-    const result = await repo.createCategoria({ nome: "Salário", tipo: "RECEITA", usuarioId: "user-1" });
+    const result = await repo.criarCategoria({ nome: "Salário", tipo: "RECEITA", usuarioId: "user-1" });
     expect(result).toEqual({ id: "cat-1", nome: "Salário", tipo: "RECEITA", usuario_id: "user-1" });
     expect(mockSupabase.from).toHaveBeenCalledWith("financas_categorias");
   });
@@ -546,7 +546,7 @@ describe("createCategoria", () => {
     resetData(null); // maybeSingle → activeExisting = null
     pushResult(null); // maybeSingle → inactiveExisting = null
     pushResult({ id: "cat-1" }, new Error("DB error")); // insert error
-    await expect(repo.createCategoria({ nome: "Teste", tipo: "RECEITA", usuarioId: "u-1" })).rejects.toThrow("DB error");
+    await expect(repo.criarCategoria({ nome: "Teste", tipo: "RECEITA", usuarioId: "u-1" })).rejects.toThrow("DB error");
   });
 });
 
@@ -591,7 +591,7 @@ describe("createSubcategoria", () => {
   it("cria uma subcategoria", async () => {
     resetData(null); // maybeSingle → no existing
     pushResult({ id: "sub-1", nome: "Aluguel", categoria_id: "cat-1", usuario_id: "user-123" }); // insert result
-    const result = await repo.createSubcategoria("user-123", { nome: "Aluguel", categoria_id: "cat-1" });
+    const result = await repo.criarSubcategoria("user-123", { nome: "Aluguel", categoria_id: "cat-1" });
     expect(result).toEqual({ id: "sub-1", nome: "Aluguel", categoria_id: "cat-1", usuario_id: "user-123" });
     expect(mockSupabase.from).toHaveBeenCalledWith("financas_subcategorias");
   });
@@ -612,7 +612,7 @@ describe("updateSubcategoria", () => {
 
 describe("deleteSubcategoria", () => {
   it("exclui uma subcategoria", async () => {
-    const result = await repo.deleteSubcategoria("sub-1");
+    const result = await repo.deletarSubcategoria("sub-1");
     expect(result).toEqual({ success: true });
     expect(mockSupabase.from).toHaveBeenCalledWith("financas_subcategorias");
   });
@@ -634,7 +634,7 @@ describe("setAuthSession", () => {
 
 describe("clearAuthSession", () => {
   it("chama auth.signOut", async () => {
-    await repo.clearAuthSession();
+    await repo.limparSessaoAuth();
     expect(mockSupabase.auth.signOut).toHaveBeenCalledOnce();
   });
 });
@@ -805,14 +805,14 @@ describe("getChamadoById", () => {
 describe("createChamado", () => {
   it("cria um chamado com array de respostas vazio", async () => {
     resetData({ id: 1, titulo: "Bug", descricao: "Erro", respostas: [] });
-    const result = await repo.createChamado({ titulo: "Bug", descricao: "Erro", usuario_id: "user-1" });
+    const result = await repo.criarChamado({ titulo: "Bug", descricao: "Erro", usuario_id: "user-1" });
     expect(result).toEqual({ id: 1, titulo: "Bug", descricao: "Erro", respostas: [] });
     expect(mockSupabase.from).toHaveBeenCalledWith("financas_chamados");
   });
 
   it("throws on error", async () => {
     resetData(null, new Error("DB error"));
-    await expect(repo.createChamado({ titulo: "Bug" })).rejects.toThrow("DB error");
+    await expect(repo.criarChamado({ titulo: "Bug" })).rejects.toThrow("DB error");
   });
 });
 
@@ -936,7 +936,7 @@ describe("createTransferencia", () => {
     resetData({ id: 1, tipo: "DESPESA", transferencia_grupo_id: "mock-uuid-transf", conta_origem_id: 1, conta_destino_id: null });
     pushResult({ id: 2, tipo: "RECEITA", transferencia_grupo_id: "mock-uuid-transf", conta_origem_id: null, conta_destino_id: 2 });
     // Act
-    const result = await repo.createTransferencia(payload);
+    const result = await repo.criarTransferencia(payload);
 
     expect(result).toHaveLength(2);
     expect(result[0].transferencia_grupo_id).toBe("mock-uuid-transf");
@@ -955,7 +955,7 @@ describe("createTransferencia", () => {
     resetData({ id: 1, tipo: "DESPESA" });
     pushResult({ id: 2, tipo: "RECEITA" });
 
-    await repo.createTransferencia({ data: "2026-06-01", status: "PENDENTE", valor: 100, conta_origem_id: 1, conta_destino_id: 2 }, "user-123");
+    await repo.criarTransferencia({ data: "2026-06-01", status: "PENDENTE", valor: 100, conta_origem_id: 1, conta_destino_id: 2 }, "user-123");
 
     const firstInsert = mockSupabase.from.mock.results[0].value.insert.mock.calls[0][0];
     const secondInsert = mockSupabase.from.mock.results[1].value.insert.mock.calls[0][0];
@@ -966,7 +966,7 @@ describe("createTransferencia", () => {
   it("lança erro no primeiro insert", async () => {
     resetData(null, new Error("DB error"));
 
-    await expect(repo.createTransferencia({ data: "2026-06-01", status: "PENDENTE", valor: 100, conta_origem_id: 1, conta_destino_id: 2 })).rejects.toThrow("DB error");
+    await expect(repo.criarTransferencia({ data: "2026-06-01", status: "PENDENTE", valor: 100, conta_origem_id: 1, conta_destino_id: 2 })).rejects.toThrow("DB error");
   });
 });
 
@@ -974,14 +974,14 @@ describe("createTransferencia", () => {
 
 describe("deleteTransferencia", () => {
   it("deleta por grupoId e retorna success", async () => {
-    const result = await repo.deleteTransferencia("grupo-1");
+    const result = await repo.deletarTransferencia("grupo-1");
     expect(result).toEqual({ success: true });
     expect(mockSupabase.from).toHaveBeenCalledWith("financas_lancamentos");
   });
 
   it("lança erro", async () => {
     resetData([], new Error("DB error"));
-    await expect(repo.deleteTransferencia("grupo-1")).rejects.toThrow("DB error");
+    await expect(repo.deletarTransferencia("grupo-1")).rejects.toThrow("DB error");
   });
 });
 
@@ -1063,24 +1063,24 @@ describe("updateTransferencia", () => {
 describe("createConta", () => {
   it("rejeita nome vazio", async () => {
     // Act / Assert
-    await expect(repo.createConta("user-1", { nome: "" })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
+    await expect(repo.criarConta("user-1", { nome: "" })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
   });
 
   it("rejeita nome muito curto", async () => {
     // Act / Assert
-    await expect(repo.createConta("user-1", { nome: "A" })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
+    await expect(repo.criarConta("user-1", { nome: "A" })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
   });
 
   it("rejeita nome muito longo", async () => {
     // Act / Assert
-    await expect(repo.createConta("user-1", { nome: "A".repeat(41) })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
+    await expect(repo.criarConta("user-1", { nome: "A".repeat(41) })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
   });
 
   it("cria conta com nome válido", async () => {
     // Arrange
     resetData({ id: "conta-1", nome: "Nubank", usuario_id: "user-1" });
     // Act
-    const result = await repo.createConta("user-1", { nome: "Nubank" });
+    const result = await repo.criarConta("user-1", { nome: "Nubank" });
     // Assert
     expect(result).toEqual({ id: "conta-1", nome: "Nubank", usuario_id: "user-1" });
     expect(mockSupabase.from).toHaveBeenCalledWith("financas_contas");
@@ -1123,24 +1123,24 @@ describe("updateConta", () => {
 describe("createPessoa", () => {
   it("rejeita nome vazio", async () => {
     // Act / Assert
-    await expect(repo.createPessoa("user-1", { nome: "" })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
+    await expect(repo.criarPessoa("user-1", { nome: "" })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
   });
 
   it("rejeita nome muito curto", async () => {
     // Act / Assert
-    await expect(repo.createPessoa("user-1", { nome: "A" })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
+    await expect(repo.criarPessoa("user-1", { nome: "A" })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
   });
 
   it("rejeita nome muito longo", async () => {
     // Act / Assert
-    await expect(repo.createPessoa("user-1", { nome: "A".repeat(41) })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
+    await expect(repo.criarPessoa("user-1", { nome: "A".repeat(41) })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
   });
 
   it("cria pessoa com nome válido", async () => {
     // Arrange
     resetData({ id: "pessoa-1", nome: "João", usuario_id: "user-1" });
     // Act
-    const result = await repo.createPessoa("user-1", { nome: "João" });
+    const result = await repo.criarPessoa("user-1", { nome: "João" });
     // Assert
     expect(result).toEqual({ id: "pessoa-1", nome: "João", usuario_id: "user-1" });
     expect(mockSupabase.from).toHaveBeenCalledWith("financas_pessoas");

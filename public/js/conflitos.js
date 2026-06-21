@@ -226,7 +226,7 @@ async function resolver(decisao, conflito, payloadMesclado, cardEl) {
       }, 400);
     }
 
-    await window.electronAPI.forceSync().catch(() => {});
+    await window.electronAPI.forcarSync().catch(() => {});
   } catch (err) {
     window.electronAPI?.logError("conflitos", "Erro ao resolver conflito", err);
     exibirToast("Erro ao resolver conflito", "error");
@@ -364,7 +364,7 @@ function configurarEventos() {
     btn.innerHTML = '<span class="spinner"></span> Sincronizando...';
 
     try {
-      await window.electronAPI.forceSync();
+      await window.electronAPI.forcarSync();
       exibirToast("Sincronização concluída", "success");
       await carregarConflitos();
     } catch (err) {

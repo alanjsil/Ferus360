@@ -29,7 +29,7 @@ describe("serviço auth padrão (modo teste)", () => {
     expect(authMod.verificarSenha).toBeInstanceOf(Function);
     expect(authMod.setRecoveryTokens).toBeInstanceOf(Function);
     expect(authMod.getRecoveryTokens).toBeInstanceOf(Function);
-    expect(authMod.buildAuthService).toBeInstanceOf(Function);
+    expect(authMod.construirAuthService).toBeInstanceOf(Function);
   });
 });
 
@@ -74,7 +74,7 @@ describe("auth (wrapper do Supabase Auth)", () => {
     onLogout = vi.fn();
 
     const mod = await import("../../../services/auth.js");
-    auth = mod.buildAuthService({
+    auth = mod.construirAuthService({
       supabase: mockSupabase,
       createClient: vi.fn(() => mockSupabase),
       onLogin,

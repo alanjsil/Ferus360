@@ -71,7 +71,7 @@ async function getChamados(usuarioId?: string): Promise<Chamado[]> {
   return data;
 }
 
-async function createChamado(payload: Record<string, unknown>): Promise<Chamado> {
+async function criarChamado(payload: Record<string, unknown>): Promise<Chamado> {
   const { data, error } = await supabase
     .from("financas_chamados")
     .insert({ ...payload, respostas: [] })
@@ -171,7 +171,7 @@ export {
   getTransacoesCliente,
   getChamadoById,
   getChamados,
-  createChamado,
+  criarChamado,
   updateChamado,
   getClientes,
   getResumoCliente,

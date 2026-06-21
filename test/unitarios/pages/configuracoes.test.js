@@ -89,14 +89,14 @@ describe("configurações (página de perfil)", () => {
         ],
       }),
       excluirConta: vi.fn().mockResolvedValue({}),
-      listCategorias: vi.fn().mockResolvedValue([]),
-      createCategoria: vi.fn(),
+      listarCategorias: vi.fn().mockResolvedValue([]),
+      criarCategoria: vi.fn(),
       updateCategoria: vi.fn(),
       toggleCategoriaAtivo: vi.fn(),
       getSubcategorias: vi.fn().mockResolvedValue([]),
-      createSubcategoria: vi.fn(),
+      criarSubcategoria: vi.fn(),
       updateSubcategoria: vi.fn(),
-      deleteSubcategoria: vi.fn(),
+      deletarSubcategoria: vi.fn(),
       logout: vi.fn(),
       getTipoPessoa: vi.fn().mockResolvedValue("PF"),
       setTipoPessoa: vi.fn().mockResolvedValue({ success: true }),
@@ -567,7 +567,7 @@ describe("configurações (página de perfil)", () => {
     });
 
     it("cria categoria via API", async () => {
-      window.electronAPI.createCategoria.mockResolvedValue({
+      window.electronAPI.criarCategoria.mockResolvedValue({
         id: "cat-n", nome: "Nova", tipo: "RECEITA", ativo: true,
       });
       await loadModule();
@@ -575,7 +575,7 @@ describe("configurações (página de perfil)", () => {
       document.getElementById("newCatNome").value = "Nova";
       document.getElementById("salvarNovaCat").click();
       await vi.waitFor(() => {
-        expect(window.electronAPI.createCategoria).toHaveBeenCalledWith({
+        expect(window.electronAPI.criarCategoria).toHaveBeenCalledWith({
           nome: "Nova", tipo: "RECEITA",
         });
       });

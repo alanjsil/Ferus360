@@ -42,14 +42,14 @@ function configurarEventListeners() {
     atualizarMesesFiltro();
     await carregarOrcamento();
     atualizarResumo();
-    renderTabela();
+    renderizarTabela();
   });
 
   document.getElementById("filtroMes").addEventListener("change", async function () {
     filtroAtualMes = this.value;
     await carregarOrcamento();
     atualizarResumo();
-    renderTabela();
+    renderizarTabela();
   });
 
   document.querySelectorAll(".pill-filter[data-filter-tipo]:not(.status-filter)").forEach((btn) => {
@@ -58,7 +58,7 @@ function configurarEventListeners() {
       this.classList.add("active");
       filtroAtualTipo = this.dataset.filterTipo || "all";
       atualizarResumo();
-      renderTabela();
+      renderizarTabela();
     });
   });
 
@@ -68,7 +68,7 @@ function configurarEventListeners() {
       this.classList.add("active");
       filtroAtualStatus = this.dataset.filterStatus || "all";
       atualizarResumo();
-      renderTabela();
+      renderizarTabela();
     });
   });
 
@@ -194,7 +194,7 @@ async function carregarLancamentos() {
   atualizarAnosFiltro();
   atualizarMesesFiltro();
   atualizarResumo();
-  renderTabela();
+  renderizarTabela();
 }
 
 /**
@@ -379,7 +379,7 @@ function atualizarMesesFiltro() {
 }
 
 // ====== TABELA ======
-function renderTabela() {
+function renderizarTabela() {
   const tbody = document.getElementById("tabelaLancamentos");
   tbody.innerHTML = "";
 
@@ -441,7 +441,7 @@ export {
   atualizarResumo,
   formatDate,
   formatCurrency,
-  renderTabela,
+  renderizarTabela,
   lancamentos,
   filtroAtualTipo,
   filtroAtualStatus,

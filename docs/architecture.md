@@ -161,7 +161,7 @@ let state = {
 | -------------------- | ------------------------------------------------------------------- |
 | `setState(key, val)` | Atualiza `state[key]` e emite `state:updated` para todas as janelas |
 | `getState(key)`      | Retorna `state[key]` (ou state inteiro se key omitida)              |
-| `resetState()`       | Zera todas as chaves (usado no logout)                              |
+| `reiniciarState()`       | Zera todas as chaves (usado no logout)                              |
 
 ### Notify pattern
 

@@ -113,7 +113,7 @@ function getStatus(extra: Record<string, unknown> = {}): SyncStatus {
   };
 }
 
-async function forceSync(): Promise<void> {
+async function forcarSync(): Promise<void> {
   await push();
   await pull();
   notificarStatus({ forcar: true });
@@ -365,7 +365,7 @@ async function resolverConflito(conflitoId: string, decisao: "local" | "remoto" 
     }
   }
 
-  await forceSync();
+  await forcarSync();
 }
 
 function __setDatabase(mockDb: BetterSqlite3.Database): void {
@@ -383,7 +383,7 @@ export {
   init,
   start,
   stop,
-  forceSync,
+  forcarSync,
   getStatus,
   getConflitos,
   resolverConflito,

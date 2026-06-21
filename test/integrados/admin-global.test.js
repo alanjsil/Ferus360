@@ -15,7 +15,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createMockSupabase, createAndLoginUser } from "./helpers.js";
 import * as repo from "../../services/repository.js";
-import { buildAuthService } from "../../services/auth.js";
+import { construirAuthService } from "../../services/auth.js";
 
 describe("Fluxo Integrado: Admin → Categorias Globais", () => {
   let _auth;
@@ -27,7 +27,7 @@ describe("Fluxo Integrado: Admin → Categorias Globais", () => {
     mockSupabase = createMockSupabase();
     repo.__setSupabase(mockSupabase);
 
-    _auth = buildAuthService({
+    _auth = construirAuthService({
       supabase: mockSupabase,
       createClient: vi.fn(() => mockSupabase),
       onLogin: vi.fn(),
@@ -63,7 +63,7 @@ describe("Fluxo Integrado: Admin → Categorias Globais", () => {
     const db = mockSupabase.__db();
     const qtdAntes = db.financas_categorias.length;
 
-    const cat = await repo.createCategoria({
+    const cat = await repo.criarCategoria({
       nome: "Assinaturas",
       tipo: "DESPESA",
       usuarioId: admin.id,
@@ -87,7 +87,7 @@ describe("Fluxo Integrado: Admin → Categorias Globais", () => {
 
   it("Step 2: Usuário comum visualiza categorias globais", async () => {
     // Admin cria categoria global
-    await repo.createCategoria({
+    await repo.criarCategoria({
       nome: "Assinaturas",
       tipo: "DESPESA",
       usuarioId: admin.id,
@@ -110,7 +110,7 @@ describe("Fluxo Integrado: Admin → Categorias Globais", () => {
   /* ─────────────────────────────────────────────────────────── */
 
   it("Step 3: Usuário comum cria categoria pessoal (não global)", async () => {
-    const cat = await repo.createCategoria({
+    const cat = await repo.criarCategoria({
       nome: "Meu investimento",
       tipo: "RECEITA",
       usuarioId: usuario.id,
@@ -135,7 +135,7 @@ describe("Fluxo Integrado: Admin → Categorias Globais", () => {
 
   it("Step 4: Isolamento entre categorias globais e pessoais", async () => {
     // Admin cria global
-    await repo.createCategoria({
+    await repo.criarCategoria({
       nome: "Global adm",
       tipo: "DESPESA",
       usuarioId: admin.id,
@@ -143,7 +143,7 @@ describe("Fluxo Integrado: Admin → Categorias Globais", () => {
     });
 
     // Usuário cria pessoal
-    await repo.createCategoria({
+    await repo.criarCategoria({
       nome: "Pessoal user",
       tipo: "DESPESA",
       usuarioId: usuario.id,

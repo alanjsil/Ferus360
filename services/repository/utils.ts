@@ -2,10 +2,10 @@ import type {
   Usuario, Categoria, Subcategoria, Conta, Pessoa,
   Lancamento, Orcamento, Chamado, Auditoria,
   DashboardData, DashboardDadosResult, AuthResult,
-  AdminDashboard, Sessao, CreateCategoriaPayload,
-  CreateSubcategoriaPayload, createContaPayload,
-  createPessoaPayload, CreateLancamentoPayload,
-  CreateTransferenciaPayload, UpdatePerfilPayload,
+  AdminDashboard, Sessao, CriarCategoriaPayload,
+  CriarSubcategoriaPayload, CriarContaPayload,
+  CriarPessoaPayload, CriarLancamentoPayload,
+  CriarTransferenciaPayload, UpdatePerfilPayload,
   ImportarOrcamentoItem, FiltrosAuditoria,
 } from "../../src/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -212,11 +212,11 @@ async function setAuthSession(accessToken: string, refreshToken: string): Promis
   await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
 }
 
-async function clearAuthSession(): Promise<void> {
+async function limparSessaoAuth(): Promise<void> {
   await supabase.auth.signOut();
 }
 
-function addUsuarioFilter(query: any, usuarioId: string | null | undefined): any {
+function adicionarFiltroUsuario(query: any, usuarioId: string | null | undefined): any {
   if (usuarioId) {
     return query.eq("usuario_id", usuarioId);
   }
@@ -224,21 +224,21 @@ function addUsuarioFilter(query: any, usuarioId: string | null | undefined): any
   return query;
 }
 
-function addTipoPessoaFilterStrict(query: any, tipoPessoa?: string): any {
+function adicionarFiltroTipoPessoaRestrito(query: any, tipoPessoa?: string): any {
   if (tipoPessoa) {
     return query.eq("tipo_pessoa", tipoPessoa);
   }
   return query;
 }
 
-function addTipoPessoaCategoriaFilter(query: any, tipoPessoa?: string, compartilhar?: boolean): any {
+function adicionarFiltroCategoriaTipoPessoa(query: any, tipoPessoa?: string, compartilhar?: boolean): any {
   if (compartilhar || !tipoPessoa) {
     return query;
   }
   return query.or(`tipo_pessoa.is.null,tipo_pessoa.eq.${tipoPessoa}`);
 }
 
-function addTipoPessoaWhere(where: string, params: Record<string, unknown>, tipoPessoa?: string, permitirNulo = false): { where: string; params: Record<string, unknown> } {
+function adicionarWhereTipoPessoa(where: string, params: Record<string, unknown>, tipoPessoa?: string, permitirNulo = false): { where: string; params: Record<string, unknown> } {
   if (!tipoPessoa) return { where, params };
   if (permitirNulo) {
     return {
@@ -298,11 +298,11 @@ export {
   _marcarPendente,
   _syncAposEscrita,
   setAuthSession,
-  clearAuthSession,
-  addUsuarioFilter,
-  addTipoPessoaFilterStrict,
-  addTipoPessoaCategoriaFilter,
-  addTipoPessoaWhere,
+  limparSessaoAuth,
+  adicionarFiltroUsuario,
+  adicionarFiltroTipoPessoaRestrito,
+  adicionarFiltroCategoriaTipoPessoa,
+  adicionarWhereTipoPessoa,
   validarUUID,
   validarMes,
   normalizarNome,

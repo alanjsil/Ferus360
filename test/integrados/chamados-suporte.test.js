@@ -15,7 +15,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createMockSupabase, createAndLoginUser } from "./helpers.js";
 import * as repo from "../../services/repository.js";
-import { buildAuthService } from "../../services/auth.js";
+import { construirAuthService } from "../../services/auth.js";
 
 describe("Fluxo Integrado: Login → Chamados (Suporte)", () => {
   let _auth;
@@ -26,7 +26,7 @@ describe("Fluxo Integrado: Login → Chamados (Suporte)", () => {
     mockSupabase = createMockSupabase();
     repo.__setSupabase(mockSupabase);
 
-    _auth = buildAuthService({
+    _auth = construirAuthService({
       supabase: mockSupabase,
       createClient: vi.fn(() => mockSupabase),
       onLogin: vi.fn(),
@@ -49,7 +49,7 @@ describe("Fluxo Integrado: Login → Chamados (Suporte)", () => {
   /* ─────────────────────────────────────────────────────────── */
 
   it("Step 1: Abrir chamado de suporte com sucesso", async () => {
-    const chamado = await repo.createChamado({
+    const chamado = await repo.criarChamado({
       usuario_id: usuario.id,
       titulo: "Erro ao gerar relatório",
       descricao: "O relatório de junho não está gerando.",
@@ -77,7 +77,7 @@ describe("Fluxo Integrado: Login → Chamados (Suporte)", () => {
     ];
 
     for (const c of chamados) {
-      await repo.createChamado({
+      await repo.criarChamado({
         ...c,
         usuario_id: usuario.id,
         status: "ABERTO",
@@ -99,7 +99,7 @@ describe("Fluxo Integrado: Login → Chamados (Suporte)", () => {
 
   it("Step 3: Isolamento de chamados entre usuários", async () => {
     // Usuário 1 abre chamado
-    await repo.createChamado({
+    await repo.criarChamado({
       titulo: "Chamado do User1",
       descricao: "Problema A",
       usuario_id: usuario.id,
@@ -113,7 +113,7 @@ describe("Fluxo Integrado: Login → Chamados (Suporte)", () => {
     });
 
     // Usuário 2 abre chamado
-    await repo.createChamado({
+    await repo.criarChamado({
       titulo: "Chamado do User2",
       descricao: "Problema B",
       usuario_id: outroUser.user.id,
@@ -134,7 +134,7 @@ describe("Fluxo Integrado: Login → Chamados (Suporte)", () => {
   /* ─────────────────────────────────────────────────────────── */
 
   it("Step 4: Atualizar status do chamado (ABERTO → EM_ANDAMENTO → RESOLVIDO)", async () => {
-    const chamado = await repo.createChamado({
+    const chamado = await repo.criarChamado({
       titulo: "Bug crítico",
       descricao: "Sistema quebrado",
       usuario_id: usuario.id,
@@ -178,7 +178,7 @@ describe("Fluxo Integrado: Login → Chamados (Suporte)", () => {
     ];
 
     for (const d of dados) {
-      await repo.createChamado({
+      await repo.criarChamado({
         ...d,
         descricao: "Descrição " + d.titulo,
         usuario_id: usuario.id,

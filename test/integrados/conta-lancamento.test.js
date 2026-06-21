@@ -16,7 +16,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createMockSupabase, createAndLoginUser, createLancamentoPayload, createContaPayload } from "./helpers.js";
 import * as repo from "../../services/repository.js";
-import { buildAuthService } from "../../services/auth.js";
+import { construirAuthService } from "../../services/auth.js";
 
 describe("Fluxo Integrado: Login → Conta → Lançamentos", () => {
   let _auth;
@@ -27,7 +27,7 @@ describe("Fluxo Integrado: Login → Conta → Lançamentos", () => {
     mockSupabase = createMockSupabase();
     repo.__setSupabase(mockSupabase);
 
-    _auth = buildAuthService({
+    _auth = construirAuthService({
       supabase: mockSupabase,
       createClient: vi.fn(() => mockSupabase),
       onLogin: vi.fn(),
@@ -179,7 +179,7 @@ describe("Fluxo Integrado: Login → Conta → Lançamentos", () => {
       categoria_id: 1,
     };
 
-    const result = await repo.createTransferencia(payload, usuario.id);
+    const result = await repo.criarTransferencia(payload, usuario.id);
 
     expect(result).toHaveLength(2);
     expect(result[0].transferencia_grupo_id).toBeTruthy();

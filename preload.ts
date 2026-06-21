@@ -34,39 +34,39 @@ const api = {
 
   // ==================== CATEGORIAS ====================
   getCategorias: (tipo?: string) => ipcRenderer.invoke("categorias:get", tipo),
-  listCategorias: () => ipcRenderer.invoke("cat:list"),
-  createCategoria: (payload: any) => ipcRenderer.invoke("cat:create", payload),
+  listarCategorias: () => ipcRenderer.invoke("cat:list"),
+  criarCategoria: (payload: any) => ipcRenderer.invoke("cat:create", payload),
   updateCategoria: (id: string, patch: any) => ipcRenderer.invoke("cat:update", id, patch),
   toggleCategoriaAtivo: (id: string) => ipcRenderer.invoke("cat:toggleAtivo", id),
 
   // ==================== SUBCATEGORIAS ====================
   getSubcategorias: (categoriaId?: string) => ipcRenderer.invoke("subcategorias:get", categoriaId),
-  createSubcategoria: (payload: any) => ipcRenderer.invoke("subcat:create", payload),
+  criarSubcategoria: (payload: any) => ipcRenderer.invoke("subcat:create", payload),
   updateSubcategoria: (id: string, patch: any) => ipcRenderer.invoke("subcat:update", id, patch),
-  deleteSubcategoria: (id: string) => ipcRenderer.invoke("subcat:delete", id),
+  deletarSubcategoria: (id: string) => ipcRenderer.invoke("subcat:delete", id),
 
   // ==================== CONTAS ====================
   getContas: () => ipcRenderer.invoke("contas:get"),
-  createConta: (payload: any) => ipcRenderer.invoke("conta:create", payload),
+  criarConta: (payload: any) => ipcRenderer.invoke("conta:create", payload),
   updateConta: (id: string, patch: any) => ipcRenderer.invoke("conta:update", id, patch),
-  deleteConta: (id: string) => ipcRenderer.invoke("conta:delete", id),
+  deletarConta: (id: string) => ipcRenderer.invoke("conta:delete", id),
 
   // ==================== PESSOAS ====================
   getPessoas: () => ipcRenderer.invoke("pessoas:get"),
-  createPessoa: (payload: any) => ipcRenderer.invoke("pessoa:create", payload),
+  criarPessoa: (payload: any) => ipcRenderer.invoke("pessoa:create", payload),
   updatePessoa: (id: string, patch: any) => ipcRenderer.invoke("pessoa:update", id, patch),
-  deletePessoa: (id: string) => ipcRenderer.invoke("pessoa:delete", id),
+  deletarPessoa: (id: string) => ipcRenderer.invoke("pessoa:delete", id),
 
   // ==================== LANÇAMENTOS ====================
   getLancamentos: (mes: string) => ipcRenderer.invoke("lancamentos:get", mes),
-  createLancamento: (payload: any) => ipcRenderer.invoke("lancamentos:create", payload),
+  criarLancamento: (payload: any) => ipcRenderer.invoke("lancamentos:create", payload),
   updateLancamento: (id: string, payload: any) => ipcRenderer.invoke("lancamentos:update", id, payload),
-  deleteLancamento: (id: string) => ipcRenderer.invoke("lancamentos:delete", id),
+  deletarLancamento: (id: string) => ipcRenderer.invoke("lancamentos:delete", id),
 
   // ==================== TRANSFERÊNCIAS ====================
-  createTransferencia: (payload: any) => ipcRenderer.invoke("transferencia:create", payload),
+  criarTransferencia: (payload: any) => ipcRenderer.invoke("transferencia:create", payload),
   updateTransferencia: (grupoId: string, payload: any) => ipcRenderer.invoke("transferencia:update", grupoId, payload),
-  deleteTransferencia: (grupoId: string) => ipcRenderer.invoke("transferencia:delete", grupoId),
+  deletarTransferencia: (grupoId: string) => ipcRenderer.invoke("transferencia:delete", grupoId),
 
   // ==================== ORÇAMENTO ====================
   getOrcamento: (mes: string) => ipcRenderer.invoke("orcamento:get", mes),
@@ -105,7 +105,7 @@ const api = {
   getTrialStatus: () => ipcRenderer.invoke("trial:status"),
 
   // ==================== SYNC ====================
-  forceSync: () => ipcRenderer.invoke("sync:force"),
+  forcarSync: () => ipcRenderer.invoke("sync:force"),
   getConflitos: () => ipcRenderer.invoke("sync:conflitos"),
   resolverConflito: (id: string, decisao: string, payloadMesclado: any) => ipcRenderer.invoke("sync:resolver-conflito", id, decisao, payloadMesclado),
   onSyncStatus: (callback: (data: any) => void) => ipcRenderer.on("sync:status", (_e: any, data: any) => callback(data)),

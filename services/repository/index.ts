@@ -3,40 +3,40 @@ export {
   __setSupabaseAdmin,
   __setDatabase,
   setAuthSession,
-  clearAuthSession,
+  limparSessaoAuth,
   validarUUID,
   validarMes,
   normalizarNome,
   limparCacheGeral,
-  addUsuarioFilter,
-  addTipoPessoaFilterStrict,
-  addTipoPessoaCategoriaFilter,
-  addTipoPessoaWhere,
+  adicionarFiltroUsuario,
+  adicionarFiltroTipoPessoaRestrito,
+  adicionarFiltroCategoriaTipoPessoa,
+  adicionarWhereTipoPessoa,
 } from "./utils";
 
 export {
   getCategorias,
-  createCategoria,
+  criarCategoria,
   updateCategoria,
   toggleCategoriaAtivo,
   getSubcategorias,
-  createSubcategoria,
+  criarSubcategoria,
   updateSubcategoria,
-  deleteSubcategoria,
+  deletarSubcategoria,
 } from "./categorias";
 
 export {
   getContas,
-  createConta,
+  criarConta,
   updateConta,
-  deleteConta,
+  deletarConta,
 } from "./contas";
 
 export {
   getPessoas,
-  createPessoa,
+  criarPessoa,
   updatePessoa,
-  deletePessoa,
+  deletarPessoa,
 } from "./pessoas";
 
 export {
@@ -45,11 +45,11 @@ export {
   getAnosDisponiveis,
   getDashboardDados,
   getDashboard,
-  createLancamento,
-  deleteLancamento,
+  criarLancamento,
+  deletarLancamento,
   updateLancamento,
-  createTransferencia,
-  deleteTransferencia,
+  criarTransferencia,
+  deletarTransferencia,
   updateTransferencia,
   importarOrcamento,
 } from "./lancamentos";
@@ -58,7 +58,7 @@ export {
   getPerfil,
   updatePerfil,
   getSessoes,
-  deleteSessao,
+  deletarSessao,
   exportarDados,
   excluirConta,
   revokeOtherSessions,
@@ -69,7 +69,7 @@ export {
   getTransacoesCliente,
   getChamadoById,
   getChamados,
-  createChamado,
+  criarChamado,
   updateChamado,
   getClientes,
   getResumoCliente,

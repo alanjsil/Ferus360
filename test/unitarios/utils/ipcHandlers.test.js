@@ -23,26 +23,26 @@ const mockRepository = {
   getOrcamento: vi.fn(),
   getDashboardDados: vi.fn(),
   getDashboard: vi.fn(),
-  createLancamento: vi.fn(),
-  deleteLancamento: vi.fn(),
+  criarLancamento: vi.fn(),
+  deletarLancamento: vi.fn(),
   updateLancamento: vi.fn(),
   importarOrcamento: vi.fn(),
-  createCategoria: vi.fn(),
+  criarCategoria: vi.fn(),
   updateCategoria: vi.fn(),
   toggleCategoriaAtivo: vi.fn(),
-  createSubcategoria: vi.fn(),
+  criarSubcategoria: vi.fn(),
   updateSubcategoria: vi.fn(),
-  deleteSubcategoria: vi.fn(),
+  deletarSubcategoria: vi.fn(),
   setAuthSession: vi.fn(),
   getPerfil: vi.fn(),
-  createConta: vi.fn(),
+  criarConta: vi.fn(),
   updateConta: vi.fn(),
-  deleteConta: vi.fn(),
-  createPessoa: vi.fn(),
+  deletarConta: vi.fn(),
+  criarPessoa: vi.fn(),
   updatePessoa: vi.fn(),
-  deletePessoa: vi.fn(),
+  deletarPessoa: vi.fn(),
   getSessoes: vi.fn(),
-  deleteSessao: vi.fn(),
+  deletarSessao: vi.fn(),
 };
 
 const mockSetState = vi.fn();
@@ -105,22 +105,22 @@ describe("ipcHandlers (handlers de IPC)", () => {
     mockRepository.getOrcamento.mockResolvedValue([mockData]);
     mockRepository.getDashboardDados.mockResolvedValue(mockData);
     mockRepository.getDashboard.mockResolvedValue(mockData);
-    mockRepository.createLancamento.mockResolvedValue(mockData);
-    mockRepository.deleteLancamento.mockResolvedValue({ success: true });
+    mockRepository.criarLancamento.mockResolvedValue(mockData);
+    mockRepository.deletarLancamento.mockResolvedValue({ success: true });
     mockRepository.updateLancamento.mockResolvedValue(mockData);
     mockRepository.importarOrcamento.mockResolvedValue({ success: true, importados: 2 });
-    mockRepository.createCategoria.mockResolvedValue(mockData);
+    mockRepository.criarCategoria.mockResolvedValue(mockData);
     mockRepository.updateCategoria.mockResolvedValue(mockData);
     mockRepository.toggleCategoriaAtivo.mockResolvedValue(mockData);
-    mockRepository.createSubcategoria.mockResolvedValue(mockData);
+    mockRepository.criarSubcategoria.mockResolvedValue(mockData);
     mockRepository.updateSubcategoria.mockResolvedValue(mockData);
-    mockRepository.deleteSubcategoria.mockResolvedValue({ success: true });
-    mockRepository.createConta.mockResolvedValue(mockData);
+    mockRepository.deletarSubcategoria.mockResolvedValue({ success: true });
+    mockRepository.criarConta.mockResolvedValue(mockData);
     mockRepository.updateConta.mockResolvedValue(mockData);
-    mockRepository.deleteConta.mockResolvedValue({ success: true });
-    mockRepository.createPessoa.mockResolvedValue(mockData);
+    mockRepository.deletarConta.mockResolvedValue({ success: true });
+    mockRepository.criarPessoa.mockResolvedValue(mockData);
     mockRepository.updatePessoa.mockResolvedValue(mockData);
-    mockRepository.deletePessoa.mockResolvedValue({ success: true });
+    mockRepository.deletarPessoa.mockResolvedValue({ success: true });
 
     mockAdminService.getDashboard.mockResolvedValue({ totalReceitas: 10000, totalDespesas: 5000, saldo: 5000, totalUsuariosAtivos: 10 });
     mockAdminService.getClientes.mockResolvedValue([{ id: "u-1", nome: "User", email: "u@t.com", ativo: true }]);
@@ -163,7 +163,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
       expect(result.token).toBe("at-1");
     });
 
-    it("handleAuthLogout chama logout, resetState e setState(null)", async () => {
+    it("handleAuthLogout chama logout, reiniciarState e setState(null)", async () => {
       // Arrange
       const mockResetStateFn = vi.fn();
       handlers = ipcHandlersModule.createHandlers(
@@ -284,7 +284,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("calls repository.createConta on conta:create", async () => {
       const payload = { nome: "Nova Conta" };
       const result = await handlers.handleContaCreate(null, payload);
-      expect(mockRepository.createConta).toHaveBeenCalledWith("user-123", { ...payload, tipo_pessoa: "PF" });
+      expect(mockRepository.criarConta).toHaveBeenCalledWith("user-123", { ...payload, tipo_pessoa: "PF" });
       expect(mockSetState).toHaveBeenCalledWith("contas", [mockData]);
       expect(result).toEqual(mockData);
     });
@@ -298,14 +298,14 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("calls repository.deleteConta on conta:delete", async () => {
       const result = await handlers.handleContaDelete(null, 1);
-      expect(mockRepository.deleteConta).toHaveBeenCalledWith("user-123", 1);
+      expect(mockRepository.deletarConta).toHaveBeenCalledWith("user-123", 1);
       expect(result).toEqual({ success: true });
     });
 
     it("calls repository.createPessoa on pessoa:create", async () => {
       const payload = { nome: "Nova Pessoa" };
       const result = await handlers.handlePessoaCreate(null, payload);
-      expect(mockRepository.createPessoa).toHaveBeenCalledWith("user-123", { ...payload, tipo_pessoa: "PF" });
+      expect(mockRepository.criarPessoa).toHaveBeenCalledWith("user-123", { ...payload, tipo_pessoa: "PF" });
       expect(mockSetState).toHaveBeenCalledWith("pessoas", [mockData]);
       expect(result).toEqual(mockData);
     });
@@ -319,7 +319,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("calls repository.deletePessoa on pessoa:delete", async () => {
       const result = await handlers.handlePessoaDelete(null, 1);
-      expect(mockRepository.deletePessoa).toHaveBeenCalledWith("user-123", 1);
+      expect(mockRepository.deletarPessoa).toHaveBeenCalledWith("user-123", 1);
       expect(result).toEqual({ success: true });
     });
 
@@ -360,14 +360,14 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("calls repository.createLancamento on lancamentos:create", async () => {
       const payload = { data: "2026-06-01", tipo: "DESPESA", valor: 100 };
       const result = await handlers.handleLancamentosCreate(null, payload);
-      expect(mockRepository.createLancamento).toHaveBeenCalledWith({ ...payload, tipo_pessoa: "PF" }, "user-123");
+      expect(mockRepository.criarLancamento).toHaveBeenCalledWith({ ...payload, tipo_pessoa: "PF" }, "user-123");
       expect(mockSetState).toHaveBeenCalledWith("lancamentos", [mockData]);
       expect(result).toEqual(mockData);
     });
 
     it("calls repository.deleteLancamento on lancamentos:delete", async () => {
       const result = await handlers.handleLancamentosDelete(null, 42);
-      expect(mockRepository.deleteLancamento).toHaveBeenCalledWith(42, "user-123");
+      expect(mockRepository.deletarLancamento).toHaveBeenCalledWith(42, "user-123");
       expect(result).toEqual({ success: true });
     });
 
@@ -408,7 +408,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("returns UNAUTHORIZED for conta:create without usuario logado", async () => {
       const result = await handlers.handleContaCreate(null, { nome: "X" });
       expect(result).toEqual({ error: "UNAUTHORIZED" });
-      expect(mockRepository.createConta).not.toHaveBeenCalled();
+      expect(mockRepository.criarConta).not.toHaveBeenCalled();
     });
 
     it("returns UNAUTHORIZED for conta:update without usuario logado", async () => {
@@ -420,13 +420,13 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("returns UNAUTHORIZED for conta:delete without usuario logado", async () => {
       const result = await handlers.handleContaDelete(null, 1);
       expect(result).toEqual({ error: "UNAUTHORIZED" });
-      expect(mockRepository.deleteConta).not.toHaveBeenCalled();
+      expect(mockRepository.deletarConta).not.toHaveBeenCalled();
     });
 
     it("returns UNAUTHORIZED for pessoa:create without usuario logado", async () => {
       const result = await handlers.handlePessoaCreate(null, { nome: "X" });
       expect(result).toEqual({ error: "UNAUTHORIZED" });
-      expect(mockRepository.createPessoa).not.toHaveBeenCalled();
+      expect(mockRepository.criarPessoa).not.toHaveBeenCalled();
     });
 
     it("returns UNAUTHORIZED for lancamentos:get without usuario logado", async () => {
@@ -471,9 +471,9 @@ describe("ipcHandlers (handlers de IPC)", () => {
     });
 
     it("handleConfigEncerrarSessao encerra sessão", async () => {
-      mockRepository.deleteSessao.mockResolvedValue({ success: true });
+      mockRepository.deletarSessao.mockResolvedValue({ success: true });
       const result = await handlers.handleConfigEncerrarSessao(null, "sessao-1");
-      expect(mockRepository.deleteSessao).toHaveBeenCalledWith("sessao-1");
+      expect(mockRepository.deletarSessao).toHaveBeenCalledWith("sessao-1");
       expect(result).toEqual({ success: true });
     });
 
@@ -526,7 +526,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("cat:create calls createCategoria with payload and token", async () => {
       const payload = { nome: "Nova Cat", tipo: "RECEITA" };
       const result = await handlers.handleCatCreate(null, payload);
-      expect(mockRepository.createCategoria).toHaveBeenCalledWith({ ...payload, usuarioId: "user-123", tipo_pessoa: "PF" });
+      expect(mockRepository.criarCategoria).toHaveBeenCalledWith({ ...payload, usuarioId: "user-123", tipo_pessoa: "PF" });
       expect(result).toEqual(mockData);
     });
 
@@ -536,7 +536,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
       );
       const result = await noAuth.handleCatCreate(null, { nome: "X", tipo: "RECEITA" });
       expect(result).toEqual({ error: "UNAUTHORIZED" });
-      expect(mockRepository.createCategoria).not.toHaveBeenCalled();
+      expect(mockRepository.criarCategoria).not.toHaveBeenCalled();
     });
 
     it("cat:update calls updateCategoria", async () => {
@@ -566,7 +566,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("subcat:create calls createSubcategoria", async () => {
       const payload = { nome: "Sub", categoria_id: "cat-1" };
       const result = await handlers.handleSubcatCreate(null, payload);
-      expect(mockRepository.createSubcategoria).toHaveBeenCalledWith("user-123", { ...payload, tipo_pessoa: "PF" });
+      expect(mockRepository.criarSubcategoria).toHaveBeenCalledWith("user-123", { ...payload, tipo_pessoa: "PF" });
       expect(result).toEqual(mockData);
     });
 
@@ -578,12 +578,12 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("subcat:delete calls deleteSubcategoria", async () => {
       const result = await handlers.handleSubcatDelete(null, "sub-1");
-      expect(mockRepository.deleteSubcategoria).toHaveBeenCalledWith("sub-1");
+      expect(mockRepository.deletarSubcategoria).toHaveBeenCalledWith("sub-1");
       expect(result).toEqual({ success: true });
     });
 
     it("subcat:delete retorna mensagem de erro quando rejeita", async () => {
-      mockRepository.deleteSubcategoria.mockRejectedValue(new Error("ERRO_DELETAR"));
+      mockRepository.deletarSubcategoria.mockRejectedValue(new Error("ERRO_DELETAR"));
       const result = await handlers.handleSubcatDelete(null, "sub-1");
       expect(result).toEqual({ error: "ERRO_DELETAR" });
     });

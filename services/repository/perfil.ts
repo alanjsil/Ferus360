@@ -56,7 +56,7 @@ async function getSessoes(usuarioId: string): Promise<Sessao[]> {
   }
 }
 
-async function deleteSessao(sessaoId: string): Promise<{ success: boolean }> {
+async function deletarSessao(sessaoId: string): Promise<{ success: boolean }> {
   if (!sessaoId) {
     throw new Error("SESSAO_ID_AUSENTE");
   }
@@ -108,4 +108,4 @@ async function revokeOtherSessions(): Promise<unknown> {
   }
 }
 
-export { getPerfil, updatePerfil, getSessoes, deleteSessao, exportarDados, excluirConta, revokeOtherSessions };
+export { getPerfil, updatePerfil, getSessoes, deletarSessao, exportarDados, excluirConta, revokeOtherSessions };

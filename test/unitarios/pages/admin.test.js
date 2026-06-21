@@ -55,9 +55,9 @@ function baseMocks() {
     adminUpdateChamado: vi.fn(),
     adminGetAuditoria: vi.fn().mockResolvedValue([]),
     adminCriarUsuario: vi.fn(),
-    listCategorias: vi.fn().mockResolvedValue([]),
+    listarCategorias: vi.fn().mockResolvedValue([]),
     updateCategoria: vi.fn(),
-    createCategoria: vi.fn(),
+    criarCategoria: vi.fn(),
     toggleCategoriaAtivo: vi.fn(),
     logout: vi.fn(),
   };
@@ -101,7 +101,7 @@ describe("admin (página administrativa)", () => {
     });
 
     it("carrega categorias globais", () => {
-      expect(window.electronAPI.listCategorias).toHaveBeenCalled();
+      expect(window.electronAPI.listarCategorias).toHaveBeenCalled();
     });
   });
 
@@ -226,7 +226,7 @@ describe("admin (página administrativa)", () => {
 
       it("cria categoria global via API", async () => {
       // Arrange
-      window.electronAPI.createCategoria = vi.fn().mockResolvedValue({
+      window.electronAPI.criarCategoria = vi.fn().mockResolvedValue({
         id: "cg1", nome: "Global", tipo: "RECEITA", eh_global: true, ativo: true,
       });
       // Act
@@ -235,14 +235,14 @@ describe("admin (página administrativa)", () => {
       document.getElementById("newCatGlobalNome").value = "Global";
       document.getElementById("salvarCatGlobal").click();
       await vi.waitFor(() => {
-        expect(window.electronAPI.createCategoria).toHaveBeenCalledWith({
+        expect(window.electronAPI.criarCategoria).toHaveBeenCalledWith({
           nome: "Global", tipo: "RECEITA", eh_global: true,
         });
       });
     });
 
     it("renderiza categorias globais com badge Ativo/Inativo", async () => {
-      window.electronAPI.listCategorias = vi.fn().mockResolvedValue([
+      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([
         { id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true },
         { id: "cg2", nome: "Global B", tipo: "DESPESA", eh_global: true, ativo: false },
       ]);
@@ -441,7 +441,7 @@ describe("admin (página administrativa)", () => {
 
   describe("categoria global editar", () => {
     it("entra em modo edição ao clicar Editar", async () => {
-      window.electronAPI.listCategorias = vi.fn().mockResolvedValue([
+      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([
         { id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true },
       ]);
       await loadModule();
@@ -456,7 +456,7 @@ describe("admin (página administrativa)", () => {
     });
 
     it("salva edição de categoria global via API", async () => {
-      window.electronAPI.listCategorias = vi.fn().mockResolvedValue([
+      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([
         { id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true },
       ]);
       window.electronAPI.updateCategoria = vi.fn().mockResolvedValue({ id: "cg1", nome: "Global Editado", tipo: "DESPESA", eh_global: true, ativo: true });
@@ -476,7 +476,7 @@ describe("admin (página administrativa)", () => {
     });
 
     it("cancela edição de categoria global", async () => {
-      window.electronAPI.listCategorias = vi.fn().mockResolvedValue([
+      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([
         { id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true },
       ]);
       await loadModule();
@@ -495,7 +495,7 @@ describe("admin (página administrativa)", () => {
     });
 
     it("chama toggleCategoriaAtivo ao clicar Desativar", async () => {
-      window.electronAPI.listCategorias = vi.fn().mockResolvedValue([
+      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([
         { id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true },
       ]);
       window.electronAPI.toggleCategoriaAtivo = vi.fn().mockResolvedValue({ id: "cg1", ativo: false });

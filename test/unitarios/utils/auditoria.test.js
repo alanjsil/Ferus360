@@ -41,7 +41,7 @@ describe("auditoria (spec-11)", () => {
       };
 
       const mod = await import("../../../services/auth.js");
-      const auth = mod.buildAuthService({
+      const auth = mod.construirAuthService({
         supabase: mockSupabase,
         logAuditoria: logSpy,
         onLogin: vi.fn(),
@@ -70,7 +70,7 @@ describe("auditoria (spec-11)", () => {
       };
 
       const mod = await import("../../../services/auth.js");
-      const auth = mod.buildAuthService({
+      const auth = mod.construirAuthService({
         supabase: mockSupabase,
         logAuditoria: logSpy,
       });
@@ -102,7 +102,7 @@ describe("auditoria (spec-11)", () => {
       };
 
       const mod = await import("../../../services/auth.js");
-      const auth = mod.buildAuthService({
+      const auth = mod.construirAuthService({
         supabase: mockSupabase,
         logAuditoria: fakeLogger,
         onLogout: vi.fn(),
@@ -145,7 +145,7 @@ describe("auditoria (spec-11)", () => {
       }));
 
       const mod = await import("../../../services/auth.js");
-      const auth = mod.buildAuthService({
+      const auth = mod.construirAuthService({
         supabase: mockSupabase,
         createClient: mockCreateClient,
         logAuditoria: logSpy,
@@ -174,7 +174,7 @@ describe("auditoria (spec-11)", () => {
       };
 
       const mod = await import("../../../services/admin.js");
-      const admin = mod.buildAdminService({
+      const admin = mod.construirAdminService({
         repository: mockRepo,
         auth: mockAuth,
       });
@@ -195,7 +195,7 @@ describe("auditoria (spec-11)", () => {
       };
 
       const mod = await import("../../../services/admin.js");
-      const admin = mod.buildAdminService({
+      const admin = mod.construirAdminService({
         repository: { getAuditoria: vi.fn() },
         auth: mockAuth,
       });
@@ -220,7 +220,7 @@ describe("auditoria (spec-11)", () => {
       };
 
       const mod = await import("../../../services/admin.js");
-      const admin = mod.buildAdminService({
+      const admin = mod.construirAdminService({
         repository: mockRepo,
         auth: mockAuth,
       });
@@ -250,7 +250,7 @@ describe("auditoria (spec-11)", () => {
       };
 
       const mod = await import("../../../services/admin.js");
-      const admin = mod.buildAdminService({
+      const admin = mod.construirAdminService({
         repository: mockRepo,
         auth: mockAuth,
       });

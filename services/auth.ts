@@ -1,7 +1,7 @@
 import type { Usuario, AuthResult } from "../src/types";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { supabase as defaultSupabase, SUPABASE_URL, SUPABASE_ANON_KEY, createClient } from "./conexao";
-import { setAuthSession, clearAuthSession, logAuditoria as logAuditoriaRepo } from "./repository";
+import { setAuthSession, limparSessaoAuth, logAuditoria as logAuditoriaRepo } from "./repository";
 import * as logger from "./logger";
 
 interface RecTokens {
@@ -27,7 +27,7 @@ class AuthError extends Error {
   }
 }
 
-function mapSupabaseError(error: { message?: string } | null): string | null {
+function mapearErroSupabase(error: { message?: string } | null): string | null {
   if (!error) return null;
   const msg = error.message || "";
   if (msg.includes("Invalid login credentials")) return "CREDENCIAIS_INVALIDAS";
@@ -59,11 +59,11 @@ interface AuthService {
   verificarSenha: (usuarioId: string, senha: string) => Promise<{ success: boolean }>;
   setRecoveryTokens: (accessToken: string, refreshToken: string) => void;
   getRecoveryTokens: () => RecTokens | null;
-  hasRecoveryTokens: () => boolean;
-  clearRecoveryTokens: () => void;
+  temTokenRecuperacao: () => boolean;
+  limparTokenRecuperacao: () => void;
 }
 
-function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
+function construirAuthService(dependencies: AuthDependencies = {}): AuthService {
   const supabase = dependencies.supabase || defaultSupabase;
   const _createClient = dependencies.createClient || createClient;
   const onLogin = dependencies.onLogin || (() => {});
@@ -87,7 +87,7 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
         ip: metadados?.ip,
         user_agent: metadados?.user_agent,
       }).catch((err: unknown) => logger.error("auth", "auditoria LOGIN_FAILED falhou", err));
-      throw new AuthError(mapSupabaseError(error) || "CREDENCIAIS_INVALIDAS");
+      throw new AuthError(mapearErroSupabase(error) || "CREDENCIAIS_INVALIDAS");
     }
 
     const perfil = await getPerfilById(data.user.id);
@@ -142,7 +142,7 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
   async function trocarSenha(_usuarioId: string, senhaAtual: string, novaSenha: string, metadados?: MetadadosRequisicao): Promise<{ success: boolean }> {
     await verificarSenha(_usuarioId, senhaAtual);
     const { error } = await supabase.auth.updateUser({ password: novaSenha });
-    if (error) throw new AuthError(mapSupabaseError(error) || "ERRO_INTERNO");
+    if (error) throw new AuthError(mapearErroSupabase(error) || "ERRO_INTERNO");
     await _logAuditoria(_usuarioId, "SENHA_TROCADA", {
       ip: metadados?.ip,
       user_agent: metadados?.user_agent,
@@ -169,11 +169,11 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
     return tokens;
   }
 
-  function hasRecoveryTokens(): boolean {
+  function temTokenRecuperacao(): boolean {
     return pendingRecoveryTokens !== null;
   }
 
-  function clearRecoveryTokens(): void {
+  function limparTokenRecuperacao(): void {
     if (_recoveryTimer) {
       clearTimeout(_recoveryTimer);
       _recoveryTimer = null;
@@ -202,10 +202,10 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
       token,
       type: "recovery",
     });
-    if (verifyError) throw new AuthError(mapSupabaseError(verifyError) || "TOKEN_INVALIDO");
+    if (verifyError) throw new AuthError(mapearErroSupabase(verifyError) || "TOKEN_INVALIDO");
 
     const { error: updateError } = await supabase.auth.updateUser({ password: novaSenha });
-    if (updateError) throw new AuthError(mapSupabaseError(updateError) || "ERRO_INTERNO");
+    if (updateError) throw new AuthError(mapearErroSupabase(updateError) || "ERRO_INTERNO");
 
     await _logAuditoria(null, "RECUPERACAO_CONFIRMADA", {
       dados_novos: { email },
@@ -223,7 +223,7 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
       });
     }
     const { error } = await supabase.auth.updateUser({ password: novaSenha });
-    if (error) throw new AuthError(mapSupabaseError(error) || "ERRO_INTERNO");
+    if (error) throw new AuthError(mapearErroSupabase(error) || "ERRO_INTERNO");
     return { success: true };
   }
 
@@ -282,14 +282,14 @@ function buildAuthService(dependencies: AuthDependencies = {}): AuthService {
     verificarSenha,
     setRecoveryTokens,
     getRecoveryTokens,
-    hasRecoveryTokens,
-    clearRecoveryTokens,
+    temTokenRecuperacao,
+    limparTokenRecuperacao,
   };
 }
 
-function buildDefaultAuthService(): AuthService {
+function construirAuthServicePadrao(): AuthService {
   if (process.env.NODE_ENV === "test" || process.env.VITEST) {
-    return buildAuthService({
+    return construirAuthService({
       supabase: {
         auth: {
           signInWithPassword: () => Promise.reject(new Error("Auth default disabled in tests")),
@@ -308,12 +308,12 @@ function buildDefaultAuthService(): AuthService {
     });
   }
 
-  return buildAuthService({
+  return construirAuthService({
     onLogin: (accessToken: string, refreshToken: string) => {
       return setAuthSession(accessToken, refreshToken);
     },
     onLogout: () => {
-      return clearAuthSession();
+      return limparSessaoAuth();
     },
     logAuditoria: async (usuarioId, acao, metadados) => {
       await logAuditoriaRepo(usuarioId, acao, metadados);
@@ -321,9 +321,9 @@ function buildDefaultAuthService(): AuthService {
   });
 }
 
-const defaultService = buildDefaultAuthService();
+const defaultService = construirAuthServicePadrao();
 
-export { defaultService as createAuthService, buildAuthService, AuthError };
+export { defaultService as createAuthService, construirAuthService, AuthError };
 export const {
   login,
   logout,
@@ -337,6 +337,6 @@ export const {
   verificarSenha,
   setRecoveryTokens,
   getRecoveryTokens,
-  hasRecoveryTokens,
-  clearRecoveryTokens,
+  temTokenRecuperacao,
+  limparTokenRecuperacao,
 } = defaultService;

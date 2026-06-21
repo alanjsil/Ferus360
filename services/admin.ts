@@ -15,7 +15,7 @@ class AdminError extends Error {
   }
 }
 
-function createAdminError(code: string): AdminError {
+function criarAdminError(code: string): AdminError {
   return new AdminError(code);
 }
 
@@ -27,7 +27,7 @@ interface DefaultDependencies {
   supabaseClient: import("@supabase/supabase-js").SupabaseClient;
 }
 
-function createDefaultDependencies(): DefaultDependencies {
+function criarDependenciesPadrao(): DefaultDependencies {
   return {
     repository: repositoryModule as unknown as Record<string, Function>,
     auth: authModule as unknown as Record<string, Function>,
@@ -60,16 +60,16 @@ interface AdminService {
   getChamados: () => Promise<(Chamado & { usuario_nome: string; usuario_email: string })[]>;
   responderChamado: (id: string, msg: string) => Promise<Chamado>;
   updateChamado: (id: string, status: string) => Promise<Chamado>;
-  createChamado: (payload: Record<string, unknown>) => Promise<Chamado>;
+  criarChamado: (payload: Record<string, unknown>) => Promise<Chamado>;
   getAuditoria: (filtros?: FiltrosAuditoria) => Promise<Auditoria[]>;
   criarUsuario: (nome: string, email: string, senha: string) => Promise<unknown>;
 }
 
-function buildAdminService(dependencies: AdminDependencies = {}): AdminService {
+function construirAdminService(dependencies: AdminDependencies = {}): AdminService {
   let defaultDeps: DefaultDependencies | null = null;
   function getDefaultDeps(): DefaultDependencies {
     if (!defaultDeps) {
-      defaultDeps = createDefaultDependencies();
+      defaultDeps = criarDependenciesPadrao();
     }
     return defaultDeps;
   }
@@ -86,7 +86,7 @@ function buildAdminService(dependencies: AdminDependencies = {}): AdminService {
     const usuario = await deps.auth.verificarSessao();
 
     if (usuario.role !== "admin") {
-      throw createAdminError("UNAUTHORIZED");
+      throw criarAdminError("UNAUTHORIZED");
     }
 
     return usuario;
@@ -159,7 +159,7 @@ function buildAdminService(dependencies: AdminDependencies = {}): AdminService {
     const usuario = await deps.repository.getPerfil(id);
 
     if (!usuario) {
-      throw createAdminError("USUARIO_NAO_ENCONTRADO");
+      throw criarAdminError("USUARIO_NAO_ENCONTRADO");
     }
 
     await deps.auth.solicitarRecuperacao(usuario.email);
@@ -223,9 +223,9 @@ function buildAdminService(dependencies: AdminDependencies = {}): AdminService {
     return await deps.repository.updateChamado(id, { status });
   }
 
-  async function createChamado(payload: Record<string, unknown>): Promise<Chamado> {
+  async function criarChamado(payload: Record<string, unknown>): Promise<Chamado> {
     await verificarAdmin();
-    return await deps.repository.createChamado(payload);
+    return await deps.repository.criarChamado(payload);
   }
 
   async function getAuditoria(filtros: FiltrosAuditoria = {}): Promise<Auditoria[]> {
@@ -237,7 +237,7 @@ function buildAdminService(dependencies: AdminDependencies = {}): AdminService {
     await verificarAdmin();
 
     if (!nome || !email || !senha) {
-      throw createAdminError("DADOS_INCOMPLETOS");
+      throw criarAdminError("DADOS_INCOMPLETOS");
     }
 
     const { data: sessionData } = await deps.supabaseClient.auth.getSession();
@@ -255,7 +255,7 @@ function buildAdminService(dependencies: AdminDependencies = {}): AdminService {
     const result = await response.json() as Record<string, unknown>;
 
     if (!response.ok) {
-      throw createAdminError((result.error as string) || "ERRO_CRIAR_USUARIO");
+      throw criarAdminError((result.error as string) || "ERRO_CRIAR_USUARIO");
     }
 
     return result;
@@ -276,15 +276,15 @@ function buildAdminService(dependencies: AdminDependencies = {}): AdminService {
     getChamados,
     responderChamado,
     updateChamado,
-    createChamado,
+    criarChamado,
     getAuditoria,
     criarUsuario,
   };
 }
 
-const defaultService = buildAdminService();
+const defaultService = construirAdminService();
 
-export { defaultService as createAdminService, buildAdminService, AdminError };
+export { defaultService as createAdminService, construirAdminService, AdminError };
 export const {
   verificarAdmin,
   getDashboard,
@@ -300,7 +300,7 @@ export const {
   getChamados,
   responderChamado,
   updateChamado,
-  createChamado,
+  criarChamado,
   getAuditoria,
   criarUsuario,
 } = defaultService;

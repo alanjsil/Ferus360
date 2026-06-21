@@ -62,7 +62,7 @@ state = {
 };
 ```
 
-Espelhado para o renderer via IPC (`state:updated`). Tudo é limpo no logout (`resetState()`).
+Espelhado para o renderer via IPC (`state:updated`). Tudo é limpo no logout (`reiniciarState()`).
 
 ---
 

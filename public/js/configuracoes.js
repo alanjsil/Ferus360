@@ -447,7 +447,7 @@ async function recarregarCadastros() {
   const pessoasEmpty = document.getElementById("pessoasEmpty");
 
   await Promise.all([
-    loadCategorias(catBody, catEmpty),
+    carregarCategorias(catBody, catEmpty),
     loadContas(contasBody, contasEmpty),
     loadPessoas(pessoasBody, pessoasEmpty),
   ]);
@@ -473,7 +473,7 @@ function configurarCategorias() {
   const catEmpty = document.getElementById("catEmpty");
   const inlineForm = document.getElementById("inlineForm");
 
-  filtroTipo.addEventListener("change", () => render(catBody, catEmpty));
+  filtroTipo.addEventListener("change", () => renderizarCategorias);
 
   novaCategoriaBtn.addEventListener("click", () => {
     inlineForm.hidden = false;
@@ -498,13 +498,13 @@ function configurarCategorias() {
     try {
       salvarNovaCat.disabled = true;
       salvarNovaCat.innerHTML = '<span class="spinner"></span>Salvando...';
-      const data = await window.electronAPI.createCategoria({ nome, tipo });
+      const data = await window.electronAPI.criarCategoria({ nome, tipo });
       if (data && data.error) {
         newCatMessage.textContent = data.error;
         return;
       }
       categorias.push(data);
-      render(catBody, catEmpty);
+      renderizarCategorias;
       inlineForm.hidden = true;
     } catch (err) {
       newCatMessage.textContent = err.message;
@@ -538,14 +538,14 @@ function configurarCategorias() {
           editingSubcatId = null;
           salvarSubcat.textContent = "Adicionar";
           newSubcatNome.value = "";
-          await loadSubcategorias(currentSubcatCatId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
+          await carregarSubcategorias(currentSubcatCatId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
           return;
         }
         editingSubcatId = null;
         salvarSubcat.textContent = "Adicionar";
         newSubcatNome.value = "";
         subcatMessage.textContent = "";
-        await loadSubcategorias(currentSubcatCatId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
+        await carregarSubcategorias(currentSubcatCatId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
       } catch (err) {
         subcatMessage.textContent = err.message;
       } finally {
@@ -556,14 +556,14 @@ function configurarCategorias() {
     try {
       salvarSubcat.disabled = true;
       salvarSubcat.innerHTML = '<span class="spinner"></span>Adicionando...';
-      const data = await window.electronAPI.createSubcategoria({ categoria_id: currentSubcatCatId, nome });
+      const data = await window.electronAPI.criarSubcategoria({ categoria_id: currentSubcatCatId, nome });
       if (data && data.error) {
         subcatMessage.textContent = data.error;
         return;
       }
       newSubcatNome.value = "";
       subcatMessage.textContent = "";
-      await loadSubcategorias(currentSubcatCatId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
+      await carregarSubcategorias(currentSubcatCatId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
     } catch (err) {
       subcatMessage.textContent = err.message;
     } finally {
@@ -576,7 +576,7 @@ function configurarCategorias() {
     if (e.key === "Enter") salvarSubcat.click();
   });
 
-  loadCategorias(catBody, catEmpty);
+  carregarCategorias(catBody, catEmpty);
   configurarContas();
   configurarPessoas();
 }
@@ -613,13 +613,13 @@ function configurarContas() {
     try {
       salvarNovaConta.disabled = true;
       salvarNovaConta.innerHTML = '<span class="spinner"></span>Salvando...';
-      const data = await window.electronAPI.createConta({ nome });
+      const data = await window.electronAPI.criarConta({ nome });
       if (data && data.error) {
         newContaMessage.textContent = data.error;
         return;
       }
       contas.push(data);
-      renderContas(contasBody, contasEmpty);
+      renderizarContas(contasBody, contasEmpty);
       inlineContaForm.hidden = true;
     } catch (err) {
       newContaMessage.textContent = err.message;
@@ -633,21 +633,21 @@ function configurarContas() {
     if (e.key === "Enter") salvarNovaConta.click();
   });
 
-  loadContas(contasBody, contasEmpty);
+  carregarContas(contasBody, contasEmpty);
 }
 
-async function loadContas(contasBody, contasEmpty) {
+async function carregarContas(contasBody, contasEmpty) {
   try {
     const data = await window.electronAPI.getContas();
     if (data && data.error) return;
     contas = data || [];
-    renderContas(contasBody, contasEmpty);
+    renderizarContas(contasBody, contasEmpty);
   } catch {
     // ignore
   }
 }
 
-function renderContas(contasBody, contasEmpty) {
+function renderizarContas(contasBody, contasEmpty) {
   if (contas.length === 0) {
     contasBody.innerHTML = "";
     contasEmpty.hidden = false;
@@ -682,13 +682,13 @@ function renderContas(contasBody, contasEmpty) {
     btn.addEventListener("click", async () => {
       if (!(await confirmDialog("Excluir esta conta?"))) return;
       try {
-        const data = await window.electronAPI.deleteConta(btn.dataset.id);
+        const data = await window.electronAPI.deletarConta(btn.dataset.id);
         if (data && data.error) {
           exibirToast(data.error, "error");
           return;
         }
         contas = contas.filter((c) => c.id !== btn.dataset.id);
-        renderContas(contasBody, contasEmpty);
+        renderizarContas(contasBody, contasEmpty);
       } catch (err) {
         exibirToast(err.message, "error");
       }
@@ -705,7 +705,7 @@ async function editarConta(id, nome, contasBody, contasEmpty) {
     }
     const idx = contas.findIndex((c) => c.id === id);
     if (idx !== -1) contas[idx] = data;
-    renderContas(contasBody, contasEmpty);
+    renderizarContas(contasBody, contasEmpty);
   } catch (err) {
     exibirToast(err.message, "error");
   }
@@ -743,13 +743,13 @@ function configurarPessoas() {
     try {
       salvarNovaPessoa.disabled = true;
       salvarNovaPessoa.innerHTML = '<span class="spinner"></span>Salvando...';
-      const data = await window.electronAPI.createPessoa({ nome });
+      const data = await window.electronAPI.criarPessoa({ nome });
       if (data && data.error) {
         newPessoaMessage.textContent = data.error;
         return;
       }
       pessoas.push(data);
-      renderPessoas(pessoasBody, pessoasEmpty);
+      renderizarPessoas(pessoasBody, pessoasEmpty);
       inlinePessoaForm.hidden = true;
     } catch (err) {
       newPessoaMessage.textContent = err.message;
@@ -763,21 +763,21 @@ function configurarPessoas() {
     if (e.key === "Enter") salvarNovaPessoa.click();
   });
 
-  loadPessoas(pessoasBody, pessoasEmpty);
+  carregarPessoas(pessoasBody, pessoasEmpty);
 }
 
-async function loadPessoas(pessoasBody, pessoasEmpty) {
+async function carregarPessoas(pessoasBody, pessoasEmpty) {
   try {
     const data = await window.electronAPI.getPessoas();
     if (data && data.error) return;
     pessoas = data || [];
-    renderPessoas(pessoasBody, pessoasEmpty);
+    renderizarPessoas(pessoasBody, pessoasEmpty);
   } catch {
     // ignore
   }
 }
 
-function renderPessoas(pessoasBody, pessoasEmpty) {
+function renderizarPessoas(pessoasBody, pessoasEmpty) {
   if (pessoas.length === 0) {
     pessoasBody.innerHTML = "";
     pessoasEmpty.hidden = false;
@@ -812,13 +812,13 @@ function renderPessoas(pessoasBody, pessoasEmpty) {
     btn.addEventListener("click", async () => {
       if (!(await confirmDialog("Excluir esta pessoa?"))) return;
       try {
-        const data = await window.electronAPI.deletePessoa(btn.dataset.id);
+        const data = await window.electronAPI.deletarPessoa(btn.dataset.id);
         if (data && data.error) {
           exibirToast(data.error, "error");
           return;
         }
         pessoas = pessoas.filter((p) => p.id !== btn.dataset.id);
-        renderPessoas(pessoasBody, pessoasEmpty);
+        renderizarPessoas(pessoasBody, pessoasEmpty);
       } catch (err) {
         exibirToast(err.message, "error");
       }
@@ -835,24 +835,24 @@ async function editarPessoa(id, nome, pessoasBody, pessoasEmpty) {
     }
     const idx = pessoas.findIndex((p) => p.id === id);
     if (idx !== -1) pessoas[idx] = data;
-    renderPessoas(pessoasBody, pessoasEmpty);
+    renderizarPessoas(pessoasBody, pessoasEmpty);
   } catch (err) {
     exibirToast(err.message, "error");
   }
 }
 
-async function loadCategorias(catBody, catEmpty) {
+async function carregarCategorias(catBody, catEmpty) {
   try {
-    const data = await window.electronAPI.listCategorias();
+    const data = await window.electronAPI.listarCategorias();
     if (data && data.error) return;
     categorias = data || [];
-    render(catBody, catEmpty);
+    renderizarCategorias;
   } catch {
     // ignore
   }
 }
 
-function render(catBody, catEmpty) {
+function renderizarCategorias(catBody, catEmpty) {
   const tipo = document.getElementById("filtroTipo").value;
   const filtered = tipo ? categorias.filter((c) => c.tipo === tipo) : categorias;
   if (filtered.length === 0) {
@@ -888,7 +888,7 @@ function render(catBody, catEmpty) {
       document.getElementById("subcatMessage").textContent = "";
       document.getElementById("newSubcatNome").value = "";
       document.getElementById("subcatPanel").hidden = false;
-      loadSubcategorias(
+      carregarSubcategorias(
         currentSubcatCatId,
         document.getElementById("subcatBody"),
         subcatTitle,
@@ -902,7 +902,7 @@ function render(catBody, catEmpty) {
   catBody.querySelectorAll(".btn-edit-cat").forEach((btn) => {
     btn.addEventListener("click", () => {
       editingCatId = btn.dataset.id;
-      render(catBody, catEmpty);
+      renderizarCategorias;
       const nomeInput = document.getElementById(`editNome_${editingCatId}`);
       if (nomeInput) {
         nomeInput.focus();
@@ -926,7 +926,7 @@ function render(catBody, catEmpty) {
           data,
         );
         editingCatId = null;
-        render(catBody, catEmpty);
+        renderizarCategorias;
       } catch {
         // ignore
       }
@@ -936,7 +936,7 @@ function render(catBody, catEmpty) {
   catBody.querySelectorAll(".btn-cancel-edit").forEach((btn) => {
     btn.addEventListener("click", () => {
       editingCatId = null;
-      render(catBody, catEmpty);
+      renderizarCategorias;
     });
   });
 
@@ -953,7 +953,7 @@ function render(catBody, catEmpty) {
           categorias.find((c) => c.id === id),
           data,
         );
-        render(catBody, catEmpty);
+        renderizarCategorias;
       } catch {
         // ignore
       }
@@ -969,7 +969,7 @@ function render(catBody, catEmpty) {
       }
       if (e.key === "Escape") {
         editingCatId = null;
-        render(catBody, catEmpty);
+        renderizarCategorias;
       }
     });
   });
@@ -1010,7 +1010,7 @@ function editActions(c) {
   `;
 }
 
-async function loadSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat) {
+async function carregarSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat) {
   try {
     subcatBody.innerHTML = '<p style="color:#64748b;text-align:center">Carregando...</p>';
     const data = await window.electronAPI.getSubcategorias(categoriaId);
@@ -1046,7 +1046,7 @@ async function loadSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMes
           subcatMessage.textContent = "";
           newSubcatNome.focus();
         }
-        loadSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
+        carregarSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
       });
     });
 
@@ -1054,7 +1054,7 @@ async function loadSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMes
       btn.addEventListener("click", async () => {
         if (!(await confirmDialog("Excluir esta subcategoria?"))) return;
         try {
-          const data = await window.electronAPI.deleteSubcategoria(btn.dataset.id);
+          const data = await window.electronAPI.deletarSubcategoria(btn.dataset.id);
           if (data && data.error) {
             subcatMessage.textContent = data.error;
             return;
@@ -1062,7 +1062,7 @@ async function loadSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMes
           editingSubcatId = null;
           salvarSubcat.textContent = "Adicionar";
           subcatMessage.textContent = "";
-          await loadSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
+          await carregarSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
         } catch (err) {
           subcatMessage.textContent = err.message;
         }
@@ -1076,7 +1076,7 @@ async function loadSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMes
           editingSubcatId = null;
           salvarSubcat.textContent = "Adicionar";
           newSubcatNome.value = "";
-          loadSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
+          carregarSubcategorias(categoriaId, subcatBody, subcatTitle, subcatMessage, newSubcatNome, salvarSubcat);
         }
       });
     });

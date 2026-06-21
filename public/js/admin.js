@@ -304,7 +304,7 @@ async function abrirDetalhesCliente(id) {
 /* ---------- ABA 3 — CATEGORIAS GLOBAIS ---------- */
 
 function configurarCategoriasGlobais() {
-  document.getElementById("filtroCatGlobal").addEventListener("change", renderCatGlobais);
+  document.getElementById("filtroCatGlobal").addEventListener("change", renderizarCatGlobais);
   document.getElementById("novaCatGlobalBtn").addEventListener("click", () => {
     document.getElementById("inlineCatGlobal").hidden = false;
     document.getElementById("newCatGlobalNome").value = "";
@@ -323,16 +323,16 @@ function configurarCategoriasGlobais() {
 
 async function carregarCategoriasGlobais() {
   try {
-    const data = await window.electronAPI.listCategorias();
+    const data = await window.electronAPI.listarCategorias();
     if (data?.error) return;
     categoriasGlobais = (data || []).filter((c) => c.eh_global);
-    renderCatGlobais();
+    renderizarCatGlobais();
   } catch {
     /* ignore */
   }
 }
 
-function renderCatGlobais() {
+function renderizarCatGlobais() {
   const tipo = document.getElementById("filtroCatGlobal").value;
   const filtered = tipo ? categoriasGlobais.filter((c) => c.tipo === tipo) : categoriasGlobais;
   const body = document.getElementById("catGlobalBody");
@@ -367,7 +367,7 @@ function renderCatGlobais() {
   body.querySelectorAll(".btn-edit-cat-global").forEach((btn) => {
     btn.addEventListener("click", () => {
       editingCatGlobalId = btn.dataset.id;
-      renderCatGlobais();
+      renderizarCatGlobais();
     });
   });
 
@@ -396,7 +396,7 @@ function renderCatGlobais() {
   body.querySelectorAll(".btn-cancel-cat-global").forEach((btn) => {
     btn.addEventListener("click", () => {
       editingCatGlobalId = null;
-      renderCatGlobais();
+      renderizarCatGlobais();
     });
   });
 
@@ -455,7 +455,7 @@ async function salvarCatGlobal() {
     const btn = document.getElementById("salvarCatGlobal");
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Salvando...';
-    const data = await window.electronAPI.createCategoria({ nome, tipo, eh_global: true });
+    const data = await window.electronAPI.criarCategoria({ nome, tipo, eh_global: true });
     if (data?.error) {
       document.getElementById("catGlobalMessage").textContent = data.error;
       return;
@@ -552,7 +552,7 @@ async function buscarParaRedefinir() {
 /* ---------- ABA 5 — CHAMADOS ---------- */
 
 function configurarChamados() {
-  document.getElementById("filtroStatusChamado").addEventListener("change", renderChamados);
+  document.getElementById("filtroStatusChamado").addEventListener("change", renderizarChamados);
   document.getElementById("fecharChamado").addEventListener("click", () => {
     document.getElementById("chamadoDialog").close();
   });
@@ -565,7 +565,7 @@ async function carregarChamados() {
     if (data?.error) return;
     chamados = data || [];
     atualizarBadgeChamados();
-    renderChamados();
+    renderizarChamados();
   } catch {
     /* ignore */
   }
@@ -578,7 +578,7 @@ function atualizarBadgeChamados() {
   badge.hidden = abertos === 0;
 }
 
-function renderChamados() {
+function renderizarChamados() {
   const filtro = document.getElementById("filtroStatusChamado").value;
   const filtered = filtro ? chamados.filter((c) => c.status === filtro) : chamados;
   const body = document.getElementById("chamadosBody");

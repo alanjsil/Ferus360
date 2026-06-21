@@ -15,7 +15,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as repo from "../../services/repository.js";
 import { createAndLoginUser, createMockSupabase } from "./helpers.js";
-import { buildAuthService } from "../../services/auth.js";
+import { construirAuthService } from "../../services/auth.js";
 
 describe("Fluxo Integrado: Login → Orçamento → Dashboard", () => {
   let _auth;
@@ -26,7 +26,7 @@ describe("Fluxo Integrado: Login → Orçamento → Dashboard", () => {
     mockSupabase = createMockSupabase();
     repo.__setSupabase(mockSupabase);
 
-    _auth = buildAuthService({
+    _auth = construirAuthService({
       supabase: mockSupabase,
       createClient: vi.fn(() => mockSupabase),
       onLogin: vi.fn(),
@@ -101,7 +101,7 @@ describe("Fluxo Integrado: Login → Orçamento → Dashboard", () => {
     ];
 
     for (const l of lancamentos) {
-      const inserted = await repo.createLancamento(
+      const inserted = await repo.criarLancamento(
         {
           ...l,
           status: "PAGO",
@@ -167,7 +167,7 @@ describe("Fluxo Integrado: Login → Orçamento → Dashboard", () => {
     ];
 
     for (const v of vals) {
-      await repo.createLancamento({ ...v, data: "2026-06-15", data_busca: "2026-06", categoria_id: 1 }, usuario.id);
+      await repo.criarLancamento({ ...v, data: "2026-06-15", data_busca: "2026-06", categoria_id: 1 }, usuario.id);
     }
 
     const dashboard = await repo.getDashboard("2026-06", usuario.id);
@@ -212,11 +212,11 @@ describe("Fluxo Integrado: Login → Orçamento → Dashboard", () => {
     );
 
     // Criar lançamentos realizados
-    await repo.createLancamento({ tipo: "RECEITA", valor: 5000, status: "PAGO", data: "2026-06-01", data_busca: "2026-06", categoria_id: 2 }, userId);
+    await repo.criarLancamento({ tipo: "RECEITA", valor: 5000, status: "PAGO", data: "2026-06-01", data_busca: "2026-06", categoria_id: 2 }, userId);
 
-    await repo.createLancamento({ tipo: "DESPESA", valor: 1500, status: "PAGO", data: "2026-06-05", descricao: "Aluguel", data_busca: "2026-06", categoria_id: 1 }, userId);
+    await repo.criarLancamento({ tipo: "DESPESA", valor: 1500, status: "PAGO", data: "2026-06-05", descricao: "Aluguel", data_busca: "2026-06", categoria_id: 1 }, userId);
 
-    await repo.createLancamento({ tipo: "DESPESA", valor: 300, status: "PAGO", data: "2026-06-10", descricao: "Transporte", data_busca: "2026-06", categoria_id: 1 }, userId);
+    await repo.criarLancamento({ tipo: "DESPESA", valor: 300, status: "PAGO", data: "2026-06-10", descricao: "Transporte", data_busca: "2026-06", categoria_id: 1 }, userId);
 
     const dashboard = await repo.getDashboard("2026-06", userId);
 

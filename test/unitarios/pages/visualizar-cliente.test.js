@@ -240,11 +240,11 @@ describe("visualizar-cliente (página de visualização de cliente pelo admin)",
     });
   });
 
-  describe("renderTabela", () => {
+  describe("renderizarTabela", () => {
     it("mostra estado vazio quando não há lançamentos", () => {
       mod.lancamentos.length = 0;
 
-      mod.renderTabela();
+      mod.renderizarTabela();
 
       expect(document.getElementById("tabelaLancamentos").innerHTML).toContain("Nenhum lançamento encontrado");
     });
@@ -263,7 +263,7 @@ describe("visualizar-cliente (página de visualização de cliente pelo admin)",
       filtroMes.innerHTML = '<option value="all">Todos</option><option value="01">Janeiro</option>';
       filtroMes.value = "01";
 
-      mod.renderTabela();
+      mod.renderizarTabela();
 
       expect(document.getElementById("tabelaLancamentos").innerHTML).toContain("Salário");
     });
@@ -274,7 +274,7 @@ describe("visualizar-cliente (página de visualização de cliente pelo admin)",
         { data: "2026-01-15", tipo: "RECEITA", status: "PAGO", valor: 100, descricao: "Salário", categoria_id: null, subcategoria_id: null, conta_origem_id: null, conta_destino_id: null },
       );
 
-      mod.renderTabela();
+      mod.renderizarTabela();
 
       expect(document.getElementById("contadorLancamentos").textContent).toContain("1 lançamento");
     });

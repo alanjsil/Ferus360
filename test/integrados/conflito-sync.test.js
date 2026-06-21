@@ -158,7 +158,7 @@ describe("Conflito de Sincronia (offline → push → CONFLICT)", () => {
     });
 
     // Act
-    await syncModule.forceSync();
+    await syncModule.forcarSync();
 
     // Assert
     const row = db.prepare("SELECT * FROM financas_lancamentos WHERE id = ?").get(recordId);
@@ -205,7 +205,7 @@ describe("Conflito de Sincronia (offline → push → CONFLICT)", () => {
     `).run("2026-06-19T12:00:00.000Z", recordId);
 
     // Act
-    await syncModule.forceSync();
+    await syncModule.forcarSync();
 
     // Assert: CONFLICT detectado
     const conflito = db.prepare("SELECT * FROM sync_conflicts WHERE registro_id = ?").get(recordId);
@@ -257,7 +257,7 @@ describe("Conflito de Sincronia (offline → push → CONFLICT)", () => {
       UPDATE financas_lancamentos SET valor = 200, descricao = 'Alterado offline', sync_status = 'pending', local_updated_at = ? WHERE id = ?
     `).run("2026-06-19T12:00:00.000Z", recordId);
 
-    await syncModule.forceSync();
+    await syncModule.forcarSync();
 
     // Verificar que conflito foi criado
     const conflito = db.prepare("SELECT * FROM sync_conflicts WHERE registro_id = ?").get(recordId);
@@ -311,7 +311,7 @@ describe("Conflito de Sincronia (offline → push → CONFLICT)", () => {
       UPDATE financas_lancamentos SET valor = 200, descricao = 'Valor local', sync_status = 'pending', local_updated_at = ? WHERE id = ?
     `).run("2026-06-19T12:00:00.000Z", recordId);
 
-    await syncModule.forceSync();
+    await syncModule.forcarSync();
 
     const conflito = db.prepare("SELECT * FROM sync_conflicts WHERE registro_id = ?").get(recordId);
     expect(conflito).toBeTruthy();
@@ -355,7 +355,7 @@ describe("Conflito de Sincronia (offline → push → CONFLICT)", () => {
       UPDATE financas_lancamentos SET valor = 500, sync_status = 'pending', local_updated_at = ? WHERE id = ?
     `).run("2026-06-19T12:00:00.000Z", recordId);
 
-    await syncModule.forceSync();
+    await syncModule.forcarSync();
 
     const conflito = db.prepare("SELECT * FROM sync_conflicts WHERE registro_id = ?").get(recordId);
     expect(conflito).toBeTruthy();
@@ -395,7 +395,7 @@ describe("Conflito de Sincronia (offline → push → CONFLICT)", () => {
 
     // Act: sync_upsert com expected_version=2 vs Supabase version=3 → CONFLICT
     // Como é não-crítica, last-write-wins: remoto mais novo → prevalece
-    await syncModule.forceSync();
+    await syncModule.forcarSync();
 
     // Assert: last-write-wins — remoto venceu (timestamp maior)
     const row = db.prepare("SELECT * FROM financas_categorias WHERE id = ?").get(recordId);
@@ -430,7 +430,7 @@ describe("Conflito de Sincronia (offline → push → CONFLICT)", () => {
     manual.version = 2;
 
     // Act: local está 'synced', push não pega esse registro
-    await syncModule.forceSync();
+    await syncModule.forcarSync();
 
     // Assert: nenhum conflito criado (registro não estava pending)
     const conflito = db.prepare("SELECT * FROM sync_conflicts WHERE registro_id = ?").get(recordId);

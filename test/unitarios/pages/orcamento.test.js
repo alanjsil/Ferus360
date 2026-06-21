@@ -26,8 +26,8 @@ const mockElectronAPI = {
   getLancamentos: vi.fn(),
   getOrcamento: vi.fn(),
   getDashboard: vi.fn(),
-  createLancamento: vi.fn(),
-  deleteLancamento: vi.fn(),
+  criarLancamento: vi.fn(),
+  deletarLancamento: vi.fn(),
   updateLancamento: vi.fn(),
   importarOrcamento: vi.fn(),
   getTipoPessoa: vi.fn().mockResolvedValue("PF"),
@@ -174,23 +174,23 @@ describe("orcamento (página de lançamentos)", () => {
   });
 
   describe("processarImportacao (pipeline de importação)", () => {
-    it("parseCSV analisa CSV separado por tabulação", () => {
+    it("analisarCSV analisa CSV separado por tabulação", () => {
       const csv = [
         "Data\tDescrição\tTipo\tValor\tCategoria\tSubcategoria\tRecorrente",
         "2026-06-01\tAluguel\tDESPESA\t1500\tMoradia\tAluguel\ttrue",
         "2026-06-10\tSalário\tRECEITA\t5000\tSalário\tSalário fixo\ttrue",
       ].join("\n");
 
-      const result = orcamento.parseCSV(csv);
+      const result = orcamento.analisarCSV(csv);
       expect(result).toHaveLength(2);
       expect(result[0].descricao).toBe("Aluguel");
       expect(result[0].tipo).toBe("DESPESA");
       expect(result[1].valor).toBe("5000");
     });
 
-    it("parseCSV ignora cabeçalho e linhas vazias", () => {
+    it("analisarCSV ignora cabeçalho e linhas vazias", () => {
       const csv = "Data\tDesc\tTipo\tValor\n\n2026-01-01\tTest\tRECEITA\t100\n";
-      const result = orcamento.parseCSV(csv);
+      const result = orcamento.analisarCSV(csv);
       expect(result).toHaveLength(1);
     });
 
@@ -481,14 +481,14 @@ describe("orcamento (página de lançamentos)", () => {
     });
 
     it("chama API se confirmado e recarrega dados", async () => {
-      mockElectronAPI.deleteLancamento.mockResolvedValue({ success: true });
+      mockElectronAPI.deletarLancamento.mockResolvedValue({ success: true });
       mockElectronAPI.getLancamentos.mockResolvedValue([]);
 
       orcamento.setLancamentos([{ id: 1, data: "2026-06-01", tipo: "DESPESA", valor: 100, descricao: "Teste" }]);
 
       await orcamento.excluirLancamento(1);
 
-      expect(mockElectronAPI.deleteLancamento).toHaveBeenCalledWith(1);
+      expect(mockElectronAPI.deletarLancamento).toHaveBeenCalledWith(1);
     });
 
     it("não chama API se não confirmado", async () => {
@@ -502,7 +502,7 @@ describe("orcamento (página de lançamentos)", () => {
       orcamento.setLancamentos([{ id: 1, data: "2026-06-01", tipo: "DESPESA", valor: 100, descricao: "Teste" }]);
       await orcamento.excluirLancamento(1);
 
-      expect(mockElectronAPI.deleteLancamento).not.toHaveBeenCalled();
+      expect(mockElectronAPI.deletarLancamento).not.toHaveBeenCalled();
     });
   });
 
@@ -677,7 +677,7 @@ describe("orcamento (página de lançamentos)", () => {
 
   /* ─────────── TABELA ─────────── */
 
-  describe("renderTabela", () => {
+  describe("renderizarTabela", () => {
     beforeEach(() => {
       orcamento.setLancamentos([
         { id: 1, data: "2026-06-01", tipo: "RECEITA", valor: 1000, status: "PAGO", descricao: "Salário", categoria_id: 1, subcategoria_id: null, conta_origem_id: null },
@@ -697,7 +697,7 @@ describe("orcamento (página de lançamentos)", () => {
 
     it("renderiza linhas na tabela", () => {
       // Act
-      orcamento.renderTabela();
+      orcamento.renderizarTabela();
       // Assert
       const rows = document.querySelectorAll("#tabelaLancamentos tr");
       expect(rows.length).toBe(2);
@@ -707,7 +707,7 @@ describe("orcamento (página de lançamentos)", () => {
     it("aplica filtro de tipo", () => {
       orcamento.setFiltroAtualTipo("RECEITA");
 
-      orcamento.renderTabela();
+      orcamento.renderizarTabela();
 
       const rows = document.querySelectorAll("#tabelaLancamentos tr");
       expect(rows.length).toBe(1);
@@ -717,14 +717,14 @@ describe("orcamento (página de lançamentos)", () => {
     it("mostra empty state quando filtro não encontra nada", () => {
       orcamento.setFiltroAtualTipo("TRANSFERENCIA");
 
-      orcamento.renderTabela();
+      orcamento.renderizarTabela();
 
       const tbody = document.getElementById("tabelaLancamentos");
       expect(tbody.innerHTML).toContain("Nenhum lançamento");
     });
 
     it("atualiza contador de lançamentos", () => {
-      orcamento.renderTabela();
+      orcamento.renderizarTabela();
 
       expect(document.getElementById("contadorLancamentos").textContent).toContain("2 lançamentos");
     });
@@ -732,7 +732,7 @@ describe("orcamento (página de lançamentos)", () => {
     it("mostra empty state quando não há lançamentos", () => {
       orcamento.setLancamentos([]);
 
-      orcamento.renderTabela();
+      orcamento.renderizarTabela();
 
       const tbody = document.getElementById("tabelaLancamentos");
       expect(tbody.innerHTML).toContain("Nenhum lançamento");

@@ -1,6 +1,6 @@
 /**
  * @file Testes do serviço de estado (services/state.js).
- * @description Valida getState, setState e resetState com notificação via IPC.
+ * @description Valida getState, setState e reiniciarState com notificação via IPC.
  * @module test/unitarios/services/state.test.js
  * @changelog
  * [2026-06-08] - Padronização
@@ -91,14 +91,14 @@ describe("state (serviço de estado)", () => {
     });
   });
 
-  describe("resetState", () => {
+  describe("reiniciarState", () => {
     it("reseta todos os arrays para vazio e objetos para null", () => {
       // Arrange
       state.setState("categorias", [{ id: 1 }]);
       state.setState("dashboard", { some: "data" });
 
       // Act
-      state.resetState();
+      state.reiniciarState();
 
       // Assert
       expect(state.getState("categorias")).toEqual([]);

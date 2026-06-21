@@ -1,11 +1,11 @@
-import type { Conta, createContaPayload } from "../../src/types";
+import type { Conta, CriarContaPayload } from "../../src/types";
 import crypto from "crypto";
 import * as database from "../database";
 import * as logger from "../logger";
 import {
   supabase, _doSQLite, _popularCache, _atualizarLocal, _syncAposEscrita,
   _marcarPendente, _inserirLocal,
-  addUsuarioFilter, addTipoPessoaFilterStrict, addTipoPessoaWhere,
+  adicionarFiltroUsuario, adicionarFiltroTipoPessoaRestrito, adicionarWhereTipoPessoa,
   validarUUID, normalizarNome,
 } from "./utils";
 
@@ -14,7 +14,7 @@ async function getContas(usuarioId?: string, tipoPessoa?: string): Promise<Conta
     try {
       let where = "deleted_at IS NULL";
       const params: Record<string, unknown> = {};
-      const r = addTipoPessoaWhere(where, params, tipoPessoa);
+      const r = adicionarWhereTipoPessoa(where, params, tipoPessoa);
       const data = database.query(`SELECT * FROM financas_contas WHERE ${r.where} ORDER BY nome`, r.params).map((r2) => _doSQLite(r2));
       if (data.length > 0) return data as unknown as Conta[];
     } catch {
@@ -24,8 +24,8 @@ async function getContas(usuarioId?: string, tipoPessoa?: string): Promise<Conta
 
   let query = supabase.from("financas_contas").select("*").order("nome") as any;
 
-  query = addUsuarioFilter(query, usuarioId);
-  query = addTipoPessoaFilterStrict(query, tipoPessoa);
+  query = adicionarFiltroUsuario(query, usuarioId);
+  query = adicionarFiltroTipoPessoaRestrito(query, tipoPessoa);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -33,7 +33,7 @@ async function getContas(usuarioId?: string, tipoPessoa?: string): Promise<Conta
   return data;
 }
 
-async function createConta(usuarioId: string, payload: createContaPayload): Promise<Conta> {
+async function criarConta(usuarioId: string, payload: CriarContaPayload): Promise<Conta> {
   const nomeNormalizado = normalizarNome(payload.nome);
   if (nomeNormalizado.length < 2 || nomeNormalizado.length > 40) {
     throw new Error("Nome deve ter entre 2 e 40 caracteres");
@@ -79,7 +79,7 @@ async function updateConta(id: string, patch: { nome?: string }): Promise<Conta 
   return data;
 }
 
-async function deleteConta(usuarioId: string, id: string): Promise<{ success: boolean }> {
+async function deletarConta(usuarioId: string, id: string): Promise<{ success: boolean }> {
   validarUUID(id);
   const [origem, destino] = await Promise.all([
     supabase.from("financas_lancamentos").select("id", { count: "exact", head: true }).eq("conta_origem_id", id),
@@ -98,7 +98,7 @@ async function deleteConta(usuarioId: string, id: string): Promise<{ success: bo
   database.run("UPDATE financas_contas SET deleted_at = datetime('now'), sync_status = 'pending' WHERE id = ?", id);
 
   let query = supabase.from("financas_contas").delete().eq("id", id) as any;
-  query = addUsuarioFilter(query, usuarioId);
+  query = adicionarFiltroUsuario(query, usuarioId);
   const { error } = await query;
   if (error) {
     _marcarPendente("financas_contas", id);
@@ -107,4 +107,4 @@ async function deleteConta(usuarioId: string, id: string): Promise<{ success: bo
   return { success: true };
 }
 
-export { getContas, createConta, updateConta, deleteConta };
+export { getContas, criarConta, updateConta, deletarConta };

@@ -224,7 +224,7 @@ export interface ConflitoSync {
   resolvido_como: string | null;
 }
 
-export interface CreateCategoriaPayload {
+export interface CriarCategoriaPayload {
   nome: string;
   tipo: string;
   usuarioId?: string;
@@ -233,23 +233,23 @@ export interface CreateCategoriaPayload {
   tipo_pessoa?: TipoPessoa | null;
 }
 
-export interface CreateSubcategoriaPayload {
+export interface CriarSubcategoriaPayload {
   categoria_id: string;
   nome: string;
   tipo_pessoa?: TipoPessoa | null;
 }
 
-export type createContaPayload = {
+export type CriarContaPayload = {
   nome: string;
   tipo_pessoa?: TipoPessoa;
 };
 
-export type createPessoaPayload = {
+export type CriarPessoaPayload = {
   nome: string;
   tipo_pessoa?: TipoPessoa;
 };
 
-export interface CreateLancamentoPayload {
+export interface CriarLancamentoPayload {
   data: string;
   tipo: string;
   valor: number;
@@ -264,7 +264,7 @@ export interface CreateLancamentoPayload {
   id?: string;
 }
 
-export interface CreateTransferenciaPayload {
+export interface CriarTransferenciaPayload {
   data: string;
   status: string;
   valor: number;

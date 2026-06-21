@@ -1,11 +1,11 @@
-import type { Lancamento, Orcamento, DashboardData, DashboardDadosResult, CreateLancamentoPayload, CreateTransferenciaPayload, ImportarOrcamentoItem } from "../../src/types";
+import type { Lancamento, Orcamento, DashboardData, DashboardDadosResult, CriarLancamentoPayload, CriarTransferenciaPayload, ImportarOrcamentoItem } from "../../src/types";
 import crypto from "crypto";
 import * as database from "../database";
 import * as logger from "../logger";
 import {
   supabase, _doSQLite, _popularCache, _atualizarLocal, _syncAposEscrita,
   _marcarPendente, _inserirLocal,
-  addUsuarioFilter, addTipoPessoaFilterStrict, addTipoPessoaWhere,
+  adicionarFiltroUsuario, adicionarFiltroTipoPessoaRestrito, adicionarWhereTipoPessoa,
   validarMes, validarUUID, normalizarNome,
 } from "./utils";
 import { logAuditoria } from "./auditoria";
@@ -23,7 +23,7 @@ async function getLancamentos(mes?: string, usuarioId?: string, tipoPessoa?: str
         where += " AND usuario_id = @usuarioId";
         params.usuarioId = usuarioId;
       }
-      const r = addTipoPessoaWhere(where, params, tipoPessoa);
+      const r = adicionarWhereTipoPessoa(where, params, tipoPessoa);
       const data = database.query(`SELECT * FROM financas_lancamentos WHERE deleted_at IS NULL AND ${r.where} ORDER BY data DESC`, r.params).map((r2) => _doSQLite(r2));
       if (data.length > 0) return data as unknown as Lancamento[];
     } catch {
@@ -33,8 +33,8 @@ async function getLancamentos(mes?: string, usuarioId?: string, tipoPessoa?: str
 
   let query = supabase.from("financas_lancamentos").select("*").order("data", { ascending: false }).limit(5000) as any;
 
-  query = addUsuarioFilter(query, usuarioId);
-  query = addTipoPessoaFilterStrict(query, tipoPessoa);
+  query = adicionarFiltroUsuario(query, usuarioId);
+  query = adicionarFiltroTipoPessoaRestrito(query, tipoPessoa);
 
   if (mes) {
     validarMes(mes);
@@ -57,7 +57,7 @@ async function getOrcamento(mes?: string, usuarioId?: string, tipoPessoa?: strin
         where += " AND data_busca LIKE @mes";
         params.mes = mes + "%";
       }
-      const r = addTipoPessoaWhere(where, params, tipoPessoa);
+      const r = adicionarWhereTipoPessoa(where, params, tipoPessoa);
       const data = database.query(`SELECT * FROM financas_orcamento WHERE deleted_at IS NULL AND ${r.where} ORDER BY data ASC`, r.params).map((r2) => _doSQLite(r2));
       if (data.length > 0) return data as unknown as Orcamento[];
     } catch {
@@ -67,8 +67,8 @@ async function getOrcamento(mes?: string, usuarioId?: string, tipoPessoa?: strin
 
   let query = supabase.from("financas_orcamento").select("*").order("data", { ascending: true }) as any;
 
-  query = addUsuarioFilter(query, usuarioId);
-  query = addTipoPessoaFilterStrict(query, tipoPessoa);
+  query = adicionarFiltroUsuario(query, usuarioId);
+  query = adicionarFiltroTipoPessoaRestrito(query, tipoPessoa);
 
   if (mes) {
     validarMes(mes);
@@ -88,8 +88,8 @@ async function getAnosDisponiveis(usuarioId?: string, tipoPessoa?: string): Prom
       let oWhere = "deleted_at IS NULL";
       const lParams: Record<string, unknown> = {};
       const oParams: Record<string, unknown> = {};
-      const lr = addTipoPessoaWhere(lWhere, lParams, tipoPessoa);
-      const or = addTipoPessoaWhere(oWhere, oParams, tipoPessoa);
+      const lr = adicionarWhereTipoPessoa(lWhere, lParams, tipoPessoa);
+      const or = adicionarWhereTipoPessoa(oWhere, oParams, tipoPessoa);
       const lancamentos = database.query(`SELECT DISTINCT substr(data, 1, 4) as ano FROM financas_lancamentos WHERE ${lr.where}`, lr.params).map((r: Record<string, unknown>) => Number(r.ano));
       const orcamentos = database.query(`SELECT DISTINCT substr(data, 1, 4) as ano FROM financas_orcamento WHERE ${or.where}`, or.params).map((r: Record<string, unknown>) => Number(r.ano));
       const anos = new Set([...lancamentos, ...orcamentos]);
@@ -100,12 +100,12 @@ async function getAnosDisponiveis(usuarioId?: string, tipoPessoa?: string): Prom
   }
 
   let lancamentosQuery = supabase.from("financas_lancamentos").select("data") as any;
-  lancamentosQuery = addUsuarioFilter(lancamentosQuery, usuarioId);
-  lancamentosQuery = addTipoPessoaFilterStrict(lancamentosQuery, tipoPessoa);
+  lancamentosQuery = adicionarFiltroUsuario(lancamentosQuery, usuarioId);
+  lancamentosQuery = adicionarFiltroTipoPessoaRestrito(lancamentosQuery, tipoPessoa);
 
   let orcamentoQuery = supabase.from("financas_orcamento").select("data") as any;
-  orcamentoQuery = addUsuarioFilter(orcamentoQuery, usuarioId);
-  orcamentoQuery = addTipoPessoaFilterStrict(orcamentoQuery, tipoPessoa);
+  orcamentoQuery = adicionarFiltroUsuario(orcamentoQuery, usuarioId);
+  orcamentoQuery = adicionarFiltroTipoPessoaRestrito(orcamentoQuery, tipoPessoa);
 
   const [{ data: lancamentos, error: errorL }, { data: orcamentos, error: errorO }] = await Promise.all([lancamentosQuery, orcamentoQuery]);
 
@@ -134,7 +134,7 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
         lWhere += " AND categoria_id = @categoria";
         params.categoria = categoria;
       }
-      const lr = addTipoPessoaWhere(lWhere, params, tipoPessoa);
+      const lr = adicionarWhereTipoPessoa(lWhere, params, tipoPessoa);
       const lancamentos = database.query(`SELECT * FROM financas_lancamentos WHERE ${lr.where} ORDER BY data ASC`, lr.params).map((r) => _doSQLite(r));
 
       let oWhere = "deleted_at IS NULL AND data >= @anoInicio2 AND data <= @anoFim2";
@@ -143,7 +143,7 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
         oWhere += " AND mes = @mesN";
         oParams.mesN = parseInt(mes.toString());
       }
-      const or = addTipoPessoaWhere(oWhere, oParams, tipoPessoa);
+      const or = adicionarWhereTipoPessoa(oWhere, oParams, tipoPessoa);
       const orcamentos = database.query(`SELECT * FROM financas_orcamento WHERE ${or.where} ORDER BY data ASC`, or.params).map((r) => _doSQLite(r));
 
       if (lancamentos.length > 0 || orcamentos.length > 0) {
@@ -172,10 +172,10 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
     .gte("data", `${ano}-01-01`)
     .lte("data", `${ano}-12-31`) as any;
 
-  lancamentosQuery = addUsuarioFilter(lancamentosQuery, usuarioId);
-  lancamentosQuery = addTipoPessoaFilterStrict(lancamentosQuery, tipoPessoa);
-  orcamentoQuery = addUsuarioFilter(orcamentoQuery, usuarioId);
-  orcamentoQuery = addTipoPessoaFilterStrict(orcamentoQuery, tipoPessoa);
+  lancamentosQuery = adicionarFiltroUsuario(lancamentosQuery, usuarioId);
+  lancamentosQuery = adicionarFiltroTipoPessoaRestrito(lancamentosQuery, tipoPessoa);
+  orcamentoQuery = adicionarFiltroUsuario(orcamentoQuery, usuarioId);
+  orcamentoQuery = adicionarFiltroTipoPessoaRestrito(orcamentoQuery, tipoPessoa);
 
   if (mes && mes !== "all") {
     const mesFormatado = mes.toString().padStart(2, "0");
@@ -216,8 +216,8 @@ async function getDashboard(mes?: string, usuarioId?: string, tipoPessoa?: strin
         oWhere += " AND data_busca LIKE @mesO";
         oParams.mesO = mes + "%";
       }
-      const lr = addTipoPessoaWhere(lWhere, lParams, tipoPessoa);
-      const or = addTipoPessoaWhere(oWhere, oParams, tipoPessoa);
+      const lr = adicionarWhereTipoPessoa(lWhere, lParams, tipoPessoa);
+      const or = adicionarWhereTipoPessoa(oWhere, oParams, tipoPessoa);
       const orcamento = database.query(`SELECT * FROM financas_orcamento WHERE ${or.where} ORDER BY data ASC`, { ...or.params, ...lr.params }).map((r) => _doSQLite(r));
       const realizados = database.query(`SELECT * FROM financas_lancamentos WHERE ${lr.where} ORDER BY data DESC`, { ...lr.params, ...or.params }).map((r) => _doSQLite(r));
 
@@ -244,8 +244,8 @@ async function getDashboard(mes?: string, usuarioId?: string, tipoPessoa?: strin
   }
 
   let orcamentoSP = supabase.from("financas_orcamento").select("*").limit(5000) as any;
-  orcamentoSP = addUsuarioFilter(orcamentoSP, usuarioId);
-  orcamentoSP = addTipoPessoaFilterStrict(orcamentoSP, tipoPessoa);
+  orcamentoSP = adicionarFiltroUsuario(orcamentoSP, usuarioId);
+  orcamentoSP = adicionarFiltroTipoPessoaRestrito(orcamentoSP, tipoPessoa);
 
   if (mes) {
     validarMes(mes);
@@ -255,8 +255,8 @@ async function getDashboard(mes?: string, usuarioId?: string, tipoPessoa?: strin
   if (error) throw error;
 
   let financasSP = supabase.from("financas_lancamentos").select("*").eq("status", "PAGO").limit(5000) as any;
-  financasSP = addUsuarioFilter(financasSP, usuarioId);
-  financasSP = addTipoPessoaFilterStrict(financasSP, tipoPessoa);
+  financasSP = adicionarFiltroUsuario(financasSP, usuarioId);
+  financasSP = adicionarFiltroTipoPessoaRestrito(financasSP, tipoPessoa);
 
   if (mes) {
     validarMes(mes);
@@ -313,7 +313,7 @@ function validarPayloadLancamento(payload: { data?: string; tipo?: string; valor
   }
 }
 
-async function createLancamento(payload: CreateLancamentoPayload, usuarioId?: string): Promise<Lancamento> {
+async function criarLancamento(payload: CriarLancamentoPayload, usuarioId?: string): Promise<Lancamento> {
   validarPayloadLancamento(payload);
   const payloadNormalizado = {
     ...payload,
@@ -342,11 +342,11 @@ async function createLancamento(payload: CreateLancamentoPayload, usuarioId?: st
   return data;
 }
 
-async function deleteLancamento(id: string, usuarioId?: string): Promise<{ success: boolean }> {
+async function deletarLancamento(id: string, usuarioId?: string): Promise<{ success: boolean }> {
   database.run("UPDATE financas_lancamentos SET deleted_at = datetime('now'), sync_status = 'pending' WHERE id = ?", id);
 
   let query = supabase.from("financas_lancamentos").delete().eq("id", id) as any;
-  query = addUsuarioFilter(query, usuarioId);
+  query = adicionarFiltroUsuario(query, usuarioId);
   const { error } = await query;
   if (error) {
     _marcarPendente("financas_lancamentos", id);
@@ -355,14 +355,14 @@ async function deleteLancamento(id: string, usuarioId?: string): Promise<{ succe
   return { success: true };
 }
 
-async function updateLancamento(id: string, payload: Partial<CreateLancamentoPayload>, usuarioId?: string): Promise<Lancamento> {
+async function updateLancamento(id: string, payload: Partial<CriarLancamentoPayload>, usuarioId?: string): Promise<Lancamento> {
   const hoje = new Date().toISOString();
   const updateData: Record<string, unknown> = payload.status === "PAGO" ? { ...payload, data_pagamento: hoje } : { ...payload };
 
   _atualizarLocal("financas_lancamentos", id, { ...updateData, sync_status: "pending" });
 
   let query = supabase.from("financas_lancamentos").update(updateData).eq("id", id) as any;
-  query = addUsuarioFilter(query, usuarioId);
+  query = adicionarFiltroUsuario(query, usuarioId);
   const { data, error } = await query.select().single();
 
   if (error) {
@@ -374,7 +374,7 @@ async function updateLancamento(id: string, payload: Partial<CreateLancamentoPay
   return data;
 }
 
-async function createTransferencia(payload: CreateTransferenciaPayload, usuarioId?: string): Promise<Lancamento[]> {
+async function criarTransferencia(payload: CriarTransferenciaPayload, usuarioId?: string): Promise<Lancamento[]> {
   const grupoId = crypto.randomUUID();
 
   const base: Record<string, unknown> = {
@@ -432,11 +432,11 @@ async function createTransferencia(payload: CreateTransferenciaPayload, usuarioI
   return [data1, data2];
 }
 
-async function deleteTransferencia(grupoId: string, usuarioId?: string): Promise<{ success: boolean }> {
+async function deletarTransferencia(grupoId: string, usuarioId?: string): Promise<{ success: boolean }> {
   database.run("UPDATE financas_lancamentos SET deleted_at = datetime('now'), sync_status = 'pending' WHERE transferencia_grupo_id = ?", grupoId);
 
   let query = supabase.from("financas_lancamentos").delete().eq("transferencia_grupo_id", grupoId) as any;
-  query = addUsuarioFilter(query, usuarioId);
+  query = adicionarFiltroUsuario(query, usuarioId);
   const { error } = await query;
   if (error) {
     _marcarPendente("financas_lancamentos", grupoId);
@@ -445,7 +445,7 @@ async function deleteTransferencia(grupoId: string, usuarioId?: string): Promise
   return { success: true };
 }
 
-async function updateTransferencia(grupoId: string, payload: Partial<CreateTransferenciaPayload>, usuarioId?: string): Promise<Lancamento[]> {
+async function updateTransferencia(grupoId: string, payload: Partial<CriarTransferenciaPayload>, usuarioId?: string): Promise<Lancamento[]> {
   const hoje = new Date().toISOString();
   const updateData: Record<string, unknown> = payload.status === "PAGO" ? { data_pagamento: hoje } : {};
 
@@ -485,7 +485,7 @@ async function updateTransferencia(grupoId: string, payload: Partial<CreateTrans
     }
 
     let q = supabase.from("financas_lancamentos").update(patch).eq("id", entry.id) as any;
-    q = addUsuarioFilter(q, usuarioId);
+    q = adicionarFiltroUsuario(q, usuarioId);
     const { error } = await q;
     if (error) {
       _marcarPendente("financas_lancamentos", entry.id);
@@ -551,11 +551,11 @@ export {
   getAnosDisponiveis,
   getDashboardDados,
   getDashboard,
-  createLancamento,
-  deleteLancamento,
+  criarLancamento,
+  deletarLancamento,
   updateLancamento,
-  createTransferencia,
-  deleteTransferencia,
+  criarTransferencia,
+  deletarTransferencia,
   updateTransferencia,
   importarOrcamento,
 };

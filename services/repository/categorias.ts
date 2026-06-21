@@ -1,4 +1,4 @@
-import type { Categoria, Subcategoria, CreateCategoriaPayload, CreateSubcategoriaPayload } from "../../src/types";
+import type { Categoria, Subcategoria, CriarCategoriaPayload, CriarSubcategoriaPayload } from "../../src/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 import * as database from "../database";
@@ -6,7 +6,7 @@ import * as logger from "../logger";
 import {
   supabase, _doSQLite, _popularCache, _atualizarLocal, _syncAposEscrita,
   _marcarPendente, _inserirLocal, _limparCacheEviccao,
-  addUsuarioFilter, addTipoPessoaCategoriaFilter, addTipoPessoaWhere,
+  adicionarFiltroUsuario, adicionarFiltroCategoriaTipoPessoa, adicionarWhereTipoPessoa,
   validarUUID, normalizarNome,
 } from "./utils";
 import { logAuditoria } from "./auditoria";
@@ -21,7 +21,7 @@ async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas 
       params.tipo = tipo;
     }
     if (!compartilhar) {
-      const r = addTipoPessoaWhere(where, params, tipoPessoa, true);
+      const r = adicionarWhereTipoPessoa(where, params, tipoPessoa, true);
       where = r.where;
       params.tipoPessoaAtivo = r.params.tipoPessoaAtivo;
     }
@@ -55,7 +55,7 @@ async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas 
     let q = supabase.from("financas_categorias").select("*");
     if (!mostrarInativas) q = q.eq("ativo", true);
     if (tipo) q = q.eq("tipo", tipo);
-    q = addTipoPessoaCategoriaFilter(q, tipoPessoa, compartilhar);
+    q = adicionarFiltroCategoriaTipoPessoa(q, tipoPessoa, compartilhar);
     return q;
   }
 
@@ -83,7 +83,7 @@ async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas 
   return data;
 }
 
-async function createCategoria(payload: CreateCategoriaPayload): Promise<Categoria> {
+async function criarCategoria(payload: CriarCategoriaPayload): Promise<Categoria> {
   const { nome, tipo, usuarioId, tipo_pessoa } = payload;
   const ehGlobal = payload.eh_global ?? payload.ehGlobal ?? false;
 
@@ -219,7 +219,7 @@ async function toggleCategoriaAtivo(id: string, usuarioId?: string): Promise<Cat
   return data;
 }
 
-async function createSubcategoria(usuarioId: string, payload: CreateSubcategoriaPayload): Promise<Subcategoria> {
+async function criarSubcategoria(usuarioId: string, payload: CriarSubcategoriaPayload): Promise<Subcategoria> {
   const { categoria_id, nome, tipo_pessoa } = payload;
 
   const nomeNormalizado = normalizarNome(nome);
@@ -284,7 +284,7 @@ async function getSubcategorias(usuarioId?: string, categoriaId?: string, tipoPe
         params.categoriaId = categoriaId;
       }
       if (!compartilhar) {
-        const r = addTipoPessoaWhere(where, params, tipoPessoa, true);
+      const r = adicionarWhereTipoPessoa(where, params, tipoPessoa, true);
         where = r.where;
         params.tipoPessoaAtivo = r.params.tipoPessoaAtivo;
       }
@@ -297,8 +297,8 @@ async function getSubcategorias(usuarioId?: string, categoriaId?: string, tipoPe
 
   let query = supabase.from("financas_subcategorias").select("*").order("nome") as any;
 
-  query = addUsuarioFilter(query, usuarioId);
-  query = addTipoPessoaCategoriaFilter(query, tipoPessoa, compartilhar);
+  query = adicionarFiltroUsuario(query, usuarioId);
+  query = adicionarFiltroCategoriaTipoPessoa(query, tipoPessoa, compartilhar);
 
   if (categoriaId) {
     query = query.eq("categoria_id", categoriaId);
@@ -310,7 +310,7 @@ async function getSubcategorias(usuarioId?: string, categoriaId?: string, tipoPe
   return data;
 }
 
-async function deleteSubcategoria(id: string): Promise<{ success: boolean }> {
+async function deletarSubcategoria(id: string): Promise<{ success: boolean }> {
   const { count, error: errCheck } = await supabase.from("financas_lancamentos").select("id", { count: "exact", head: true }).eq("subcategoria_id", id);
 
   if (errCheck) throw errCheck;
@@ -333,11 +333,11 @@ async function deleteSubcategoria(id: string): Promise<{ success: boolean }> {
 
 export {
   getCategorias,
-  createCategoria,
+  criarCategoria,
   updateCategoria,
   toggleCategoriaAtivo,
   getSubcategorias,
-  createSubcategoria,
+  criarSubcategoria,
   updateSubcategoria,
-  deleteSubcategoria,
+  deletarSubcategoria,
 };

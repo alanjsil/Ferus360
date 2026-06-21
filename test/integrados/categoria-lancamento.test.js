@@ -16,7 +16,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createMockSupabase, createAndLoginUser } from "./helpers.js";
 import * as repo from "../../services/repository.js";
-import { buildAuthService } from "../../services/auth.js";
+import { construirAuthService } from "../../services/auth.js";
 
 describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", () => {
   let auth;
@@ -28,7 +28,7 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
     mockSupabase = createMockSupabase();
     repo.__setSupabase(mockSupabase);
 
-    auth = buildAuthService({
+    auth = construirAuthService({
       supabase: mockSupabase,
       createClient: vi.fn(() => mockSupabase),
       onLogin: vi.fn(),
@@ -55,7 +55,7 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
     const db = mockSupabase.__db();
     const qtdAntes = db.financas_categorias.length;
 
-    const categoria = await repo.createCategoria({
+    const categoria = await repo.criarCategoria({
       nome: "Transporte app",
       tipo: "DESPESA",
       usuarioId: usuario.id,
@@ -76,14 +76,14 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
   /* ─────────────────────────────────────────────────────────── */
 
   it("Step 2: Criar categoria e listar com filtro por tipo", async () => {
-    await repo.createCategoria({
+    await repo.criarCategoria({
       nome: "Gasolina",
       tipo: "DESPESA",
       usuarioId: usuario.id,
       ehGlobal: false,
     });
 
-    await repo.createCategoria({
+    await repo.criarCategoria({
       nome: "Freelance",
       tipo: "RECEITA",
       usuarioId: usuario.id,
@@ -105,7 +105,7 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
 
   it("Step 3: Isolamento de categoria entre usuários", async () => {
     // Usuário 1 cria categoria
-    await repo.createCategoria({
+    await repo.criarCategoria({
       nome: "Categoria secreta",
       tipo: "DESPESA",
       usuarioId: usuario.id,
@@ -141,7 +141,7 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
       (c) => c.eh_global && c.nome === "Alimentação",
     );
 
-    const lancamento = await repo.createLancamento(
+    const lancamento = await repo.criarLancamento(
       {
         tipo: "DESPESA",
         valor: 45.9,
@@ -177,18 +177,18 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
     const transporte = db.financas_categorias.find((c) => c.nome === "Transporte");
 
     // Criar 2 lançamentos em Alimentação
-    await repo.createLancamento(
+    await repo.criarLancamento(
       { tipo: "DESPESA", valor: 30, categoria_id: alimentacao.id, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06" },
       usuario.id,
     );
 
-    await repo.createLancamento(
+    await repo.criarLancamento(
       { tipo: "DESPESA", valor: 50, categoria_id: alimentacao.id, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06" },
       usuario.id,
     );
 
     // Criar 1 lançamento em Transporte
-    await repo.createLancamento(
+    await repo.criarLancamento(
       { tipo: "DESPESA", valor: 20, categoria_id: transporte.id, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06" },
       usuario.id,
     );
@@ -219,7 +219,7 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
     const userId = loginResult.usuario.id;
 
     // Criar categoria pessoal
-    const categoria = await repo.createCategoria({
+    const categoria = await repo.criarCategoria({
       nome: "Salário extra",
       tipo: "RECEITA",
       usuarioId: userId,
@@ -229,7 +229,7 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
     const catId = categoria.id;
 
     // Criar lançamento de receita com a nova categoria
-    await repo.createLancamento(
+    await repo.criarLancamento(
       {
         tipo: "RECEITA",
         valor: 1000,
@@ -248,7 +248,7 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
       (c) => c.eh_global && c.nome === "Alimentação",
     );
 
-    await repo.createLancamento(
+    await repo.criarLancamento(
       {
         tipo: "DESPESA",
         valor: 200,

@@ -105,7 +105,7 @@ describe("sync.js — motor de sincronia", () => {
 
   describe("push", () => {
     it("não envia nada se não há pendentes", async () => {
-      await syncModule.forceSync();
+      await syncModule.forcarSync();
       expect(mockConexao.supabase.rpc).not.toHaveBeenCalled();
     });
 
@@ -114,7 +114,7 @@ describe("sync.js — motor de sincronia", () => {
 
       mockConexao.supabase.rpc.mockResolvedValue({ data: { id: "cat-1" }, error: null });
 
-      await syncModule.forceSync();
+      await syncModule.forcarSync();
 
       expect(mockConexao.supabase.rpc).toHaveBeenCalledWith("sync_insert", {
         tabela: "financas_categorias",
@@ -130,7 +130,7 @@ describe("sync.js — motor de sincronia", () => {
 
       mockConexao.supabase.rpc.mockResolvedValue({ data: { id: "cat-1" }, error: null });
 
-      await syncModule.forceSync();
+      await syncModule.forcarSync();
 
       expect(mockConexao.supabase.rpc).toHaveBeenCalledWith(
         "sync_upsert",
@@ -147,7 +147,7 @@ describe("sync.js — motor de sincronia", () => {
 
       mockConexao.supabase.rpc.mockResolvedValue({ data: null, error: new Error("Network error") });
 
-      await syncModule.forceSync();
+      await syncModule.forcarSync();
 
       const row = db.prepare("SELECT * FROM financas_categorias WHERE id = ?").get("cat-1");
       expect(row.sync_status).toBe("failed");
@@ -159,7 +159,7 @@ describe("sync.js — motor de sincronia", () => {
 
       mockConexao.supabase.rpc.mockResolvedValue({ data: null, error: null });
 
-      await syncModule.forceSync();
+      await syncModule.forcarSync();
 
       expect(mockConexao.supabase.rpc).toHaveBeenCalledWith("sync_delete", {
         tabela: "financas_categorias",
@@ -175,7 +175,7 @@ describe("sync.js — motor de sincronia", () => {
 
       syncModule.__setConexao({ isOnline: () => false, supabase: mockConexao.supabase, onStatusChange: vi.fn() });
 
-      await syncModule.forceSync();
+      await syncModule.forcarSync();
 
       expect(mockConexao.supabase.rpc).not.toHaveBeenCalled();
     });
@@ -201,7 +201,7 @@ describe("sync.js — motor de sincronia", () => {
         }),
       });
 
-      await syncModule.forceSync();
+      await syncModule.forcarSync();
 
       const conflito = db.prepare("SELECT * FROM sync_conflicts WHERE registro_id = ?").get("l-1");
       expect(conflito).toBeTruthy();
@@ -235,7 +235,7 @@ describe("sync.js — motor de sincronia", () => {
         }),
       });
 
-      await syncModule.forceSync();
+      await syncModule.forcarSync();
 
       const row = db.prepare("SELECT * FROM financas_categorias WHERE id = ?").get("cat-1");
       expect(row.nome).toBe("Remoto");
@@ -247,7 +247,7 @@ describe("sync.js — motor de sincronia", () => {
     it("não faz pull se offline", async () => {
       syncModule.__setConexao({ isOnline: () => false, supabase: mockConexao.supabase, onStatusChange: vi.fn() });
 
-      await syncModule.forceSync();
+      await syncModule.forcarSync();
       expect(mockConexao.supabase.from).not.toHaveBeenCalled();
     });
 
@@ -259,7 +259,7 @@ describe("sync.js — motor de sincronia", () => {
         }),
       });
 
-      await syncModule.forceSync();
+      await syncModule.forcarSync();
 
       const row = db.prepare("SELECT * FROM financas_categorias WHERE id = ?").get("cat-1");
       expect(row).toBeTruthy();
@@ -282,7 +282,7 @@ describe("sync.js — motor de sincronia", () => {
         }),
       });
 
-      await syncModule.forceSync();
+      await syncModule.forcarSync();
 
       const row = db.prepare("SELECT * FROM financas_categorias WHERE id = ?").get("cat-1");
       expect(row.nome).toBe("Local Pendente");

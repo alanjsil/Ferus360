@@ -1,11 +1,11 @@
-import type { Pessoa, createPessoaPayload } from "../../src/types";
+import type { Pessoa, CriarPessoaPayload } from "../../src/types";
 import crypto from "crypto";
 import * as database from "../database";
 import * as logger from "../logger";
 import {
   supabase, _doSQLite, _popularCache, _atualizarLocal, _syncAposEscrita,
   _marcarPendente, _inserirLocal,
-  addUsuarioFilter, addTipoPessoaFilterStrict, addTipoPessoaWhere,
+  adicionarFiltroUsuario, adicionarFiltroTipoPessoaRestrito, adicionarWhereTipoPessoa,
   normalizarNome,
 } from "./utils";
 
@@ -14,7 +14,7 @@ async function getPessoas(usuarioId?: string, tipoPessoa?: string): Promise<Pess
     try {
       let where = "deleted_at IS NULL";
       const params: Record<string, unknown> = {};
-      const r = addTipoPessoaWhere(where, params, tipoPessoa);
+      const r = adicionarWhereTipoPessoa(where, params, tipoPessoa);
       const data = database.query(`SELECT * FROM financas_pessoas WHERE ${r.where} ORDER BY nome`, r.params).map((r2) => _doSQLite(r2));
       if (data.length > 0) return data as unknown as Pessoa[];
     } catch {
@@ -23,8 +23,8 @@ async function getPessoas(usuarioId?: string, tipoPessoa?: string): Promise<Pess
   }
 
   let query = supabase.from("financas_pessoas").select("*").order("nome") as any;
-  query = addUsuarioFilter(query, usuarioId);
-  query = addTipoPessoaFilterStrict(query, tipoPessoa);
+  query = adicionarFiltroUsuario(query, usuarioId);
+  query = adicionarFiltroTipoPessoaRestrito(query, tipoPessoa);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -32,7 +32,7 @@ async function getPessoas(usuarioId?: string, tipoPessoa?: string): Promise<Pess
   return data;
 }
 
-async function createPessoa(usuarioId: string, payload: createPessoaPayload): Promise<Pessoa> {
+async function criarPessoa(usuarioId: string, payload: CriarPessoaPayload): Promise<Pessoa> {
   const nomeNormalizado = normalizarNome(payload.nome);
   if (nomeNormalizado.length < 2 || nomeNormalizado.length > 40) {
     throw new Error("Nome deve ter entre 2 e 40 caracteres");
@@ -78,7 +78,7 @@ async function updatePessoa(id: string, patch: { nome?: string }): Promise<Pesso
   return data;
 }
 
-async function deletePessoa(usuarioId: string, id: string): Promise<{ success: boolean }> {
+async function deletarPessoa(usuarioId: string, id: string): Promise<{ success: boolean }> {
   const { count, error: errCheck } = await supabase.from("financas_lancamentos").select("id", { count: "exact", head: true }).eq("pessoa_id", id);
 
   if (errCheck) throw errCheck;
@@ -90,7 +90,7 @@ async function deletePessoa(usuarioId: string, id: string): Promise<{ success: b
   database.run("UPDATE financas_pessoas SET deleted_at = datetime('now'), sync_status = 'pending' WHERE id = ?", id);
 
   let query = supabase.from("financas_pessoas").delete().eq("id", id) as any;
-  query = addUsuarioFilter(query, usuarioId);
+  query = adicionarFiltroUsuario(query, usuarioId);
   const { error } = await query;
   if (error) {
     _marcarPendente("financas_pessoas", id);
@@ -99,4 +99,4 @@ async function deletePessoa(usuarioId: string, id: string): Promise<{ success: b
   return { success: true };
 }
 
-export { getPessoas, createPessoa, updatePessoa, deletePessoa };
+export { getPessoas, criarPessoa, updatePessoa, deletarPessoa };

@@ -196,7 +196,7 @@ async function aplicarFiltrosSalvos() {
   await carregarOrcamento();
   await carregarDashboard();
   atualizarResumo();
-  renderTabela();
+  renderizarTabela();
 }
 
 /**
@@ -225,7 +225,7 @@ function configurarEventListeners() {
     await carregarOrcamento();
     await carregarDashboard();
     atualizarResumo();
-    renderTabela();
+    renderizarTabela();
   });
 
   // Filtro de mês
@@ -235,7 +235,7 @@ function configurarEventListeners() {
     await carregarOrcamento();
     await carregarDashboard();
     atualizarResumo();
-    renderTabela();
+    renderizarTabela();
   });
 
   // Filtros de tipo (pills)
@@ -250,7 +250,7 @@ function configurarEventListeners() {
       filtroAtualTipo = this.dataset.filterTipo || "all";
       salvarEstadoFiltros();
       atualizarResumo();
-      renderTabela();
+      renderizarTabela();
     });
   });
 
@@ -265,7 +265,7 @@ function configurarEventListeners() {
       filtroAtualStatus = this.dataset.filterStatus || "all";
       salvarEstadoFiltros();
       atualizarResumo();
-      renderTabela();
+      renderizarTabela();
     });
   });
 
@@ -448,7 +448,7 @@ async function carregarLancamentos() {
     atualizarAnosFiltro();
     atualizarMesesFiltro();
     atualizarResumo();
-    renderTabela();
+    renderizarTabela();
   } catch (err) {
     window.electronAPI?.logError("index", "Erro ao carregar lançamentos", err);
     if (tbody) {
@@ -818,9 +818,9 @@ async function excluirLancamento(id, event = null) {
 
   try {
     if (lancamento.transferencia_grupo_id) {
-      await window.electronAPI.deleteTransferencia(lancamento.transferencia_grupo_id);
+      await window.electronAPI.deletarTransferencia(lancamento.transferencia_grupo_id);
     } else {
-      await window.electronAPI.deleteLancamento(id);
+      await window.electronAPI.deletarLancamento(id);
     }
 
     // Recarregar os dados
@@ -853,7 +853,7 @@ async function fazerImportacaoAPI(itens) {
  * @param {string} csvText
  * @returns {Array<{ data: string, descricao: string, valor: string, tipo: string, categoria_id: string, subcategoria_id: string, conta_id: string, status: string }>}
  */
-function parseCSV(csvText) {
+function analisarCSV(csvText) {
   const linhas = csvText.split("\n").filter((linha) => linha.trim());
   const itensBrutos = [];
 
@@ -929,7 +929,7 @@ async function processarImportacao() {
 
   try {
     // Pipeline claro
-    const itensBrutos = parseCSV(dadosCSV);
+    const itensBrutos = analisarCSV(dadosCSV);
     const itensProcessados = transformarItens(itensBrutos, mesRef);
 
     if (itensProcessados.length === 0) {
@@ -1134,7 +1134,7 @@ function atualizarMesesFiltro() {
   }
 }
 
-function renderTabela() {
+function renderizarTabela() {
   const tbody = document.getElementById("tabelaLancamentos");
   tbody.innerHTML = "";
 
@@ -1255,9 +1255,9 @@ document.getElementById("formLancamento").addEventListener("submit", async (e) =
         await window.electronAPI.updateLancamento(lancamentoEditando.id, payload);
       }
     } else if (isTransferencia) {
-      await window.electronAPI.createTransferencia(payload);
+      await window.electronAPI.criarTransferencia(payload);
     } else {
-      await window.electronAPI.createLancamento(payload);
+      await window.electronAPI.criarLancamento(payload);
     }
 
     // Sucesso
@@ -1280,7 +1280,7 @@ document.getElementById("formLancamento").addEventListener("submit", async (e) =
 // Recarrega ao trocar o mês
 document.getElementById("filtroMes").addEventListener("change", () => {
   atualizarResumo();
-  renderTabela();
+  renderizarTabela();
 });
 // Preencher data atual por padrão
 document.getElementById("data").valueAsDate = new Date();
@@ -1449,9 +1449,9 @@ export {
   formatDate,
   mostrarFeedback,
   mostrarResultadoImportacao,
-  parseCSV,
+  analisarCSV,
   processarImportacao,
-  renderTabela,
+  renderizarTabela,
   salvarEstadoFiltros,
   setCampoValor,
   transformarItens,

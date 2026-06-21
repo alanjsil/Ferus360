@@ -24,29 +24,29 @@ A ponte é definida em `preload.ts` via `contextBridge.exposeInMainWorld("electr
 | `auth:renovar`                    | renderer→main | `renovarAuth(refreshToken)`                                     | auth.ts       | Renova sessão com refresh token       |
 | `auth:trocar-senha`               | renderer→main | `trocarSenha(usuarioId, novaSenha)`                             | auth.ts       | Troca senha do usuário logado         |
 | `categorias:get`                  | renderer→main | `getCategorias(tipo)`                                           | repository.ts | Lista categorias por tipo             |
-| `cat:list`                        | renderer→main | `listCategorias()`                                              | repository.ts | Lista todas (inclusive inativas)      |
-| `cat:create`                      | renderer→main | `createCategoria(payload)`                                      | repository.ts | Cria categoria                        |
+| `cat:list`                        | renderer→main | `listarCategorias()`                                              | repository.ts | Lista todas (inclusive inativas)      |
+| `cat:create`                      | renderer→main | `criarCategoria(payload)`                                      | repository.ts | Cria categoria                        |
 | `cat:update`                      | renderer→main | `updateCategoria(id, patch)`                                    | repository.ts | Atualiza categoria                    |
 | `cat:toggleAtivo`                 | renderer→main | `toggleCategoriaAtivo(id)`                                      | repository.ts | Ativa/desativa categoria              |
 | `subcategorias:get`               | renderer→main | `getSubcategorias(categoriaId)`                                 | repository.ts | Lista subcategorias                   |
-| `subcat:create`                   | renderer→main | `createSubcategoria(payload)`                                   | repository.ts | Cria subcategoria                     |
+| `subcat:create`                   | renderer→main | `criarSubcategoria(payload)`                                   | repository.ts | Cria subcategoria                     |
 | `subcat:update`                   | renderer→main | `updateSubcategoria(id, patch)`                                 | repository.ts | Atualiza subcategoria                 |
-| `subcat:delete`                   | renderer→main | `deleteSubcategoria(id)`                                        | repository.ts | Exclui subcategoria                   |
+| `subcat:delete`                   | renderer→main | `deletarSubcategoria(id)`                                        | repository.ts | Exclui subcategoria                   |
 | `contas:get`                      | renderer→main | `getContas()`                                                   | repository.ts | Lista contas bancárias                |
-| `conta:create`                    | renderer→main | `createConta(payload)`                                          | repository.ts | Cria conta                            |
+| `conta:create`                    | renderer→main | `criarConta(payload)`                                          | repository.ts | Cria conta                            |
 | `conta:update`                    | renderer→main | `updateConta(id, patch)`                                        | repository.ts | Atualiza conta                        |
-| `conta:delete`                    | renderer→main | `deleteConta(id)`                                               | repository.ts | Exclui conta                          |
+| `conta:delete`                    | renderer→main | `deletarConta(id)`                                               | repository.ts | Exclui conta                          |
 | `pessoas:get`                     | renderer→main | `getPessoas()`                                                  | repository.ts | Lista pessoas                         |
-| `pessoa:create`                   | renderer→main | `createPessoa(payload)`                                         | repository.ts | Cria pessoa                           |
+| `pessoa:create`                   | renderer→main | `criarPessoa(payload)`                                         | repository.ts | Cria pessoa                           |
 | `pessoa:update`                   | renderer→main | `updatePessoa(id, patch)`                                       | repository.ts | Atualiza pessoa                       |
-| `pessoa:delete`                   | renderer→main | `deletePessoa(id)`                                              | repository.ts | Exclui pessoa                         |
+| `pessoa:delete`                   | renderer→main | `deletarPessoa(id)`                                              | repository.ts | Exclui pessoa                         |
 | `lancamentos:get`                 | renderer→main | `getLancamentos(mes)`                                           | repository.ts | Lista lançamentos do mês              |
-| `lancamentos:create`              | renderer→main | `createLancamento(payload)`                                     | repository.ts | Cria lançamento                       |
+| `lancamentos:create`              | renderer→main | `criarLancamento(payload)`                                     | repository.ts | Cria lançamento                       |
 | `lancamentos:update`              | renderer→main | `updateLancamento(id, payload)`                                 | repository.ts | Atualiza lançamento                   |
-| `lancamentos:delete`              | renderer→main | `deleteLancamento(id)`                                          | repository.ts | Exclui lançamento                     |
-| `transferencia:create`            | renderer→main | `createTransferencia(payload)`                                  | repository.ts | Cria transferência entre contas       |
+| `lancamentos:delete`              | renderer→main | `deletarLancamento(id)`                                          | repository.ts | Exclui lançamento                     |
+| `transferencia:create`            | renderer→main | `criarTransferencia(payload)`                                  | repository.ts | Cria transferência entre contas       |
 | `transferencia:update`            | renderer→main | `updateTransferencia(grupoId, payload)`                         | repository.ts | Atualiza transferência                |
-| `transferencia:delete`            | renderer→main | `deleteTransferencia(grupoId)`                                  | repository.ts | Exclui transferência                  |
+| `transferencia:delete`            | renderer→main | `deletarTransferencia(grupoId)`                                  | repository.ts | Exclui transferência                  |
 | `orcamento:get`                   | renderer→main | `getOrcamento(mes)`                                             | repository.ts | Lista orçamento do mês                |
 | `orcamento:importar`              | renderer→main | `importarOrcamento(itens)`                                      | repository.ts | Importa itens de orçamento            |
 | `dashboard:get`                   | renderer→main | `getDashboard(mes)`                                             | repository.ts | Totais do dashboard                   |
@@ -59,7 +59,7 @@ A ponte é definida em `preload.ts` via `contextBridge.exposeInMainWorld("electr
 | `config:encerrar-outras-sessoes`  | renderer→main | `revogarOutrasSessoes()`                                        | repository.ts | Revoga todas as outras sessões        |
 | `config:exportarDados`            | renderer→main | `exportarDados()`                                               | repository.ts | Exporta dados do usuário              |
 | `config:excluir-conta`            | renderer→main | `excluirConta()`                                                | repository.ts | Exclui conta do usuário               |
-| `sync:force`                      | renderer→main | `forceSync()`                                                   | sync.ts       | Força sincronização imediata          |
+| `sync:force`                      | renderer→main | `forcarSync()`                                                   | sync.ts       | Força sincronização imediata          |
 | `sync:conflitos`                  | renderer→main | `getConflitos()`                                                | sync.ts       | Lista conflitos de sincronização      |
 | `sync:resolver-conflito`          | renderer→main | `resolverConflito(id, decisao, payloadMesclado)`                | sync.ts       | Resolve conflito manualmente          |
 | `admin:getDashboard`              | renderer→main | `adminGetDashboard()`                                           | admin.ts      | Dashboard administrativo              |
@@ -101,7 +101,7 @@ if (result.error) return console.error(result.error);
 const cats = await window.electronAPI.getCategorias("DESPESA");
 
 // Criar lançamento
-const lanc = await window.electronAPI.createLancamento({
+const lanc = await window.electronAPI.criarLancamento({
   data: "2026-06-13",
   tipo: "DESPESA",
   valor: 150.0,
