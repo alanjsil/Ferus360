@@ -32,7 +32,6 @@ Perfil dos usuários. Criado automaticamente pelo trigger `on_auth_user_created`
 | `email` | `TEXT` | NOT NULL, UNIQUE |
 | `role` | `TEXT` | `'user'` ou `'admin'`, default `'user'` |
 | `ativo` | `BOOLEAN` | Default `TRUE` |
-| `email_recuperacao` | `TEXT` | Criptografado via AES-256-GCM no app layer |
 | `avatar_url` | `TEXT` | |
 | `criado_em` | `TIMESTAMPTZ` | `NOW()` |
 | `atualizado_em` | `TIMESTAMPTZ` | `NOW()` |

@@ -87,7 +87,7 @@ describe("config (configurações via repository)", () => {
       // Arrange
       repo.__seed("user-1", "financas_usuarios", [{
         id: "user-1", nome: "Alan", email: "alan@example.com",
-        email_recuperacao: "rec@example.com", avatar_url: null,
+        avatar_url: null,
         role: "user", senha_hash: "hash", ativo: true,
       }]);
 
@@ -97,7 +97,7 @@ describe("config (configurações via repository)", () => {
       // Assert
       expect(perfil).toEqual({
         id: "user-1", nome: "Alan", email: "alan@example.com",
-        email_recuperacao: "rec@example.com", avatar_url: null, role: "user",
+        avatar_url: null, role: "user",
       });
     });
 
@@ -112,7 +112,7 @@ describe("config (configurações via repository)", () => {
       // Arrange
       repo.__seed("user-1", "financas_usuarios", [{
         id: "user-1", nome: "Alan", email: "alan@example.com",
-        email_recuperacao: null, avatar_url: null, role: "user",
+        avatar_url: null, role: "user",
         senha_hash: "hash", ativo: true,
       }]);
 
@@ -128,7 +128,7 @@ describe("config (configurações via repository)", () => {
       const avatar = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAA";
       repo.__seed("user-1", "financas_usuarios", [{
         id: "user-1", nome: "Alan", email: "alan@example.com",
-        email_recuperacao: null, avatar_url: null, role: "user",
+        avatar_url: null, role: "user",
         senha_hash: "hash", ativo: true,
       }]);
 
