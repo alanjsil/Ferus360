@@ -44,25 +44,6 @@
 | [ ]     | `services/repository/admin.ts:36`—`getTransacoesCliente()`           | Repository filtra `.eq("tipo_pessoa")` se passado       |
 | [ ]     | `services/repository/admin.ts:46`—`getResumoCliente()`               | Repository filtra `.eq("tipo_pessoa")` se passado       |
 | [ ]     | `services/state.ts:37/42`—`setState/getState`                        | State mirror (fonte da verdade)                         |
-| Checado | Onde                                                                 | O que observar                                          |
-| ------- | ----------------------------------------------------------           | ------------------------------------------------------- |
-| [ ]     | `services/repository/categorias.ts:13`—`getCategorias()`             | Categorias globais + pessoais carregando corretamente   |
-| [ ]     | `services/repository/auditoria.ts:35`—`logAuditoria()`               | Todo log de auditoria passa aqui                        |
-| [ ]     | `services/repository/admin.ts:58`—`getChamados()`                    | Listagem de chamados (admin vê todos, user vê próprios) |
-| [ ]     | `services/repository/admin.ts:81`—`updateChamado()`                  | Atualização de status + respostas                       |
-| [ ]     | `services/admin.ts:156`—`resetSenha()`                               | Redefinição de senha via admin                          |
-| [ ]     | `services/admin.ts:179`—`getChamados()`                              | Chamados lado admin (join com usuário)                  |
-| [ ]     | `services/admin.ts:231`—`getAuditoria()`                             | Consulta de auditoria (back-end)                        |
-| [ ]     | `services/admin.ts:236`—`criarUsuario()`                             | Criação via edge function do Supabase                   |
-| [ ]     | `services/auth.ts:74`—`login()`                                      | Login com auditoria (LOGIN / LOGIN_FAILED)              |
-| [ ]     | `services/ipcHandlers.ts:567`—`handleAdminGetChamados`               | IPC de chamados                                         |
-| [ ]     | `services/ipcHandlers.ts:591`—`handleAdminGetAuditoria`              | IPC de auditoria                                        |
-| [ ]     | `services/ipcHandlers.ts:503`—`handleAdminToggleCliente`             | Toggle ativa/inativa cliente                            |
-| [ ]     | `services/ipcHandlers.ts:441`—`handleConfigGetSessoes`               | IPC listar sessões ativas                               |
-| [ ]     | `services/ipcHandlers.ts:469`—`handleConfigExportarDados`            | IPC exportar dados JSON                                 |
-| [ ]     | `services/ipcHandlers.ts:475`—`handleConfigExcluirConta`             | IPC deletar conta (RLS-protected)                       |
-| [ ]     | `services/ipcHandlers.ts:447`—`handleConfigEncerrarSessao`           | IPC encerrar sessão específica                          |
-| [ ]     | `services/state.ts:37/42`—`setState/getState`                        | State mirror (fonte da verdade)                         |
 
 ### 🧭 Pontos de Parada Sugeridos (Renderer)
 
@@ -85,21 +66,6 @@
 | [ ]     | public/js/visualizar-cliente.js:126`—`carregarLancamentos()                 | Carregar dados do cliente               |
 | [ ]     | public/js/visualizar-dashboard-cliente.js`                                  | Dashboard do cliente via admin          |
 | [ ]     | public/js/auth-guard.js:99` — renovação de token                            | `renewFromRefreshToken()` quando expira |
-| Checado | Onde                                                                        | O que observar                          |
-| ------- | -----------------------------------------------------------                 | --------------------------------------- |
-| [ ]     | public/js/admin.js:76`—`carregarDashboard()                                 | Dashboard admin (cards totais)          |
-| [ ]     | public/js/admin.js:118`—`carregarClientes()                                 | Listagem + filtro de clientes           |
-| [ ]     | public/js/admin.js:456`—`configurarRedefinirSenha()                         | Busca + redefinição de senha            |
-| [ ]     | public/js/admin.js:540`—`carregarChamados()                                 | Carregar chamados + badge               |
-| [ ]     | public/js/admin.js:590`—`abrirAtendimento()                                 | Dialog de atendimento com histórico     |
-| [ ]     | public/js/admin.js:632`—`enviarRespostaChamado()                            | Enviar resposta + mudar status          |
-| [ ]     | public/js/admin.js:665`—`configurarNovoUsuario()                            | Criação de usuário (modal)              |
-| [ ]     | public/js/conflitos.js`—`resolverConflito()                                 | Resolver conflitos de sync (UI novo)    |
-| [ ]     | public/js/index.js:800`—`parseCSV()                                         | Parser de importação CSV                |
-| [ ]     | public/js/index.js:863`—`processarImportacao()                              | Fluxo completo de importação            |
-| [ ]     | public/js/visualizar-cliente.js:126`—`carregarLancamentos()                 | Carregar dados do cliente               |
-| [ ]     | public/js/visualizar-dashboard-cliente.js`                                  | Dashboard do cliente via admin          |
-| [ ]     | public/js/auth-guard.js:99` — renovação de token                            | `renewFromRefreshToken()` quando expira |
 
 ---
 
@@ -109,7 +75,7 @@
   - **Breakpoint:** `login.js:91` `fazerLogin()` — entrada do submit
   - **Breakpoint:** `auth.ts:74` `login()` — chamada Supabase Auth
 - [x] 0.2 Login — credenciais inválidas → erro "Email ou senha incorretos"
-- [ ] 0.3 Login — usuário inativo → erro "Usuário inativado. Entre em contato com o administrador."
+- [x] 0.3 Login — usuário inativo → erro "Usuário inativado. Entre em contato com o administrador."
   - **Breakpoint:** `auth.ts:87` verificação `perfil.ativo`
 - [x] 0.4 Login — email não confirmado → erro "Email não confirmado."
 - [x] 0.5 Login — rate limit → erro "Muitas tentativas. Aguarde um momento."
@@ -125,35 +91,35 @@
 - [x] 0.10 Restaurar sessão automática ao carregar página de login (se já logado, redireciona)
   - **Breakpoint:** `login.js:140` `tentarRestaurarSessao()`
   - **Breakpoint:** `auth-guard.js:114` `ensureAuthenticated()` — verifica token, tenta renovar
-- [ ] 0.11 Renovação de token expirado via refreshToken
+- [x] 0.11 Renovação de token expirado via refreshToken
   - **Breakpoint:** `auth-guard.js:99` `renewFromRefreshToken()`
   - **Breakpoint:** `auth.ts:219` `renovarSessao()`
-- [ ] 0.12 Logout → limpa state + storage + redirect (`clearAuthSession()`)
+- [x] 0.12 Logout → limpa state + storage + redirect (`clearAuthSession()`)
   - **Breakpoint:** `auth-guard.js:68` `clearAuthSession()`
   - **Breakpoint:** `auth.ts:103` `logout()`
 
 #### Recuperação de Senha
 
-- [ ] 0.13 Abrir modal de recuperação ("Esqueci minha senha")
+- [x] 0.13 Abrir modal de recuperação ("Esqueci minha senha")
   - **Breakpoint:** `login.js:171` `configurarRecuperacao()`
-- [ ] 0.14 Solicitar recuperação — valida email, envia link (mensagem genérica "Se o email existir...")
+- [x] 0.14 Solicitar recuperação — valida email, envia link (mensagem genérica "Se o email existir...")
   - **Breakpoint:** `login.js:187` submit do formulário de recuperação
   - **Breakpoint:** `auth.ts:168` `solicitarRecuperacao()` — chama Supabase `resetPasswordForEmail`
-- [ ] 0.15 Página `redefinir.html` — deep link (`access_token` no hash → modo automático)
+- [x] 0.15 Página `redefinir.html` — deep link (`access_token` no hash → modo automático)
   - **Breakpoint:** `redefinir.js:13` `obterTokenRecuperacao()` — parse do hash
   - **Breakpoint:** `auth.ts:198` `redefinirSenha()` — via token da sessão
-- [ ] 0.16 Página `redefinir.html` — fallback manual (cola link ou token)
+- [x] 0.16 Página `redefinir.html` — fallback manual (cola link ou token)
   - **Breakpoint:** `redefinir.js:38` `extrairTokenDoLink()` — parse URL ou token puro
   - **Breakpoint:** `auth.ts:181` `confirmarRecuperacao()` — via email + token + OTP verify
-- [ ] 0.17 Validações de senha em `redefinir.html`:
+- [x] 0.17 Validações de senha em `redefinir.html`:
   - Mínimo 8 caracteres, 1 maiúscula, 1 número (requisitos visuais em tempo real)
   - **Breakpoint:** `password-utils.js:7` `REQUISITOS` — lista de validações
   - **Breakpoint:** `redefinir.js:163` `avaliarRequisitos()` no evento `input`
-- [ ] 0.18 Confirmar senha — campos conferem antes de enviar
+- [x] 0.18 Confirmar senha — campos conferem antes de enviar
   - **Breakpoint:** `redefinir.js:80` validação `senha !== confirmacao`
-- [ ] 0.19 Token de recuperação expira em 5 minutos (TTL no backend)
+- [x] 0.19 Token de recuperação expira em 5 minutos (TTL no backend)
   - **Breakpoint:** `auth.ts:137` `setRecoveryTokens()` com `TEMPO_EXPIRACAO_RECUPERACAO_MS`
-- [ ] 0.20 Splash screen animada na inicialização do login
+- [x] 0.20 Splash screen animada na inicialização do login
   - **Breakpoint:** `login.js:236` fade-out do splash
 
 #### Autenticação Transversal (auth-guard)

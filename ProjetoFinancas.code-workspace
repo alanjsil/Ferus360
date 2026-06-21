@@ -14,6 +14,7 @@
       ".github": true, // Somente o teste de CI
       "build": true, // Somente o icon do APP
       "dist-ts": true, // Pasta com os maps do ts
+      ".vscode": true,
 
       // Arquivos
       ".env": true,
@@ -236,32 +237,6 @@
       "christian-kohler.path-intellisense",
       "ms-ceintl.vscode-language-pack-pt-br",
       "ms-vscode.vscode-chat-customizations-evaluations",
-    ],
-  },
-
-  "launch": {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "type": "node",
-        "request": "launch",
-        "name": "Electron: Main Process",
-        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
-        "windows": {
-          "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd",
-        },
-        "program": "${workspaceFolder}/main.ts",
-        "skipFiles": ["<node_internals>/**"],
-      },
-      {
-        "type": "node",
-        "request": "launch",
-        "name": "Debug Popular Dados",
-        "skipFiles": ["<node_internals>/**"],
-        "program": "${workspaceFolder}/scripts/popular-dados-exemplo.mjs",
-        "args": ["-debug"],
-        "console": "integratedTerminal",
-      },
     ],
   },
 }

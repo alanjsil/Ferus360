@@ -58,35 +58,8 @@ function iniciar(userDataPath: string): Database.Database {
     }
   }
 
-  migrar();
+  criarTabelas();
   return db!;
-}
-
-function migrar(): void {
-  const v = Number(db!.pragma("user_version", { simple: true }));
-
-  if (v < 1) {
-    criarTabelas();
-    db!.pragma("user_version = 1");
-  }
-
-  if (v < 2) {
-    db!.exec("DROP TABLE IF EXISTS financas_usuarios");
-    criarTabelas();
-    db!.pragma("user_version = 2");
-  }
-
-  if (v < 3) {
-    db!.exec(`
-      ALTER TABLE financas_categorias ADD COLUMN tipo_pessoa TEXT DEFAULT NULL;
-      ALTER TABLE financas_subcategorias ADD COLUMN tipo_pessoa TEXT DEFAULT NULL;
-      ALTER TABLE financas_contas ADD COLUMN tipo_pessoa TEXT DEFAULT 'PF';
-      ALTER TABLE financas_pessoas ADD COLUMN tipo_pessoa TEXT DEFAULT 'PF';
-      ALTER TABLE financas_lancamentos ADD COLUMN tipo_pessoa TEXT DEFAULT 'PF';
-      ALTER TABLE financas_orcamento ADD COLUMN tipo_pessoa TEXT DEFAULT 'PF';
-    `);
-    db!.pragma("user_version = 3");
-  }
 }
 
 function criarTabelas(): void {
@@ -98,6 +71,7 @@ function criarTabelas(): void {
       usuario_id TEXT,
       eh_global INTEGER DEFAULT 0,
       ativo INTEGER DEFAULT 1,
+      tipo_pessoa TEXT DEFAULT NULL,
       criado_em TEXT DEFAULT (datetime('now')),
       atualizado_em TEXT DEFAULT (datetime('now')),
       sync_status TEXT DEFAULT 'synced',
@@ -115,6 +89,7 @@ function criarTabelas(): void {
       categoria_id TEXT NOT NULL,
       nome TEXT NOT NULL,
       usuario_id TEXT,
+      tipo_pessoa TEXT DEFAULT NULL,
       criado_em TEXT DEFAULT (datetime('now')),
       atualizado_em TEXT DEFAULT (datetime('now')),
       sync_status TEXT DEFAULT 'synced',
@@ -131,6 +106,7 @@ function criarTabelas(): void {
       id TEXT PRIMARY KEY,
       nome TEXT NOT NULL,
       usuario_id TEXT,
+      tipo_pessoa TEXT DEFAULT 'PF',
       criado_em TEXT DEFAULT (datetime('now')),
       atualizado_em TEXT DEFAULT (datetime('now')),
       sync_status TEXT DEFAULT 'synced',
@@ -147,6 +123,7 @@ function criarTabelas(): void {
       id TEXT PRIMARY KEY,
       nome TEXT NOT NULL,
       usuario_id TEXT,
+      tipo_pessoa TEXT DEFAULT 'PF',
       criado_em TEXT DEFAULT (datetime('now')),
       atualizado_em TEXT DEFAULT (datetime('now')),
       sync_status TEXT DEFAULT 'synced',
@@ -171,6 +148,7 @@ function criarTabelas(): void {
       conta_origem_id TEXT,
       conta_destino_id TEXT,
       pessoa_id TEXT,
+      tipo_pessoa TEXT DEFAULT 'PF',
       status TEXT DEFAULT 'PENDENTE',
       data_pagamento TEXT,
       transferencia_grupo_id TEXT,
@@ -199,6 +177,7 @@ function criarTabelas(): void {
       subcategoria_id TEXT,
       conta_id TEXT,
       pessoa_id TEXT,
+      tipo_pessoa TEXT DEFAULT 'PF',
       recorrente INTEGER DEFAULT 0,
       observacoes TEXT,
       mes INTEGER,
@@ -252,23 +231,6 @@ function criarTabelas(): void {
       device_id TEXT
     )`,
 
-    `CREATE TABLE IF NOT EXISTS financas_usuarios (
-      id TEXT PRIMARY KEY,
-      nome TEXT NOT NULL,
-      email TEXT NOT NULL,
-      role TEXT DEFAULT 'user',
-      ativo INTEGER DEFAULT 1,
-      email_recuperacao TEXT,
-      avatar_url TEXT,
-      criado_em TEXT DEFAULT (datetime('now')),
-      atualizado_em TEXT DEFAULT (datetime('now')),
-      sync_status TEXT DEFAULT 'synced',
-      sync_error TEXT,
-      device_id TEXT,
-      version INTEGER DEFAULT 1,
-      local_updated_at TEXT DEFAULT (datetime('now')),
-      remote_updated_at TEXT
-    )`,
   ];
 
   const transaction = db!.transaction(() => {
