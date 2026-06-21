@@ -5,7 +5,7 @@
 import { clearAuthSession, ensureAuthenticated, escapeHtml, getAccessToken } from "./auth-guard.js";
 import { converterParaCSV, gerarTemplateCSV } from "./csv.js";
 import { avaliarRequisitos, iniciarToggleSenha } from "./password-utils.js";
-import { confirmDialog, exibirToast } from "./toast.js";
+import { confirmDialog, exibirToast, promptDialog } from "./toast.js";
 
 let usuarioAuth = null;
 let categorias = [];
@@ -668,10 +668,10 @@ function renderContas(contasBody, contasEmpty) {
     .join("");
 
   contasBody.querySelectorAll(".btn-edit-conta").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const conta = contas.find((c) => c.id === btn.dataset.id);
       if (!conta) return;
-      const newNome = prompt("Editar nome da conta:", conta.nome);
+      const newNome = await promptDialog("Editar nome da conta:", conta.nome);
       if (newNome && newNome.trim() && newNome.trim().length <= 40) {
         editarConta(btn.dataset.id, newNome.trim(), contasBody, contasEmpty);
       }
@@ -798,10 +798,10 @@ function renderPessoas(pessoasBody, pessoasEmpty) {
     .join("");
 
   pessoasBody.querySelectorAll(".btn-edit-pessoa").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const pessoa = pessoas.find((p) => p.id === btn.dataset.id);
       if (!pessoa) return;
-      const newNome = prompt("Editar nome da pessoa:", pessoa.nome);
+      const newNome = await promptDialog("Editar nome da pessoa:", pessoa.nome);
       if (newNome && newNome.trim() && newNome.trim().length <= 40) {
         editarPessoa(btn.dataset.id, newNome.trim(), pessoasBody, pessoasEmpty);
       }

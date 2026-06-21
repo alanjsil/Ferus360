@@ -106,3 +106,67 @@ export function confirmDialog(mensagem) {
     dialog.querySelector("#confirmOk").focus();
   });
 }
+
+/**
+ * Exibe um diálogo de prompt modal (não-nativo).
+ * Substitui window.prompt() sem os problemas de foco do Electron.
+ *
+ * @param {string} mensagem - Texto exibido acima do campo
+ * @param {string} [valorPadrao=""] - Valor inicial do input
+ * @returns {Promise<string | null>} O valor digitado, ou null se cancelou
+ */
+export function promptDialog(mensagem, valorPadrao = "") {
+  return new Promise((resolve) => {
+    const dialog = document.createElement("dialog");
+    dialog.className = "dialog";
+
+    dialog.innerHTML = `
+      <div class="dialog-header">
+        <h2>Editar</h2>
+      </div>
+      <div class="dialog-body">
+        <p style="margin:0 0 12px 0;line-height:1.6">${mensagem}</p>
+        <input type="text" id="promptInput" value="${valorPadrao.replace(/"/g, "&quot;")}"
+          style="width:100%;padding:10px 12px;border:1px solid #334155;border-radius:8px;background:#111827;color:#e2e8f0;box-sizing:border-box" />
+      </div>
+      <div class="dialog-actions" style="padding:12px 0 0;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)">
+        <button class="btn-secondary" id="promptCancel" type="button">Cancelar</button>
+        <button class="btn-primary" id="promptOk" type="button">Salvar</button>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    const input = dialog.querySelector("#promptInput");
+    const fechar = (resultado) => {
+      dialog.close();
+      document.body.removeChild(dialog);
+      resolve(resultado);
+    };
+
+    dialog.querySelector("#promptOk").addEventListener("click", () => fechar(input.value));
+    dialog.querySelector("#promptCancel").addEventListener("click", () => fechar(null));
+
+    dialog.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        fechar(input.value);
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        fechar(null);
+      }
+    });
+
+    dialog.addEventListener("close", () => {
+      if (document.body.contains(dialog)) {
+        document.body.removeChild(dialog);
+      }
+      resolve(null);
+    });
+
+    dialog.showModal();
+    input.focus();
+    input.select();
+  });
+}
