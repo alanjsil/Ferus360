@@ -103,9 +103,9 @@ describe("redefinir.js", () => {
     });
   });
 
-  describe("chamada IPC (com hash de recuperação)", () => {
+  describe("chamada IPC (com token de recuperação)", () => {
     beforeEach(() => {
-      window.location.hash = "#access_token=test-token&refresh_token=test-refresh";
+      window.electronAPI.temTokenRecuperacao.mockResolvedValue(true);
       importarPagina();
     });
 
@@ -166,7 +166,7 @@ describe("redefinir.js", () => {
 
   describe("mapeamento de erros", () => {
     beforeEach(() => {
-      window.location.hash = "#access_token=test-token&refresh_token=test-refresh";
+      window.electronAPI.temTokenRecuperacao.mockResolvedValue(true);
       importarPagina();
     });
 
