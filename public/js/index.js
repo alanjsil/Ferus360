@@ -6,6 +6,13 @@ import { clearAuthSession, ensureAuthenticated, escapeHtml, getAccessToken } fro
 import { formatarMoeda } from "./helper.js";
 import { confirmDialog, exibirToast } from "./toast.js";
 
+const _cleanups = [];
+
+window.addEventListener("beforeunload", () => {
+  _cleanups.forEach(fn => fn());
+  _cleanups.length = 0;
+});
+
 /**
  * @returns {void}
  */
@@ -27,7 +34,7 @@ function configurarSyncStatus() {
     /* ok */
   }
 
-  window.electronAPI.onSyncStatus(async (status) => {
+  _cleanups.push(window.electronAPI.onSyncStatus(async (status) => {
     // ← async aqui
     const count = status.conflitos || 0;
     badge.hidden = count === 0;
@@ -43,7 +50,7 @@ function configurarSyncStatus() {
     if (status.dadosAtualizados) {
       await recarregarTudo(); // ← agora válido
     }
-  });
+  }));
 }
 
 function atualizarToggle(container, tp) {
@@ -64,20 +71,20 @@ function configurarTipoPessoaToggle() {
     await recarregarTudo();
   });
 
-  window.electronAPI.onTipoPessoaChanged(async (value) => {
+  _cleanups.push(window.electronAPI.onTipoPessoaChanged(async (value) => {
     if (value) atualizarToggle(container, value);
     await recarregarTudo();
-  });
+  }));
 
   window.electronAPI.getTipoPessoa().then((value) => {
     if (value) atualizarToggle(container, value);
   });
 
   if (typeof window.electronAPI?.onUsarPjChanged === "function") {
-    window.electronAPI.onUsarPjChanged(async (value) => {
+    _cleanups.push(window.electronAPI.onUsarPjChanged(async (value) => {
       container.hidden = !value;
       if (!value) await recarregarTudo();
-    });
+    }));
   }
 
   if (typeof window.electronAPI?.getUsarPj === "function") {
