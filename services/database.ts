@@ -2,6 +2,9 @@ import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import * as logger from "./logger";
+
+const LOCAL_HABILITADO = process.env.LOCAL !== "false";
 
 let db: Database.Database | null = null;
 let dbIntegrity = "ok";
@@ -11,7 +14,11 @@ function getCaminho(userDataPath?: string): string {
   return path.join(userDataPath || __dirname, "financas.db");
 }
 
-function iniciar(userDataPath: string): Database.Database {
+function iniciar(userDataPath: string): Database.Database | null {
+  if (!LOCAL_HABILITADO) {
+    logger.warn("database", "Modo offline desabilitado via LOCAL=false");
+    return null;
+  }
   if (db) return db;
 
   const caminho = getCaminho(userDataPath);

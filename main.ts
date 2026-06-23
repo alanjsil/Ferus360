@@ -224,22 +224,25 @@ if (!gotLock) {
     expiracao.init(appRoot);
 
     const repository = require("./services/repository");
-    sync.init(database.getDb()!, repository);
-    sync.start();
-    iniciarMonitoramento();
+    if (database.getDb()) {
+      sync.init(database.getDb()!, repository);
+      sync.start();
 
-    repository.limparCacheGeral();
+      repository.limparCacheGeral();
 
-    setInterval(() => repository.limparCacheGeral(), 3600000);
+      setInterval(() => repository.limparCacheGeral(), 3600000);
 
-    sync.onSyncStatus((status: any) => {
-      const wins = BrowserWindow.getAllWindows();
-      wins.forEach((win: any) => {
-        if (!win.isDestroyed()) {
-          win.webContents.send("sync:status", status);
-        }
+      sync.onSyncStatus((status: any) => {
+        const wins = BrowserWindow.getAllWindows();
+        wins.forEach((win: any) => {
+          if (!win.isDestroyed()) {
+            win.webContents.send("sync:status", status);
+          }
+        });
       });
-    });
+    }
+
+    iniciarMonitoramento();
 
     registerHandlers(promptSenha);
     createWindow();
