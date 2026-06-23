@@ -106,9 +106,10 @@ describe("getCategorias", () => {
     expect(mockSupabase.from).toHaveBeenCalledWith("financas_categorias");
   });
 
-  it("throws on error", async () => {
+  it("retorna array vazio em erro do Supabase (fallback cache)", async () => {
     resetData([], new Error("DB error"));
-    await expect(repo.getCategorias()).rejects.toThrow("DB error");
+    const result = await repo.getCategorias();
+    expect(result).toEqual([]);
   });
 });
 
