@@ -175,7 +175,14 @@ async function handleDeepLink(url: string) {
       } catch {
         logger.warn("deep-link", "token de recuperação falhou na verificação direta, prosseguindo com setSession", url);
       }
-      auth.setRecoveryTokens(accessToken, refreshToken);
+      auth.setRecoveryTokens(accessToken, refreshToken, () => {
+        const wins = BrowserWindow.getAllWindows();
+        wins.forEach((win: any) => {
+          if (!win.isDestroyed()) {
+            win.webContents.send("recovery:expired");
+          }
+        });
+      });
     }
 
     mainWindow?.loadFile(path.join(__dirname, "..", "public", "redefinir.html"));

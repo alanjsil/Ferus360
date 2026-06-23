@@ -48,7 +48,7 @@
 - [x] 0.15 Página `redefinir.html` — deep link (`access_token` no hash → modo automático)
   - **Breakpoint:** `redefinir.js:13` `obterTokenRecuperacao()` — parse do hash
   - **Breakpoint:** `auth.ts:198` `redefinirSenha()` — via token da sessão
-- [x] 0.16 Página `redefinir.html` — fallback manual (cola link ou token)
+- [ ] 0.16 Página `redefinir.html` — fallback manual (cola link ou token)
   - **Breakpoint:** `redefinir.js:38` `extrairTokenDoLink()` — parse URL ou token puro
   - **Breakpoint:** `auth.ts:181` `confirmarRecuperacao()` — via email + token + OTP verify
 - [x] 0.17 Validações de senha em `redefinir.html`:
@@ -57,9 +57,9 @@
   - **Breakpoint:** `redefinir.js:163` `avaliarRequisitos()` no evento `input`
 - [x] 0.18 Confirmar senha — campos conferem antes de enviar
   - **Breakpoint:** `redefinir.js:80` validação `senha !== confirmacao`
-- [x] 0.19 Token de recuperação expira em 5 minutos (TTL no backend)
+- [ ] 0.19 Token de recuperação expira em 5 minutos (TTL no backend)
   - **Breakpoint:** `auth.ts:137` `setRecoveryTokens()` com `TEMPO_EXPIRACAO_RECUPERACAO_MS`
-- [x] 0.20 Splash screen animada na inicialização do login
+- [ ] 0.20 Splash screen animada na inicialização do login
   - **Breakpoint:** `login.js:236` fade-out do splash
 
 #### Autenticação Transversal (auth-guard)
@@ -77,18 +77,18 @@
 
 ### 1. Categorias (`categorias.html`)
 
-- [x] 1.1 Criar categoria (nome 2-40 chars, salva, aparece na tabela)
-- [x] 1.2 Criar categoria duplicada (mesmo nome + tipo → erro NOME_DUPLICADO) | Existe um bug, se eu colocar o nome salvar, depois trocar a categoria, ele ignora duplicadas.
-- [x] 1.3 Criar categoria nome inválido (<2 ou >40 chars → block no front)
-- [x] 1.4 Editar categoria (inline aparece, salva, tabela atualiza)
-- [x] 1.5 Editar categoria — cancelar (Esc ou Cancelar → volta)
+- [ ] 1.1 Criar categoria (nome 2-40 chars, salva, aparece na tabela)
+- [ ] 1.2 Criar categoria duplicada (mesmo nome + tipo → erro NOME_DUPLICADO) | Existe um bug, se eu colocar o nome salvar, depois trocar a categoria, ele ignora duplicadas.
+- [ ] 1.3 Criar categoria nome inválido (<2 ou >40 chars → block no front)
+- [ ] 1.4 Editar categoria (inline aparece, salva, tabela atualiza)
+- [ ] 1.5 Editar categoria — cancelar (Esc ou Cancelar → volta)
 - [ ] 1.6 Ativar/Desativar categoria (toggle, badge verde/vermelho)
 - [ ] 1.7 Desativar c/ lançamentos no mês → erro CATEGORIA_COM_LANCAMENTOS
 - [ ] 1.8 Filtrar por tipo (Todos/Receita/Despesa/Transferência)
 - [ ] 1.9 Categoria global (badge "Global" exibido)
 - [ ] 1.10 Edição inline — botões Salvar/Cancelar na actions-cell (não embaixo do input)
-- [x] 1.11 Categoria global — botões Editar/Ativar ocultos para não-admin
-- [x] 1.12 Categoria global — bloqueio no backend (update/toggle rejeita se não admin)
+- [ ] 1.11 Categoria global — botões Editar/Ativar ocultos para não-admin
+- [ ] 1.12 Categoria global — bloqueio no backend (update/toggle rejeita se não admin)
 - [ ] 1.13 Categorias compartilhadas PF↔PJ (toggle em configurações `compartilharCategorias`)
   - Quando ativo: categorias/subcategorias ignoram filtro `tipo_pessoa`
   - Contas/pessoas/lançamentos/orçamento continuam filtrados por `tipo_pessoa`
@@ -96,8 +96,8 @@
 
 #### Toast / Notificações
 
-- [x] 1.13 Toast substitui alert() em categorias, configurações, admin, orçamento
-- [x] 1.14 Toast empilha, emerge do canto direito, persiste até clique
+- [ ] 1.13 Toast substitui alert() em categorias, configurações, admin, orçamento
+- [ ] 1.14 Toast empilha, emerge do canto direito, persiste até clique
 
 #### Subcategorias
 
@@ -222,24 +222,24 @@
 
 #### 6.9 Chamados — Listar
 
-- [x] 6.9 Chamados — listar (tabela com usuário, título, status, badge de abertos) ✅ PRONTO
+- [ ] 6.9 Chamados — listar (tabela com usuário, título, status, badge de abertos) ✅ PRONTO
   - **Breakpoint:** `admin.js:540` `carregarChamados()`
   - **Breakpoint:** `admin.js:552` `atualizarBadgeChamados()`
   - **Status UI:** Aba "Chamados" ativa em `admin.html` linha 29
 
 #### 6.10 Chamados — Atender
 
-- [x] 6.10 Chamados — atender (dialog abre com dados do chamado + histórico) ✅ PRONTO
+- [ ] 6.10 Chamados — atender (dialog abre com dados do chamado + histórico) ✅ PRONTO
   - **Breakpoint:** `admin.js:590` `abrirAtendimento()`
 
 #### 6.11 Chamados — Responder
 
-- [x] 6.11 Chamados — responder (mensagem salva, status avança) ✅ PRONTO
+- [ ] 6.11 Chamados — responder (mensagem salva, status avança) ✅ PRONTO
   - **Breakpoint:** `admin.js:632` `enviarRespostaChamado()`
 
 #### 6.12 Chamados — Marcar Resolvido
 
-- [x] 6.12 Chamados — marcar resolvido (via select + submit) ✅ PRONTO
+- [ ] 6.12 Chamados — marcar resolvido (via select + submit) ✅ PRONTO
   - **Breakpoint:** `admin.js:651` `adminUpdateChamado(id, novoStatus)`
 
 #### 6.13 Auditoria
@@ -323,7 +323,7 @@ Todos os eventos são registrados em `services/repository/auditoria.ts:35` via `
 
 ### 🎯 Pendências
 
-- [x] ~~6.13 Frontend: Criar aba de auditoria no `admin.html` (backend + IPC + preload já prontos)~~ — 🟡 Backend pronto, UI falta verificação de RLS/permissões
+- [ ] ~~6.13 Frontend: Criar aba de auditoria no `admin.html` (backend + IPC + preload já prontos)~~ — 🟡 Backend pronto, UI falta verificação de RLS/permissões
 - [ ] **6.14:** Alterar email do cliente pelo admin (campo editável, não implementado)
 - [ ] **6.X:** UI para usuários abrirem chamados de suporte (backend `createChamado()` pronto em `services/repository/admin.ts:70`, falta página renderer)
 

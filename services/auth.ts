@@ -16,6 +16,8 @@ interface MetadadosRequisicao {
 
 let pendingRecoveryTokens: RecTokens | null = null;
 let _recoveryTimer: ReturnType<typeof setTimeout> | null = null;
+let _recoveryExpiresAt: number | null = null;
+let _onRecoveryExpired: (() => void) | null = null;
 const TEMPO_EXPIRACAO_RECUPERACAO_MS = 5 * 60 * 1000;
 
 class AuthError extends Error {
@@ -57,10 +59,11 @@ interface AuthService {
   redefinirSenha: (accessToken: string, refreshToken: string, novaSenha: string) => Promise<{ success: boolean }>;
   renovarSessao: (refreshToken: string) => Promise<AuthResult>;
   verificarSenha: (usuarioId: string, senha: string) => Promise<{ success: boolean }>;
-  setRecoveryTokens: (accessToken: string, refreshToken: string) => void;
+  setRecoveryTokens: (accessToken: string, refreshToken: string, onExpired?: () => void) => void;
   getRecoveryTokens: () => RecTokens | null;
   temTokenRecuperacao: () => boolean;
   limparTokenRecuperacao: () => void;
+  getTempoRestanteRecuperacao: () => number;
 }
 
 function construirAuthService(dependencies: AuthDependencies = {}): AuthService {
@@ -150,12 +153,19 @@ function construirAuthService(dependencies: AuthDependencies = {}): AuthService 
     return { success: true };
   }
 
-  function setRecoveryTokens(accessToken: string, refreshToken: string): void {
+  function setRecoveryTokens(accessToken: string, refreshToken: string, onExpired?: () => void): void {
     if (_recoveryTimer) clearTimeout(_recoveryTimer);
     pendingRecoveryTokens = { accessToken, refreshToken };
+    _recoveryExpiresAt = Date.now() + TEMPO_EXPIRACAO_RECUPERACAO_MS;
+    _onRecoveryExpired = onExpired || null;
     _recoveryTimer = setTimeout(() => {
       pendingRecoveryTokens = null;
+      _recoveryExpiresAt = null;
       _recoveryTimer = null;
+      if (_onRecoveryExpired) {
+        _onRecoveryExpired();
+        _onRecoveryExpired = null;
+      }
     }, TEMPO_EXPIRACAO_RECUPERACAO_MS);
   }
 
@@ -179,6 +189,13 @@ function construirAuthService(dependencies: AuthDependencies = {}): AuthService 
       _recoveryTimer = null;
     }
     pendingRecoveryTokens = null;
+    _recoveryExpiresAt = null;
+    _onRecoveryExpired = null;
+  }
+
+  function getTempoRestanteRecuperacao(): number {
+    if (!pendingRecoveryTokens || _recoveryExpiresAt === null) return 0;
+    return Math.max(0, _recoveryExpiresAt - Date.now());
   }
 
   async function solicitarRecuperacao(email: string, metadados?: MetadadosRequisicao): Promise<{ success: boolean }> {
@@ -284,6 +301,7 @@ function construirAuthService(dependencies: AuthDependencies = {}): AuthService 
     getRecoveryTokens,
     temTokenRecuperacao,
     limparTokenRecuperacao,
+    getTempoRestanteRecuperacao,
   };
 }
 
@@ -339,4 +357,5 @@ export const {
   getRecoveryTokens,
   temTokenRecuperacao,
   limparTokenRecuperacao,
+  getTempoRestanteRecuperacao,
 } = defaultService;

@@ -24,6 +24,10 @@ const api = {
   solicitarRecuperacao: (email: string) => ipcRenderer.invoke("auth:recuperar", email),
   confirmarRecuperacao: (email: string, token: string, novaSenha: string) => ipcRenderer.invoke("auth:confirmar-recuperacao", email, token, novaSenha),
   temTokenRecuperacao: () => ipcRenderer.invoke("auth:tem-token-recuperacao"),
+  getTempoRestanteRecuperacao: () => ipcRenderer.invoke("auth:tempo-restante-recuperacao"),
+  onRecoveryExpired: (callback: () => void) => {
+    ipcRenderer.on("recovery:expired", () => callback());
+  },
   redefinirSenha: (novaSenha: string) => ipcRenderer.invoke("auth:redefinir-senha", novaSenha),
   trocarSenha: (usuarioId: string, novaSenha: string) => ipcRenderer.invoke("auth:trocar-senha", usuarioId, novaSenha),
 
