@@ -26,6 +26,7 @@ const database = require("./services/database");
 const expiracao = require("./services/expiration");
 const sync = require("./services/sync");
 const { iniciarMonitoramento, pararMonitoramento } = require("./services/conexao");
+const { promptSenha } = require("./services/prompt-senha");
 const dbPath = path.join(app.getPath("userData"), "financas.db");
 
 let mainWindow: any;
@@ -71,59 +72,7 @@ function createWindow() {
 
 
 
-function promptSenha(mensagem: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (!mainWindow) return reject(new Error("Janela principal não disponível"));
 
-    let resolvido = false;
-    const win = new BrowserWindow({
-      width: 380,
-      height: 260,
-      resizable: false,
-      modal: true,
-      parent: mainWindow,
-      webPreferences: {
-        contextIsolation: true,
-        nodeIntegration: false,
-        preload: path.join(__dirname, "dialog-senha-preload.js"),
-      },
-    });
-
-    win.setMenu(null);
-    win.loadFile(path.join(__dirname, "..", "public", "dialog-senha.html"), {
-      query: { msg: mensagem },
-    });
-
-    const onConfirmar = (_event: any, senha: string) => {
-      if (resolvido) return;
-      resolvido = true;
-      cleanup();
-      resolve(senha);
-    };
-
-    const onCancelar = () => {
-      if (resolvido) return;
-      resolvido = true;
-      cleanup();
-      reject(new Error("USUARIO_CANCELOU"));
-    };
-
-    function cleanup() {
-      ipcMain.removeListener("dialog-senha:confirmar", onConfirmar);
-      ipcMain.removeListener("dialog-senha:cancelar", onCancelar);
-      if (!win.isDestroyed()) win.close();
-    }
-
-    win.on("closed", () => {
-      if (!resolvido) onCancelar();
-    });
-
-    ipcMain.on("dialog-senha:confirmar", onConfirmar);
-    ipcMain.on("dialog-senha:cancelar", onCancelar);
-  });
-}
-
-module.exports = { promptSenha };
 
 async function handleDeepLink(url: string) {
   try {
