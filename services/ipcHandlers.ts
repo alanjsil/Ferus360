@@ -127,8 +127,11 @@ function createHandlers(
         const metadados = await _extrairMetadados(event);
         const senhaAtual = await promptSenha!("Digite sua senha atual para confirmar a troca");
         return await auth.trocarSenha(usuarioId, senhaAtual, novaSenha, metadados);
-      } catch {
-        return { error: "USUARIO_CANCELOU" };
+      } catch (err) {
+        if ((err as Error)?.message === "USUARIO_CANCELOU") {
+          return { error: "USUARIO_CANCELOU" };
+        }
+        throw err;
       }
     },
 

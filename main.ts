@@ -26,6 +26,7 @@ const database = require("./services/database");
 const expiracao = require("./services/expiration");
 const sync = require("./services/sync");
 const { iniciarMonitoramento, pararMonitoramento } = require("./services/conexao");
+const { promptSenha } = require("./services/prompt-senha");
 const dbPath = path.join(app.getPath("userData"), "financas.db");
 
 let mainWindow: any;
@@ -69,100 +70,9 @@ function createWindow() {
   });
 }
 
-const HTML_PROMPT_SENHA = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #1a1a2e; color: #eee; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-.container { background: #16213e; padding: 2rem; border-radius: 12px; width: 320px; }
-p { margin-bottom: 1.5rem; font-size: 1rem; text-align: center; }
-input { width: 100%; padding: 0.75rem; border: 1px solid #0f3460; border-radius: 8px; background: #1a1a2e; color: #eee; font-size: 1rem; margin-bottom: 1rem; outline: none; }
-input:focus { border-color: #e94560; }
-.buttons { display: flex; gap: 0.75rem; }
-button { flex: 1; padding: 0.75rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; }
-.btn-confirmar { background: #e94560; color: #fff; }
-.btn-cancelar { background: #0f3460; color: #eee; }
-</style>
-</head>
-<body>
-<div class="container">
-  <p id="mensagem"></p>
-  <input type="password" id="senha" autofocus placeholder="Digite sua senha">
-  <div class="buttons">
-    <button class="btn-cancelar" id="btnCancelar">Cancelar</button>
-    <button class="btn-confirmar" id="btnConfirmar">Confirmar</button>
-  </div>
-</div>
-<script>
-const params = new URLSearchParams(location.search);
-document.getElementById('mensagem').textContent = params.get('msg') || 'Confirme sua senha';
-document.getElementById('btnConfirmar').onclick = () => {
-  window.electronDialog.confirmar(document.getElementById('senha').value);
-};
-document.getElementById('btnCancelar').onclick = () => {
-  window.electronDialog.cancelar();
-};
-document.getElementById('senha').onkeydown = (e) => {
-  if (e.key === 'Enter') document.getElementById('btnConfirmar').click();
-  if (e.key === 'Escape') document.getElementById('btnCancelar').click();
-};
-</script>
-</body>
-</html>`;
 
-function promptSenha(mensagem: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (!mainWindow) return reject(new Error("Janela principal não disponível"));
 
-    let resolvido = false;
-    const win = new BrowserWindow({
-      width: 380,
-      height: 260,
-      resizable: false,
-      modal: true,
-      parent: mainWindow,
-      webPreferences: {
-        contextIsolation: true,
-        nodeIntegration: false,
-        preload: path.join(__dirname, "dialog-senha-preload.js"),
-      },
-    });
 
-    win.setMenu(null);
-    win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(HTML_PROMPT_SENHA)}&msg=${encodeURIComponent(mensagem)}`);
-
-    const onConfirmar = (_event: any, senha: string) => {
-      if (resolvido) return;
-      resolvido = true;
-      cleanup();
-      resolve(senha);
-    };
-
-    const onCancelar = () => {
-      if (resolvido) return;
-      resolvido = true;
-      cleanup();
-      reject(new Error("USUARIO_CANCELOU"));
-    };
-
-    function cleanup() {
-      ipcMain.removeListener("dialog-senha:confirmar", onConfirmar);
-      ipcMain.removeListener("dialog-senha:cancelar", onCancelar);
-      if (!win.isDestroyed()) win.close();
-    }
-
-    win.on("closed", () => {
-      if (!resolvido) onCancelar();
-    });
-
-    ipcMain.on("dialog-senha:confirmar", onConfirmar);
-    ipcMain.on("dialog-senha:cancelar", onCancelar);
-  });
-}
-
-module.exports = { promptSenha };
 
 async function handleDeepLink(url: string) {
   try {

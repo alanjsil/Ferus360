@@ -201,7 +201,13 @@ function configurarFormSenha() {
       }
 
       const auth = await window.electronAPI.verificarAuth(token);
-      await window.electronAPI.trocarSenha(auth.id, novaSenha);
+      const result = await window.electronAPI.trocarSenha(auth.id, novaSenha);
+      if (result?.error === "USUARIO_CANCELOU") {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Trocar senha";
+        return;
+      }
+      if (result?.error) throw { code: result.error };
       mostrarMensagem("senhaMessage", "Senha alterada com sucesso.", true);
       document.getElementById("senhaForm").reset();
       avaliarRequisitos("");
@@ -227,7 +233,17 @@ async function carregarSessoes() {
     const token = getAccessToken();
     const sessaoAtualId = token ? extrairSid(token) : null;
 
-    list.innerHTML = sessoes
+    const sessoesDedup = Object.values(
+      sessoes.reduce((acc, s) => {
+        const key = `${s.ip || ""}|${s.user_agent || ""}`;
+        if (!acc[key] || new Date(s.criado_em) > new Date(acc[key].criado_em)) {
+          acc[key] = s;
+        }
+        return acc;
+      }, {}),
+    );
+
+    list.innerHTML = sessoesDedup
       .map(
         (s) => `
           <div class="sessao-card${s.id === sessaoAtualId ? " current" : ""}">
