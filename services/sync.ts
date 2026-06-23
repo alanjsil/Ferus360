@@ -1,7 +1,7 @@
-import type { SyncStatus, ConflitoSync, Lancamento } from "../src/types";
-import type BetterSqlite3 from "better-sqlite3";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type BetterSqlite3 from "better-sqlite3";
 import crypto from "crypto";
+import type { ConflitoSync, SyncStatus } from "../src/types";
 import * as _conexaoModule from "./conexao";
 import * as database from "./database";
 import * as logger from "./logger";
@@ -9,9 +9,14 @@ import * as logger from "./logger";
 const ENTIDADES_CRITICAS = ["financas_lancamentos"];
 
 const ENTIDADES_VALIDAS = new Set([
-  "financas_categorias", "financas_subcategorias", "financas_contas",
-  "financas_pessoas", "financas_lancamentos", "financas_orcamento",
-  "financas_chamados", ...ENTIDADES_CRITICAS,
+  "financas_categorias",
+  "financas_subcategorias",
+  "financas_contas",
+  "financas_pessoas",
+  "financas_lancamentos",
+  "financas_orcamento",
+  "financas_chamados",
+  ...ENTIDADES_CRITICAS,
 ]);
 
 function validarEntidade(entidade: string): void {
@@ -27,7 +32,7 @@ let _supabase: import("@supabase/supabase-js").SupabaseClient | null = _conexaoM
 const ENTIDADES = ["financas_categorias", "financas_subcategorias", "financas_contas", "financas_pessoas", "financas_lancamentos", "financas_orcamento", "financas_chamados"];
 
 const INTERVALO_PUSH_MS = 60000;
-const INTERVALO_PULL_MS = 120000;
+const INTERVALO_PULL_MS = 30000;
 
 let _db: BetterSqlite3.Database | null = null;
 let _repository: object | null = null;
@@ -89,18 +94,20 @@ function stop(): void {
 
 function getStatus(extra: Record<string, unknown> = {}): SyncStatus {
   const pendingCount = _db
-    ? (_db
-        .prepare(
-          "SELECT COUNT(*) as total FROM (SELECT 1 FROM financas_lancamentos WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_categorias WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_subcategorias WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_contas WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_pessoas WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_orcamento WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_chamados WHERE sync_status IN ('pending', 'failed'))",
-        )
-        .get() as { total: number } | undefined)?.total || 0
+    ? (
+        _db
+          .prepare(
+            "SELECT COUNT(*) as total FROM (SELECT 1 FROM financas_lancamentos WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_categorias WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_subcategorias WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_contas WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_pessoas WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_orcamento WHERE sync_status IN ('pending', 'failed') UNION ALL SELECT 1 FROM financas_chamados WHERE sync_status IN ('pending', 'failed'))",
+          )
+          .get() as { total: number } | undefined
+      )?.total || 0
     : 0;
 
-  const conflictsCount = _db ? ((_db.prepare("SELECT COUNT(*) as total FROM sync_conflicts WHERE resolvido_em IS NULL").get() as { total: number })?.total || 0) : 0;
+  const conflictsCount = _db ? (_db.prepare("SELECT COUNT(*) as total FROM sync_conflicts WHERE resolvido_em IS NULL").get() as { total: number })?.total || 0 : 0;
 
-  const ultimoPush = _db ? ((_db.prepare("SELECT valor FROM sync_meta WHERE chave = 'ultimo_push_at'").get() as { valor: string } | undefined)?.valor || null) : null;
+  const ultimoPush = _db ? (_db.prepare("SELECT valor FROM sync_meta WHERE chave = 'ultimo_push_at'").get() as { valor: string } | undefined)?.valor || null : null;
 
-  const ultimoPull = _db ? ((_db.prepare("SELECT valor FROM sync_meta WHERE chave = 'ultimo_pull_at'").get() as { valor: string } | undefined)?.valor || null) : null;
+  const ultimoPull = _db ? (_db.prepare("SELECT valor FROM sync_meta WHERE chave = 'ultimo_pull_at'").get() as { valor: string } | undefined)?.valor || null : null;
 
   return {
     online: _isOnline(),
@@ -259,7 +266,9 @@ async function pull(): Promise<void> {
     const supabase = _supabase;
     if (!supabase) return;
 
-    const ultimoPull = _db ? ((_db.prepare("SELECT valor FROM sync_meta WHERE chave = 'ultimo_pull_at'").get() as { valor: string } | undefined)?.valor || null) : null;
+    const ultimoPull = _db ? (_db.prepare("SELECT valor FROM sync_meta WHERE chave = 'ultimo_pull_at'").get() as { valor: string } | undefined)?.valor || null : null;
+
+    let dadosAtualizados = false;
 
     for (const entidade of ENTIDADES) {
       let query = supabase.from(entidade).select("*").order("atualizado_em", { ascending: true });
@@ -284,11 +293,18 @@ async function pull(): Promise<void> {
           }
 
           upsertLocal(entidade, registro, "synced");
+          dadosAtualizados = true;
         }
       }
     }
 
     database.run("UPDATE sync_meta SET valor = datetime('now') WHERE chave = 'ultimo_pull_at'");
+
+    if (dadosAtualizados) {
+      notificarStatus({ dadosAtualizados: true });
+    } else {
+      notificarStatus();
+    }
   } catch (err) {
     logger.error("sync", "Erro no pull", err);
   }
@@ -317,11 +333,13 @@ function upsertLocal(entidade: string, data: Record<string, unknown>, syncStatus
   params.sync_status = syncStatus;
   params.remote_updated_at = (data as Record<string, unknown>).atualizado_em || null;
 
-  _db.prepare(
-    `INSERT INTO ${entidade} (${nomesColunas}, sync_status, remote_updated_at)
+  _db
+    .prepare(
+      `INSERT INTO ${entidade} (${nomesColunas}, sync_status, remote_updated_at)
      VALUES (${placeholders}, @sync_status, @remote_updated_at)
      ON CONFLICT(id) DO UPDATE SET ${updates}, sync_status = @sync_status, remote_updated_at = @remote_updated_at`,
-  ).run(params);
+    )
+    .run(params);
 }
 
 function getConflitos(): ConflitoSync[] {
@@ -379,15 +397,4 @@ function __setConexao(mockCnx: { isOnline?: () => boolean; supabase?: SupabaseCl
   }
 }
 
-export {
-  init,
-  start,
-  stop,
-  forcarSync,
-  getStatus,
-  getConflitos,
-  resolverConflito,
-  onSyncStatus,
-  __setDatabase,
-  __setConexao,
-};
+export { __setConexao, __setDatabase, forcarSync, getConflitos, getStatus, init, onSyncStatus, resolverConflito, start, stop };

@@ -3,8 +3,8 @@
  */
 
 import { clearAuthSession, ensureAuthenticated, escapeHtml, getAccessToken } from "./auth-guard.js";
-import { exibirToast, confirmDialog } from "./toast.js";
 import { formatarMoeda } from "./helper.js";
+import { confirmDialog, exibirToast } from "./toast.js";
 
 /**
  * @returns {void}
@@ -27,15 +27,21 @@ function configurarSyncStatus() {
     /* ok */
   }
 
-  window.electronAPI.onSyncStatus((status) => {
+  window.electronAPI.onSyncStatus(async (status) => {
+    // ← async aqui
     const count = status.conflitos || 0;
     badge.hidden = count === 0;
     badge.textContent = count;
     if (btn) btn.hidden = count === 0;
+
     try {
       localStorage.setItem(STORAGE_KEYS.CONFLITOS_COUNT, String(count));
     } catch {
       /* ok */
+    }
+
+    if (status.dadosAtualizados) {
+      await recarregarTudo(); // ← agora válido
     }
   });
 }
@@ -1109,11 +1115,7 @@ function atualizarMesesFiltro() {
 
   filtro.innerHTML = '<option value="all">Todos</option>';
 
-  const nomesMeses = [
-    "Janeiro", "Fevereiro", "Março", "Abril",
-    "Maio", "Junho", "Julho", "Agosto",
-    "Setembro", "Outubro", "Novembro", "Dezembro",
-  ];
+  const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
   mesesArray.forEach((mes) => {
     const opt = document.createElement("option");
@@ -1425,48 +1427,46 @@ function setLancamentoEditando(val) {
 }
 
 export {
+  abrirModalImportacao,
+  analisarCSV,
   aplicarFiltroPill,
   aplicarFiltrosSalvos,
-  atualizarComparacao,
   atualizarAnosFiltro,
+  atualizarComparacao,
   atualizarMesesFiltro,
   atualizarResumo,
-  carregarCategorias,
-  carregarSubcategoriasCache,
-  carregarContas,
-  carregarPessoas,
-  carregarLancamentos,
-  carregarOrcamento,
-  carregarDashboard,
+  atualizarSubcategorias,
   calcularTotaisOrcamento,
   cancelarEdicao,
+  carregarCategorias,
+  carregarContas,
+  carregarDashboard,
   carregarEstadoFiltros,
+  carregarLancamentos,
+  carregarOrcamento,
+  carregarPessoas,
+  carregarSubcategoriasCache,
   editarLancamento,
   excluirLancamento,
   fazerImportacaoAPI,
+  fecharModalImportacao,
   formatCurrency,
-  getMonthKey,
   formatDate,
+  getMonthKey,
   mostrarFeedback,
   mostrarResultadoImportacao,
-  analisarCSV,
   processarImportacao,
   renderizarTabela,
   salvarEstadoFiltros,
   setCampoValor,
-  transformarItens,
-  abrirModalImportacao,
-  fecharModalImportacao,
-  atualizarSubcategorias,
-  setLancamentos,
   setCategoriasCache,
-  setSubcategoriasCache,
   setContasCache,
-  setFiltroAtualTipo,
-  setFiltroAtualStatus,
   setFiltroAtualAno,
   setFiltroAtualMes,
+  setFiltroAtualStatus,
+  setFiltroAtualTipo,
   setLancamentoEditando,
+  setLancamentos,
+  setSubcategoriasCache,
+  transformarItens,
 };
-
-
