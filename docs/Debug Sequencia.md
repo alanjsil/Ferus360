@@ -6,6 +6,7 @@
 ## NECESSIDADES
 
 - [ ] ~~User ter uma tela para cadastro de chamados~~ → Backend `createChamado()` pronto em `services/repository/admin.ts:70`, falta UI renderer
+- [ ] E baixo de lançamentos, o saldo por conta
 
 ---
 
@@ -48,9 +49,13 @@
 - [x] 0.15 Página `redefinir.html` — deep link (`access_token` no hash → modo automático)
   - **Breakpoint:** `redefinir.js:13` `obterTokenRecuperacao()` — parse do hash
   - **Breakpoint:** `auth.ts:198` `redefinirSenha()` — via token da sessão
+
+```
 - [ ] 0.16 Página `redefinir.html` — fallback manual (cola link ou token)
   - **Breakpoint:** `redefinir.js:38` `extrairTokenDoLink()` — parse URL ou token puro
   - **Breakpoint:** `auth.ts:181` `confirmarRecuperacao()` — via email + token + OTP verify
+```
+
 - [x] 0.17 Validações de senha em `redefinir.html`:
   - Mínimo 8 caracteres, 1 maiúscula, 1 número (requisitos visuais em tempo real)
   - **Breakpoint:** `password-utils.js:7` `REQUISITOS` — lista de validações
@@ -62,6 +67,7 @@
 - [x] 0.20 Splash screen animada na inicialização do login
   - **Breakpoint:** `login.js:236` fade-out do splash
 
+```
 #### Autenticação Transversal (auth-guard)
 
 - [ ] 0.21 `ensureAuthenticated()` — protege páginas (admin.html, index.html, etc.)
@@ -72,6 +78,7 @@
   - **Breakpoint:** `auth-guard.js:57` `getAccessToken()`
 - [ ] 0.24 Auditoria de autenticação: LOGIN, LOGIN_FAILED, LOGOUT, SENHA_TROCADA, RECUPERACAO_SOLICITADA, RECUPERACAO_CONFIRMADA
   - **Breakpoint:** `auth.ts` em cada `_logAuditoria()` — linhas 80, 94, 112, 133, 172, 192
+```
 
 ---
 
@@ -85,47 +92,50 @@
 - [x] 1.6 Ativar/Desativar categoria (toggle, badge verde/vermelho)
 - [x] 1.7 Desativar c/ lançamentos no mês → erro CATEGORIA_COM_LANCAMENTOS
 - [x] 1.8 Filtrar por tipo (Todos/Receita/Despesa/Transferência)
-- [] 1.9 Categoria global (badge "Global" exibido)
+- [x] 1.9 Categoria global (badge "Global" exibido)
 - [x] 1.10 Edição inline — botões Salvar/Cancelar na actions-cell (não embaixo do input)
-- [] 1.11 Categoria global — botões Editar/Ativar ocultos para não-admin
-- [] 1.12 Categoria global — bloqueio no backend (update/toggle rejeita se não admin)
-- [] 1.13 Categorias compartilhadas PF↔PJ (toggle em configurações `compartilharCategorias`)
+- [x] 1.11 Categoria global — botões Editar/Ativar ocultos para não-admin
+- [x] 1.12 Categoria global — bloqueio no backend (update/toggle rejeita se não admin)
+
+```
+- [ ] 1.13 Categorias compartilhadas PF↔PJ (toggle em configurações `compartilharCategorias`)
   - Quando ativo: categorias/subcategorias ignoram filtro `tipo_pessoa`
   - Contas/pessoas/lançamentos/orçamento continuam filtrados por `tipo_pessoa`
   - **Breakpoint:** `services/repository/admin.ts:36` — `getTransacoesCliente()` pula `.eq("tipo_pessoa")` em categorias se compartilhado
+```
 
 #### Toast / Notificações
 
-- [ ] 1.13 Toast substitui alert() em categorias, configurações, admin, orçamento
-- [ ] 1.14 Toast empilha, emerge do canto direito, persiste até clique
+- [x] 1.13 Toast substitui alert() em categorias, configurações, admin, orçamento
+- [x] 1.14 Toast empilha, emerge do canto direito, persiste até clique
 
 #### Subcategorias
 
-- [ ] 1.15 Criar subcategoria (painel lateral, salva, lista atualiza)
-- [ ] 1.16 Editar subcategoria (campo preenchido, salva)
-- [ ] 1.17 Excluir subcategoria sem vínculo (confirma → some)
-- [ ] 1.18 Excluir subcategoria em uso → erro SUBCATEGORIA_EM_USO
+- [x] 1.15 Criar subcategoria (painel lateral, salva, lista atualiza)
+- [x] 1.16 Editar subcategoria (campo preenchido, salva)
+- [x] 1.17 Excluir subcategoria sem vínculo (confirma → some)
+- [x] 1.18 Excluir subcategoria em uso → erro SUBCATEGORIA_EM_USO
 
 ---
 
 ### 2. Lançamentos (`index.html`)
 
-- [ ] 2.1 Criar lançamento RECEITA (aparece na tabela, resumo atualiza)
-- [ ] 2.2 Criar lançamento DESPESA (categorias carregam só despesas)
-- [ ] 2.3 Criar lançamento TRANSFERÊNCIA (conta origem + destino)
-- [ ] 2.4 Criar com valor zerado → block "Valor inválido"
-- [ ] 2.5 Criar com subcategoria (categoria → subcategorias carregam)
-- [ ] 2.6 Criar com conta/pessoa (selects populados, vincula)
-- [ ] 2.7 Editar lançamento (form preenchido, salva como "Atualizar")
-- [ ] 2.8 Editar → Cancelar (form limpo, botão volta "Salvar")
-- [ ] 2.9 Editar trocando tipo (categorias recarregam)
-- [ ] 2.10 Excluir lançamento (confirma → some, resumo atualiza)
-- [ ] 2.11 Excluir — cancelar (nada acontece)
-- [ ] 2.12 Filtro por mês (select muda → filtra)
-- [ ] 2.13 Filtro por tipo (pills Receita/Despesa)
-- [ ] 2.14 Filtro por status (pills Pendente/Pago)
-- [ ] 2.15 Filtros persistentes (recarrega → mantém localStorage)
-- [ ] 2.16 Resumo financeiro (cards Receitas/Despesas/Saldo)
+- [x] 2.1 Criar lançamento RECEITA (aparece na tabela, resumo atualiza)
+- [x] 2.2 Criar lançamento DESPESA (categorias carregam só despesas)
+- [x] 2.3 Criar lançamento TRANSFERÊNCIA (conta origem + destino)
+- [x] 2.4 Criar com valor zerado → block "Valor inválido"
+- [x] 2.5 Criar com subcategoria (categoria → subcategorias carregam)
+- [x] 2.6 Criar com conta/pessoa (selects populados, vincula)
+- [x] 2.7 Editar lançamento (form preenchido, salva como "Atualizar")
+- [x] 2.8 Editar → Cancelar (form limpo, botão volta "Salvar")
+- [x] 2.9 Editar trocando tipo (categorias recarregam)
+- [x] 2.10 Excluir lançamento (confirma → some, resumo atualiza)
+- [x] 2.11 Excluir — cancelar (nada acontece)
+- [x] 2.12 Filtro por mês (select muda → filtra)
+- [x] 2.13 Filtro por tipo (pills Receita/Despesa)
+- [x] 2.14 Filtro por status (pills Pendente/Pago)
+- [x] 2.15 Filtros persistentes (recarrega → mantém localStorage)
+- [x] 2.16 Resumo financeiro (cards Receitas/Despesas/Saldo)
 
 ---
 
@@ -211,7 +221,7 @@
 
 #### 6.7 Categorias Globais
 
-- [ ] 6.7 Categorias globais (CRUD com eh_global)
+- [x] 6.7 Categorias globais (CRUD com eh_global)
   - **Breakpoint:** `admin.js:302` `carregarCategoriasGlobais()`
 
 #### 6.8 Redefinir Senha

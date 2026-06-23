@@ -9,7 +9,7 @@ import { confirmDialog, exibirToast } from "./toast.js";
 const _cleanups = [];
 
 window.addEventListener("beforeunload", () => {
-  _cleanups.forEach(fn => fn());
+  _cleanups.forEach((fn) => fn());
   _cleanups.length = 0;
 });
 
@@ -34,23 +34,25 @@ function configurarSyncStatus() {
     /* ok */
   }
 
-  _cleanups.push(window.electronAPI.onSyncStatus(async (status) => {
-    // ← async aqui
-    const count = status.conflitos || 0;
-    badge.hidden = count === 0;
-    badge.textContent = count;
-    if (btn) btn.hidden = count === 0;
+  _cleanups.push(
+    window.electronAPI.onSyncStatus(async (status) => {
+      // ← async aqui
+      const count = status.conflitos || 0;
+      badge.hidden = count === 0;
+      badge.textContent = count;
+      if (btn) btn.hidden = count === 0;
 
-    try {
-      localStorage.setItem(STORAGE_KEYS.CONFLITOS_COUNT, String(count));
-    } catch {
-      /* ok */
-    }
+      try {
+        localStorage.setItem(STORAGE_KEYS.CONFLITOS_COUNT, String(count));
+      } catch {
+        /* ok */
+      }
 
-    if (status.dadosAtualizados) {
-      await recarregarTudo(); // ← agora válido
-    }
-  }));
+      if (status.dadosAtualizados) {
+        await recarregarTudo(); // ← agora válido
+      }
+    }),
+  );
 }
 
 function atualizarToggle(container, tp) {
@@ -71,20 +73,24 @@ function configurarTipoPessoaToggle() {
     await recarregarTudo();
   });
 
-  _cleanups.push(window.electronAPI.onTipoPessoaChanged(async (value) => {
-    if (value) atualizarToggle(container, value);
-    await recarregarTudo();
-  }));
+  _cleanups.push(
+    window.electronAPI.onTipoPessoaChanged(async (value) => {
+      if (value) atualizarToggle(container, value);
+      await recarregarTudo();
+    }),
+  );
 
   window.electronAPI.getTipoPessoa().then((value) => {
     if (value) atualizarToggle(container, value);
   });
 
   if (typeof window.electronAPI?.onUsarPjChanged === "function") {
-    _cleanups.push(window.electronAPI.onUsarPjChanged(async (value) => {
-      container.hidden = !value;
-      if (!value) await recarregarTudo();
-    }));
+    _cleanups.push(
+      window.electronAPI.onUsarPjChanged(async (value) => {
+        container.hidden = !value;
+        if (!value) await recarregarTudo();
+      }),
+    );
   }
 
   if (typeof window.electronAPI?.getUsarPj === "function") {
@@ -98,7 +104,7 @@ async function recarregarTudo() {
   await carregarSubcategoriasCache();
   await carregarContas();
   await carregarPessoas();
-  await carregarCategorias();
+  await carregarCategorias(document.getElementById("tipo").value);
   await aplicarFiltrosSalvos();
 }
 
@@ -1253,6 +1259,11 @@ document.getElementById("formLancamento").addEventListener("submit", async (e) =
 
   if (!payload.valor || payload.valor <= 0) {
     mostrarFeedback("Valor inválido", "warning");
+    return;
+  }
+
+  if (isTransferencia && payload.conta_origem_id && payload.conta_destino_id && payload.conta_origem_id === payload.conta_destino_id) {
+    mostrarFeedback("Conta de origem e destino devem ser diferentes", "warning");
     return;
   }
 

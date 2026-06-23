@@ -15,7 +15,7 @@ function getContainer() {
 }
 
 /**
- * Exibe uma notificação toast que emerge do canto direito.
+ * Exibe uma notificação toast que emerge do canto inferior esquerdo.
  * O toast permanece até ser clicado (ou até o tempo informado em duracao).
  *
  * @param {string} mensagem - Texto da notificação

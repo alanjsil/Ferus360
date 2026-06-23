@@ -4,8 +4,6 @@ import fs from "fs";
 import crypto from "crypto";
 import * as logger from "./logger";
 
-const LOCAL_HABILITADO = process.env.LOCAL !== "false";
-
 let db: Database.Database | null = null;
 let dbIntegrity = "ok";
 let _testDb: Database.Database | null = null;
@@ -14,9 +12,10 @@ function getCaminho(userDataPath?: string): string {
   return path.join(userDataPath || __dirname, "financas.db");
 }
 
-function iniciar(userDataPath: string): Database.Database | null {
+function iniciar(userDataPath: string, isDev: boolean = false): Database.Database | null {
+  const LOCAL_HABILITADO = isDev ? process.env.LOCAL !== "false" : false;
   if (!LOCAL_HABILITADO) {
-    logger.warn("database", "Modo offline desabilitado via LOCAL=false");
+    logger.warn("database", isDev ? "Modo offline desabilitado via LOCAL=false" : "Modo offline desabilitado (empacotado)");
     return null;
   }
   if (db) return db;

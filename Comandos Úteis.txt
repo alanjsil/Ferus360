@@ -3,6 +3,7 @@ del package-lock.json
 npm install
 npm audit
 
+npx asar list .\app.asar
 
 const fs = require("fs");
 const path = require("path");

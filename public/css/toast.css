@@ -1,11 +1,11 @@
 /* Toast notification system */
 .toast-container {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  bottom: 20px;
+  left: 20px;
   z-index: 9999;
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
   gap: 8px;
   pointer-events: none;
   max-width: 400px;
@@ -76,22 +76,22 @@
 
 @keyframes toastIn {
   from {
-    transform: translateX(120%);
+    transform: translateY(120%);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1;
   }
 }
 
 @keyframes toastOut {
   from {
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1;
   }
   to {
-    transform: translateX(120%);
+    transform: translateY(120%);
     opacity: 0;
   }
 }

@@ -218,7 +218,7 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
-    database.iniciar(app.getPath("userData"));
+    database.iniciar(app.getPath("userData"), isDev);
 
     const appRoot = app.isPackaged ? path.join(process.resourcesPath, "app") : path.join(__dirname, "..");
     expiracao.init(appRoot);

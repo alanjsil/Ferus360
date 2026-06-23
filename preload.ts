@@ -146,7 +146,8 @@ const api = {
   adminGetOrcamentoCliente: (id: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getOrcamentoCliente", id, tipoPessoa),
   adminGetContasCliente: (id: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getContasCliente", id, tipoPessoa),
   adminGetAnosDisponiveisCliente: (usuarioId: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getAnosDisponiveisCliente", usuarioId, tipoPessoa),
-  adminGetDashboardDadosCliente: (usuarioId: string, ano: string, mes: string, categoria: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getDashboardDadosCliente", usuarioId, ano, mes, categoria, tipoPessoa),
+  adminGetDashboardDadosCliente: (usuarioId: string, ano: string, mes: string, categoria: string, tipoPessoa?: string) =>
+    ipcRenderer.invoke("admin:getDashboardDadosCliente", usuarioId, ano, mes, categoria, tipoPessoa),
 };
 
 contextBridge.exposeInMainWorld("electronAPI", api);
