@@ -4,6 +4,13 @@
 
 import { clearAuthSession, ensureAuthenticated, getAccessToken } from "./auth-guard.js";
 
+const _cleanups = [];
+
+window.addEventListener("beforeunload", () => {
+  _cleanups.forEach(fn => fn());
+  _cleanups.length = 0;
+});
+
 // Gráficos
 let chartMensal, chartCategorias, chartSaldo;
 
@@ -65,20 +72,20 @@ function configurarTipoPessoaToggle() {
     popularMeses();
   });
 
-  window.electronAPI.onTipoPessoaChanged(async (value) => {
+  _cleanups.push(window.electronAPI.onTipoPessoaChanged(async (value) => {
     if (value) atualizarToggle(container, value);
     await carregarCategorias();
     await popularAnos();
     await carregarDashboard();
     popularMeses();
-  });
+  }));
 
   window.electronAPI.getTipoPessoa().then((value) => {
     if (value) atualizarToggle(container, value);
   });
 
   if (typeof window.electronAPI?.onUsarPjChanged === "function") {
-    window.electronAPI.onUsarPjChanged(async (value) => {
+    _cleanups.push(window.electronAPI.onUsarPjChanged(async (value) => {
       container.hidden = !value;
       if (!value) {
         await carregarCategorias();
@@ -86,7 +93,7 @@ function configurarTipoPessoaToggle() {
         await carregarDashboard();
         popularMeses();
       }
-    });
+    }));
   }
 
   if (typeof window.electronAPI?.getUsarPj === "function") {

@@ -88,22 +88,34 @@ const api = {
   // ==================== TIPO PESSOA ====================
   getTipoPessoa: () => ipcRenderer.invoke("tipo-pessoa:get"),
   setTipoPessoa: (tipoPessoa: string) => ipcRenderer.invoke("tipo-pessoa:set", tipoPessoa),
-  onTipoPessoaChanged: (callback: (data: any) => void) => ipcRenderer.on("state:updated", (_e: any, data: any) => {
-    if (data.key === "tipoPessoaAtivo") callback(data.value);
-  }),
+  onTipoPessoaChanged: (callback: (data: any) => void) => {
+    const handler = (_e: any, data: any) => {
+      if (data.key === "tipoPessoaAtivo") callback(data.value);
+    };
+    ipcRenderer.on("state:updated", handler);
+    return () => ipcRenderer.removeListener("state:updated", handler);
+  },
 
   // ==================== USAR PJ ====================
   getUsarPj: () => ipcRenderer.invoke("usar-pj:get"),
   setUsarPj: (value: boolean) => ipcRenderer.invoke("usar-pj:set", value),
-  onUsarPjChanged: (callback: (data: any) => void) => ipcRenderer.on("state:updated", (_e: any, data: any) => {
-    if (data.key === "usarPjAtivo") callback(data.value);
-  }),
+  onUsarPjChanged: (callback: (data: any) => void) => {
+    const handler = (_e: any, data: any) => {
+      if (data.key === "usarPjAtivo") callback(data.value);
+    };
+    ipcRenderer.on("state:updated", handler);
+    return () => ipcRenderer.removeListener("state:updated", handler);
+  },
 
   // ==================== COMPARTILHAR CATEGORIAS ====================
   setCompartilharCategorias: (compartilhar: boolean) => ipcRenderer.invoke("compartilhar-categorias:set", compartilhar),
-  onCompartilharCategoriasChanged: (callback: (data: any) => void) => ipcRenderer.on("state:updated", (_e: any, data: any) => {
-    if (data.key === "compartilharCategorias") callback(data.value);
-  }),
+  onCompartilharCategoriasChanged: (callback: (data: any) => void) => {
+    const handler = (_e: any, data: any) => {
+      if (data.key === "compartilharCategorias") callback(data.value);
+    };
+    ipcRenderer.on("state:updated", handler);
+    return () => ipcRenderer.removeListener("state:updated", handler);
+  },
 
   // ==================== TRIAL ====================
   getTrialStatus: () => ipcRenderer.invoke("trial:status"),
@@ -112,7 +124,11 @@ const api = {
   forcarSync: () => ipcRenderer.invoke("sync:force"),
   getConflitos: () => ipcRenderer.invoke("sync:conflitos"),
   resolverConflito: (id: string, decisao: string, payloadMesclado: any) => ipcRenderer.invoke("sync:resolver-conflito", id, decisao, payloadMesclado),
-  onSyncStatus: (callback: (data: any) => void) => ipcRenderer.on("sync:status", (_e: any, data: any) => callback(data)),
+  onSyncStatus: (callback: (data: any) => void) => {
+    const handler = (_e: any, data: any) => callback(data);
+    ipcRenderer.on("sync:status", handler);
+    return () => ipcRenderer.removeListener("sync:status", handler);
+  },
   limparCache: () => ipcRenderer.invoke("sync:limpar-cache"),
 
   // ==================== ADMIN ====================

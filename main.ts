@@ -1,10 +1,14 @@
-const path = require("path");
 const { app, BrowserWindow, ipcMain } = require("electron");
 const logger = require("./services/logger");
-const { isDev } = require("./src/env");
-
 logger.init(app.getPath("userData"));
+const { isDev } = require("./src/env");
+const path = require("path");
 
+/**
+ * Redireciona todo console.error para o logger (CSV) também.
+ * Não causa loop pois logger.error() só escreve em arquivo (fs.appendFileSync),
+ * sem chamar console.error internamente.
+ */
 const consoleErrorOriginal = console.error;
 console.error = function (...args: unknown[]) {
   const msg = args.map((a) => (typeof a === "string" ? a : String(a))).join(" ");

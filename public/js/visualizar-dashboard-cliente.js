@@ -4,6 +4,13 @@
 
 import { clearAuthSession, ensureAuthenticated, getAccessToken } from "./auth-guard.js";
 
+const _cleanups = [];
+
+window.addEventListener("beforeunload", () => {
+  _cleanups.forEach(fn => fn());
+  _cleanups.length = 0;
+});
+
 let chartMensal, chartCategorias, chartSaldo;
 let dadosDashboard = [];
 let usuarioIdCliente = null;
@@ -52,13 +59,13 @@ function configurarTipoPessoaToggle() {
   });
 
   if (typeof window.electronAPI?.onTipoPessoaChanged === "function") {
-    window.electronAPI.onTipoPessoaChanged((value) => {
+    _cleanups.push(window.electronAPI.onTipoPessoaChanged((value) => {
       if (!value) return;
       tipoPessoa = value;
       container.dataset.tp = value;
       const span = container.querySelector("span");
       if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
-    });
+    }));
   }
 
   if (typeof window.electronAPI?.getTipoPessoa === "function") {
@@ -72,7 +79,7 @@ function configurarTipoPessoaToggle() {
   }
 
   if (typeof window.electronAPI?.onUsarPjChanged === "function") {
-    window.electronAPI.onUsarPjChanged((value) => {
+    _cleanups.push(window.electronAPI.onUsarPjChanged((value) => {
       container.hidden = !value;
       if (!value) {
         tipoPessoa = "PF";
@@ -80,7 +87,7 @@ function configurarTipoPessoaToggle() {
         const span = container.querySelector("span");
         if (span) span.textContent = "Pessoa Física";
       }
-    });
+    }));
   }
 
   if (typeof window.electronAPI?.getUsarPj === "function") {

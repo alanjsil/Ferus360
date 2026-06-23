@@ -7,6 +7,13 @@ import { converterParaCSV, gerarTemplateCSV } from "./csv.js";
 import { avaliarRequisitos, iniciarToggleSenha } from "./password-utils.js";
 import { confirmDialog, exibirToast, promptDialog } from "./toast.js";
 
+const _cleanups = [];
+
+window.addEventListener("beforeunload", () => {
+  _cleanups.forEach(fn => fn());
+  _cleanups.length = 0;
+});
+
 let usuarioAuth = null;
 let categorias = [];
 let contas = [];
@@ -403,14 +410,14 @@ function configurarTipoPessoaToggle() {
   });
 
   if (typeof window.electronAPI?.onTipoPessoaChanged === "function") {
-    window.electronAPI.onTipoPessoaChanged(async (value) => {
+    _cleanups.push(window.electronAPI.onTipoPessoaChanged(async (value) => {
       if (value) {
         container.dataset.tp = value;
         const span = container.querySelector("span");
         if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
       }
       await recarregarCadastros();
-    });
+    }));
   }
 
   if (typeof window.electronAPI?.getTipoPessoa === "function") {
@@ -423,12 +430,12 @@ function configurarTipoPessoaToggle() {
   }
 
   if (typeof window.electronAPI?.onUsarPjChanged === "function") {
-    window.electronAPI.onUsarPjChanged(async (value) => {
+    _cleanups.push(window.electronAPI.onUsarPjChanged(async (value) => {
       container.hidden = !value;
       if (!value) {
         await recarregarCadastros();
       }
-    });
+    }));
   }
 
   if (typeof window.electronAPI?.getUsarPj === "function") {
