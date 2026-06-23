@@ -5,6 +5,7 @@
 import { iniciarToggleSenha, avaliarRequisitos } from "./password-utils.js";
 
 let modoManual = false;
+let _recoveryInterval = null;
 
 async function obterTokenRecuperacao() {
   const temToken = await window.electronAPI.temTokenRecuperacao();
@@ -63,6 +64,35 @@ function setLoading(loading) {
   });
   submit.disabled = loading;
   submit.innerHTML = loading ? '<span class="spinner"></span> Redefinindo...' : "Redefinir senha";
+}
+
+function iniciarCountdown() {
+  const timerDiv = document.getElementById("redefinirTimer");
+  const expiradoDiv = document.getElementById("redefinirExpirado");
+  const contagem = document.getElementById("redefinirTimerContagem");
+  const bar = document.getElementById("redefinirTimerBar");
+  const submit = document.getElementById("redefinirSubmit");
+
+  timerDiv.style.display = "block";
+  expiradoDiv.style.display = "none";
+
+  _recoveryInterval = setInterval(async () => {
+    const restanteMs = await window.electronAPI.getTempoRestanteRecuperacao();
+    if (restanteMs <= 0) {
+      clearInterval(_recoveryInterval);
+      _recoveryInterval = null;
+      timerDiv.style.display = "none";
+      expiradoDiv.style.display = "block";
+      submit.disabled = true;
+      return;
+    }
+    const totalMs = 5 * 60 * 1000;
+    const segundos = Math.ceil(restanteMs / 1000);
+    const min = Math.floor(segundos / 60);
+    const sec = segundos % 60;
+    contagem.textContent = `${min}:${String(sec).padStart(2, "0")}`;
+    bar.style.width = `${(restanteMs / totalMs) * 100}%`;
+  }, 1000);
 }
 
 /**
@@ -141,6 +171,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     modoManual = false;
     document.getElementById("redefinirDeepInfo").style.display = "block";
     document.getElementById("redefinirFallback").style.display = "none";
+    iniciarCountdown();
   } else {
     modoManual = true;
     document.getElementById("redefinirDeepInfo").style.display = "none";
@@ -153,6 +184,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   senhaInput.addEventListener("input", () => avaliarRequisitos(senhaInput.value));
 
   document.getElementById("redefinirForm").addEventListener("submit", redefinir);
+
+  window.electronAPI.onRecoveryExpired(() => {
+    if (_recoveryInterval) {
+      clearInterval(_recoveryInterval);
+      _recoveryInterval = null;
+    }
+    document.getElementById("redefinirTimer").style.display = "none";
+    document.getElementById("redefinirExpirado").style.display = "block";
+    document.getElementById("redefinirSubmit").disabled = true;
+  });
 
   const trigger = document.getElementById("contatoTrigger");
   const popover = document.getElementById("contatoPopover");
@@ -167,4 +208,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   }
+});
+
+window.addEventListener("beforeunload", () => {
+  if (_recoveryInterval) clearInterval(_recoveryInterval);
 });

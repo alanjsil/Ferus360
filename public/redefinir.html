@@ -22,6 +22,14 @@
         <form id="redefinirForm" class="login-form" novalidate>
           <div id="redefinirDeepInfo" style="color: #94a3b8; text-align: center; margin-bottom: 12px; display: none">Token de recuperação detectado automaticamente.</div>
 
+          <div id="redefinirTimer" style="display: none">
+            <div id="redefinirTimerBar" class="timer-bar"></div>
+            <p id="redefinirTimerTexto">Seu link expira em <span id="redefinirTimerContagem">5:00</span></p>
+          </div>
+          <div id="redefinirExpirado" style="display: none" class="aviso-expirado">
+            <p>Seu link de recuperação expirou. Solicite um novo.</p>
+          </div>
+
           <div id="redefinirFallback" class="fallback-fields">
             <p style="color: #94a3b8; text-align: center; margin-bottom: 12px">Cole abaixo o link do email de recuperação ou apenas o token.</p>
             <div class="field">

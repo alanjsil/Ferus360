@@ -291,6 +291,35 @@ body {
   pointer-events: none;
 }
 
+/* ===== TOKEN RECOVERY TIMER ===== */
+.timer-bar {
+  height: 6px;
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  border-radius: 3px;
+  transition: width 1s linear;
+  margin-bottom: 8px;
+}
+#redefinirTimerTexto {
+  text-align: center;
+  color: #facc15;
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+}
+#redefinirTimerContagem {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.aviso-expirado {
+  text-align: center;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  color: #fca5a5;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
 /* ===== TRIAL BANNER ===== */
 .trial-banner {
   display: none;

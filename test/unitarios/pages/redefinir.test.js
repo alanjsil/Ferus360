@@ -36,6 +36,8 @@ beforeEach(() => {
   window.electronAPI = {
     redefinirSenha: vi.fn(),
     temTokenRecuperacao: vi.fn().mockResolvedValue(false),
+    getTempoRestanteRecuperacao: vi.fn().mockResolvedValue(300000),
+    onRecoveryExpired: vi.fn(),
   };
 });
 
@@ -116,7 +118,7 @@ describe("redefinir.js", () => {
       // Act
       preencherForm({ senha: "MinhaSenha1", confirmacao: "MinhaSenha1" });
       submeterForm();
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(0);
 
       // Assert
       expect(window.electronAPI.redefinirSenha).toHaveBeenCalledWith("MinhaSenha1");
@@ -129,7 +131,7 @@ describe("redefinir.js", () => {
       // Act
       preencherForm({ senha: "NovaSenha1", confirmacao: "NovaSenha1" });
       submeterForm();
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(0);
 
       // Assert
       expect(getMensagem()).toBe(
@@ -164,6 +166,54 @@ describe("redefinir.js", () => {
     });
   });
 
+  describe("countdown do token de recuperação", () => {
+    beforeEach(() => {
+      window.electronAPI.temTokenRecuperacao.mockResolvedValue(true);
+    });
+
+    it("mostra timer quando token existe", async () => {
+      // Arrange
+      window.electronAPI.getTempoRestanteRecuperacao.mockResolvedValue(300000);
+
+      // Act
+      importarPagina();
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Assert
+      expect(document.getElementById("redefinirTimer").style.display).toBe("block");
+      expect(document.getElementById("redefinirExpirado").style.display).toBe("none");
+      expect(document.getElementById("redefinirSubmit").disabled).toBe(false);
+    });
+
+    it("exibe expirado quando tempo chega a zero", async () => {
+      // Arrange
+      window.electronAPI.getTempoRestanteRecuperacao.mockResolvedValue(0);
+      const submit = document.getElementById("redefinirSubmit");
+
+      // Act
+      importarPagina();
+      await vi.advanceTimersByTimeAsync(1000);
+
+      // Assert
+      expect(document.getElementById("redefinirTimer").style.display).toBe("none");
+      expect(document.getElementById("redefinirExpirado").style.display).toBe("block");
+      expect(submit.disabled).toBe(true);
+    });
+
+    it("chama getTempoRestanteRecuperacao no intervalo do countdown", async () => {
+      // Arrange
+      importarPagina();
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Act
+      vi.advanceTimersByTime(1000);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Assert
+      expect(window.electronAPI.getTempoRestanteRecuperacao).toHaveBeenCalled();
+    });
+  });
+
   describe("mapeamento de erros", () => {
     beforeEach(() => {
       window.electronAPI.temTokenRecuperacao.mockResolvedValue(true);
@@ -179,7 +229,7 @@ describe("redefinir.js", () => {
       // Act
       preencherForm({ senha: "fracaSemMaiuscula", confirmacao: "fracaSemMaiuscula" });
       submeterForm();
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(0);
 
       // Assert
       expect(getMensagem()).toBe(
@@ -196,7 +246,7 @@ describe("redefinir.js", () => {
       // Act
       preencherForm({ senha: "NovaSenha1", confirmacao: "NovaSenha1" });
       submeterForm();
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(0);
 
       // Assert
       expect(getMensagem()).toBe("Erro ao redefinir senha.");

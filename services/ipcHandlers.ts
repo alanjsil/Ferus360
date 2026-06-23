@@ -112,6 +112,7 @@ function createHandlers(
     },
 
     handleAuthTemTokenRecuperacao: async () => auth.temTokenRecuperacao(),
+    handleAuthTempoRestanteRecuperacao: async () => auth.getTempoRestanteRecuperacao(),
 
     handleAuthRenovar: async (_event: unknown, refreshToken: string) => {
       try {
@@ -767,6 +768,7 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("auth:confirmar-recuperacao", handlers.handleAuthConfirmarRecuperacao);
   ipcMain.handle("auth:redefinir-senha", handlers.handleAuthRedefinirSenha);
   ipcMain.handle("auth:tem-token-recuperacao", handlers.handleAuthTemTokenRecuperacao);
+  ipcMain.handle("auth:tempo-restante-recuperacao", handlers.handleAuthTempoRestanteRecuperacao);
   ipcMain.handle("auth:renovar", handlers.handleAuthRenovar);
   ipcMain.handle("auth:trocar-senha", handlers.handleAuthTrocarSenha);
   ipcMain.handle("subcategorias:get", handlers.handleSubcategoriasGet);
