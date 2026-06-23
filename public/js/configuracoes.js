@@ -43,7 +43,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   configurarSessoes();
   configurarExportar();
   configurarExcluirConta();
-  configurarCompartilharCategorias();
   configurarUsarPj();
   configurarTipoPessoaToggle();
   configurarCategorias();
@@ -102,7 +101,7 @@ async function carregarPerfil() {
     }
     const usarPjToggle = document.getElementById("usarPjToggle");
     if (usarPjToggle) {
-      usarPjToggle.checked = false;
+      usarPjToggle.checked = perfil.usar_pj === true;
     }
     if (usuarioAuth?.role === "admin") {
       emailInput.removeAttribute("readonly");
@@ -374,15 +373,6 @@ function configurarExcluirConta() {
       submitBtn.disabled = false;
       submitBtn.textContent = "Excluir";
     }
-  });
-}
-
-function configurarCompartilharCategorias() {
-  const toggle = document.getElementById("compartilharCategoriasToggle");
-  if (!toggle) return;
-
-  toggle.addEventListener("change", async () => {
-    await window.electronAPI.setCompartilharCategorias(toggle.checked);
   });
 }
 
@@ -875,6 +865,7 @@ function renderizarCategorias(catBody, catEmpty) {
       <td class="nome-cell">
         ${editingCatId === c.id ? editingCatRow(c) : escapeHtml(c.nome)}
         ${c.eh_global ? '<span class="badge-global">Global</span>' : ""}
+        ${!c.eh_global && c.tipo_pessoa === null ? '<span class="badge-global">Universal</span>' : ""}
       </td>
       <td>${editingCatId === c.id ? editTipoSelect(c) : `<span class="badge-tipo ${c.tipo}">${c.tipo}</span>`}</td>
       <td><button type="button" class="btn-subcat" data-cat-id="${c.id}"><i class="fa-regular fa-pen-to-square"></i> Gerenciar</button></td>
@@ -967,6 +958,26 @@ function renderizarCategorias(catBody, catEmpty) {
     });
   });
 
+  catBody.querySelectorAll(".btn-toggle-universal").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      try {
+        const data = await window.electronAPI.toggleCategoriaUniversal(id);
+        if (data && data.error) {
+          exibirToast(data.error, "error");
+          return;
+        }
+        Object.assign(
+          categorias.find((c) => c.id === id),
+          data,
+        );
+        renderizarCategorias(catBody, catEmpty);
+      } catch {
+        // ignore
+      }
+    });
+  });
+
   catBody.querySelectorAll(".edit-nome-input").forEach((input) => {
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
@@ -1011,9 +1022,12 @@ function editActions(c) {
   if (c.eh_global) return "";
   const ativoText = c.ativo ? "Desativar" : "Ativar";
   const ativoCls = c.ativo ? "" : "inactive";
+  const universalText = c.tipo_pessoa === null ? "Universal" : "Restrito";
+  const universalCls = c.tipo_pessoa === null ? "" : "inactive";
   return `
     <button type="button" class="btn-edit btn-edit-cat" data-id="${c.id}">Editar</button>
     <button type="button" class="btn-toggle btn-toggle-cat ${ativoCls}" data-id="${c.id}">${ativoText}</button>
+    <button type="button" class="btn-toggle btn-toggle-universal ${universalCls}" data-id="${c.id}">${universalText}</button>
   `;
 }
 

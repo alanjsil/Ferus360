@@ -42,10 +42,6 @@ function createHandlers(
     return (getState("tipoPessoaAtivo") as string) || "PF";
   }
 
-  function obterCompartilharCategorias(): boolean {
-    return !!(getState("compartilharCategorias") as boolean);
-  }
-
   async function _extrairMetadados(event?: IpcMainInvokeEvent): Promise<{ ip?: string; user_agent?: string }> {
     const user_agent = (event as any)?.sender?.session?.getUserAgent() || undefined;
     const ip = await _obterIpPublico();
@@ -140,8 +136,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       const tipoPessoa = obterTipoPessoaAtivo();
-      const compartilhar = obterCompartilharCategorias();
-      const data = await repository.getCategorias(usuarioId, tipo, false, tipoPessoa, compartilhar);
+      const data = await repository.getCategorias(usuarioId, tipo, false, tipoPessoa);
       setState("categorias", data);
       return data;
     },
@@ -150,8 +145,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       const tipoPessoa = obterTipoPessoaAtivo();
-      const compartilhar = obterCompartilharCategorias();
-      const data = await repository.getSubcategorias(usuarioId, categoriaId, tipoPessoa, compartilhar);
+      const data = await repository.getSubcategorias(usuarioId, categoriaId, tipoPessoa);
       setState("subcategorias", data);
       return data;
     },
@@ -405,8 +399,7 @@ function createHandlers(
     handleCatList: async () => {
       const usuarioId = obterUsuarioId();
       const tipoPessoa = obterTipoPessoaAtivo();
-      const compartilhar = obterCompartilharCategorias();
-      const data = await repository.getCategorias(usuarioId, null, true, tipoPessoa, compartilhar);
+      const data = await repository.getCategorias(usuarioId, null, true, tipoPessoa);
       setState("categorias", data);
       return data;
     },
@@ -722,9 +715,21 @@ function createHandlers(
       return { success: true };
     },
 
-    handleCompartilharCategoriasSet: async (_event: unknown, compartilhar: boolean) => {
-      setState("compartilharCategorias", compartilhar);
-      return { success: true };
+    handleCatToggleUniversal: async (_event: unknown, id: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        const tipoPessoaAtivo = obterTipoPessoaAtivo();
+        const data = await repository.toggleCategoriaUniversal(id, usuarioId, tipoPessoaAtivo);
+        const current = (getState("categorias") as { id: string }[]) || [];
+        setState(
+          "categorias",
+          current.map((c: { id: string }) => (c.id === id ? data : c)),
+        );
+        return data;
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
     },
 
     handleLimparCache: async () => {
@@ -796,6 +801,7 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("cat:create", handlers.handleCatCreate);
   ipcMain.handle("cat:update", handlers.handleCatUpdate);
   ipcMain.handle("cat:toggleAtivo", handlers.handleCatToggleAtivo);
+  ipcMain.handle("cat:toggleUniversal", handlers.handleCatToggleUniversal);
   ipcMain.handle("subcat:create", handlers.handleSubcatCreate);
   ipcMain.handle("subcat:update", handlers.handleSubcatUpdate);
   ipcMain.handle("subcat:delete", handlers.handleSubcatDelete);
@@ -825,7 +831,6 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("tipo-pessoa:set", handlers.handleTipoPessoaSet);
   ipcMain.handle("usar-pj:get", handlers.handleUsarPjGet);
   ipcMain.handle("usar-pj:set", handlers.handleUsarPjSet);
-  ipcMain.handle("compartilhar-categorias:set", handlers.handleCompartilharCategoriasSet);
   ipcMain.handle("sync:force", handlers.handleSyncForce);
   ipcMain.handle("sync:conflitos", handlers.handleSyncConflitos);
   ipcMain.handle("sync:resolver-conflito", handlers.handleSyncResolverConflito);

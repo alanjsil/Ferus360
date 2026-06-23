@@ -245,8 +245,8 @@ function adicionarFiltroTipoPessoaRestrito(query: any, tipoPessoa?: string): any
   return query;
 }
 
-function adicionarFiltroCategoriaTipoPessoa(query: any, tipoPessoa?: string, compartilhar?: boolean): any {
-  if (compartilhar || !tipoPessoa) {
+function adicionarFiltroCategoriaTipoPessoa(query: any, tipoPessoa?: string): any {
+  if (!tipoPessoa) {
     return query;
   }
   return query.or(`tipo_pessoa.is.null,tipo_pessoa.eq.${tipoPessoa}`);

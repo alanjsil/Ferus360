@@ -42,6 +42,7 @@ const api = {
   criarCategoria: (payload: any) => ipcRenderer.invoke("cat:create", payload),
   updateCategoria: (id: string, patch: any) => ipcRenderer.invoke("cat:update", id, patch),
   toggleCategoriaAtivo: (id: string) => ipcRenderer.invoke("cat:toggleAtivo", id),
+  toggleCategoriaUniversal: (id: string) => ipcRenderer.invoke("cat:toggleUniversal", id),
 
   // ==================== SUBCATEGORIAS ====================
   getSubcategorias: (categoriaId?: string) => ipcRenderer.invoke("subcategorias:get", categoriaId),
@@ -102,16 +103,6 @@ const api = {
   onUsarPjChanged: (callback: (data: any) => void) => {
     const handler = (_e: any, data: any) => {
       if (data.key === "usarPjAtivo") callback(data.value);
-    };
-    ipcRenderer.on("state:updated", handler);
-    return () => ipcRenderer.removeListener("state:updated", handler);
-  },
-
-  // ==================== COMPARTILHAR CATEGORIAS ====================
-  setCompartilharCategorias: (compartilhar: boolean) => ipcRenderer.invoke("compartilhar-categorias:set", compartilhar),
-  onCompartilharCategoriasChanged: (callback: (data: any) => void) => {
-    const handler = (_e: any, data: any) => {
-      if (data.key === "compartilharCategorias") callback(data.value);
     };
     ipcRenderer.on("state:updated", handler);
     return () => ipcRenderer.removeListener("state:updated", handler);

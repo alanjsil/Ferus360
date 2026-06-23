@@ -19,6 +19,7 @@ export {
   criarCategoria,
   updateCategoria,
   toggleCategoriaAtivo,
+  toggleCategoriaUniversal,
   getSubcategorias,
   criarSubcategoria,
   updateSubcategoria,

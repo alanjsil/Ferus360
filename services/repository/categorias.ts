@@ -11,7 +11,7 @@ import {
 } from "./utils";
 import { logAuditoria } from "./auditoria";
 
-async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas = false, tipoPessoa?: string, compartilhar?: boolean): Promise<Categoria[]> {
+async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas = false, tipoPessoa?: string): Promise<Categoria[]> {
   function montarQueryBaseLocal(): { where: string; params: Record<string, unknown> } {
     let where = "1=1";
     const params: Record<string, unknown> = {};
@@ -20,11 +20,9 @@ async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas 
       where += " AND tipo = @tipo";
       params.tipo = tipo;
     }
-    if (!compartilhar) {
-      const r = adicionarWhereTipoPessoa(where, params, tipoPessoa, true);
-      where = r.where;
-      params.tipoPessoaAtivo = r.params.tipoPessoaAtivo;
-    }
+    const r = adicionarWhereTipoPessoa(where, params, tipoPessoa, true);
+    where = r.where;
+    params.tipoPessoaAtivo = r.params.tipoPessoaAtivo;
     return { where, params };
   }
 
@@ -32,7 +30,7 @@ async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas 
     let q = supabase.from("financas_categorias").select("*");
     if (!mostrarInativas) q = q.eq("ativo", true);
     if (tipo) q = q.eq("tipo", tipo);
-    q = adicionarFiltroCategoriaTipoPessoa(q, tipoPessoa, compartilhar);
+    q = adicionarFiltroCategoriaTipoPessoa(q, tipoPessoa);
     return q;
   }
 
@@ -158,7 +156,7 @@ async function criarCategoria(payload: CriarCategoriaPayload): Promise<Categoria
   return data;
 }
 
-async function updateCategoria(id: string, patch: { nome?: string; tipo?: string }, usuarioId?: string): Promise<Categoria | null> {
+async function updateCategoria(id: string, patch: { nome?: string; tipo?: string; tipo_pessoa?: string | null }, usuarioId?: string): Promise<Categoria | null> {
   const { data: cat } = await supabase.from("financas_categorias").select("eh_global").eq("id", id).single();
   if (!cat) throw new Error("Categoria não encontrada.");
 
@@ -178,6 +176,7 @@ async function updateCategoria(id: string, patch: { nome?: string; tipo?: string
     allowedFields.nome = nomeNormalizado;
   }
   if (patch.tipo !== undefined) allowedFields.tipo = patch.tipo;
+  if (patch.tipo_pessoa !== undefined) allowedFields.tipo_pessoa = patch.tipo_pessoa;
 
   if (Object.keys(allowedFields).length === 0) return null;
 
@@ -222,6 +221,37 @@ async function toggleCategoriaAtivo(id: string, usuarioId?: string): Promise<Cat
     _marcarPendente("financas_categorias", id);
     throw error;
   }
+
+  _atualizarLocal("financas_categorias", id, { ...data, sync_status: "synced" });
+  return data;
+}
+
+async function toggleCategoriaUniversal(id: string, usuarioId?: string, tipoPessoaAtivo?: string): Promise<Categoria> {
+  const { data: cat } = await supabase.from("financas_categorias").select("tipo_pessoa, eh_global").eq("id", id).single();
+  if (!cat) throw new Error("Categoria não encontrada.");
+
+  if (cat.eh_global) {
+    const { data: user } = await supabase.from("financas_usuarios").select("role").eq("id", usuarioId).single();
+    if (!user || user.role !== "admin") {
+      throw new Error("Categorias globais só podem ser alteradas por administradores.");
+    }
+  }
+
+  const novoTipoPessoa = cat.tipo_pessoa === null ? tipoPessoaAtivo ?? null : null;
+  _atualizarLocal("financas_categorias", id, { tipo_pessoa: novoTipoPessoa, sync_status: "pending" });
+
+  const { data, error } = await supabase.from("financas_categorias").update({ tipo_pessoa: novoTipoPessoa }).eq("id", id).select().single();
+
+  if (error) {
+    _marcarPendente("financas_categorias", id);
+    throw error;
+  }
+
+  const { error: errSub } = await supabase
+    .from("financas_subcategorias")
+    .update({ tipo_pessoa: novoTipoPessoa })
+    .eq("categoria_id", id);
+  if (errSub) throw errSub;
 
   _atualizarLocal("financas_categorias", id, { ...data, sync_status: "synced" });
   return data;
@@ -282,13 +312,13 @@ async function updateSubcategoria(id: string, patch: { nome?: string }): Promise
   return data[0];
 }
 
-async function getSubcategorias(usuarioId?: string, categoriaId?: string, tipoPessoa?: string, compartilhar?: boolean): Promise<Subcategoria[]> {
+async function getSubcategorias(usuarioId?: string, categoriaId?: string, tipoPessoa?: string): Promise<Subcategoria[]> {
   // 1. Supabase first (online)
   try {
     let query = supabase.from("financas_subcategorias").select("*").order("nome") as any;
 
     query = adicionarFiltroUsuario(query, usuarioId);
-    query = adicionarFiltroCategoriaTipoPessoa(query, tipoPessoa, compartilhar);
+    query = adicionarFiltroCategoriaTipoPessoa(query, tipoPessoa);
 
     if (categoriaId) {
       query = query.eq("categoria_id", categoriaId);
@@ -311,11 +341,9 @@ async function getSubcategorias(usuarioId?: string, categoriaId?: string, tipoPe
         where += " AND categoria_id = @categoriaId";
         params.categoriaId = categoriaId;
       }
-      if (!compartilhar) {
       const r = adicionarWhereTipoPessoa(where, params, tipoPessoa, true);
-        where = r.where;
-        params.tipoPessoaAtivo = r.params.tipoPessoaAtivo;
-      }
+      where = r.where;
+      params.tipoPessoaAtivo = r.params.tipoPessoaAtivo;
       const data = database.query(`SELECT * FROM financas_subcategorias WHERE deleted_at IS NULL AND ${where} ORDER BY nome`, params).map((r) => _doSQLite(r));
       return data as unknown as Subcategoria[];
     } catch {
@@ -352,6 +380,7 @@ export {
   criarCategoria,
   updateCategoria,
   toggleCategoriaAtivo,
+  toggleCategoriaUniversal,
   getSubcategorias,
   criarSubcategoria,
   updateSubcategoria,

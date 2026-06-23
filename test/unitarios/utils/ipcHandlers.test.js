@@ -50,7 +50,6 @@ const mockGetState = vi.fn((key) => {
   if (key === "usuarioAtual") return { id: "user-123" };
   if (key === "tipoPessoaAtivo") return "PF";
   if (key === "usarPjAtivo") return true;
-  if (key === "compartilharCategorias") return false;
   return [];
 });
 
@@ -257,7 +256,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("calls repository.getCategorias on categorias:get", async () => {
       // Act
       const result = await handlers.handleCategoriasGet(null, "DESPESA");
-      expect(mockRepository.getCategorias).toHaveBeenCalledWith("user-123", "DESPESA", false, "PF", false);
+      expect(mockRepository.getCategorias).toHaveBeenCalledWith("user-123", "DESPESA", false, "PF");
       expect(mockSetState).toHaveBeenCalledWith("categorias", [mockData]);
       expect(result).toEqual([mockData]);
     });
@@ -339,7 +338,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("calls repository.getSubcategorias on subcategorias:get", async () => {
       const result = await handlers.handleSubcategoriasGet(null, "cat-1");
-      expect(mockRepository.getSubcategorias).toHaveBeenCalledWith("user-123", "cat-1", "PF", false);
+      expect(mockRepository.getSubcategorias).toHaveBeenCalledWith("user-123", "cat-1", "PF");
       expect(mockSetState).toHaveBeenCalledWith("subcategorias", [mockData]);
       expect(result).toEqual([mockData]);
     });
@@ -518,7 +517,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
   describe("handlers de categorias", () => {
     it("cat:list calls getCategorias with usuarioId", async () => {
       const result = await handlers.handleCatList(null);
-      expect(mockRepository.getCategorias).toHaveBeenCalledWith("user-123", null, true, "PF", false);
+      expect(mockRepository.getCategorias).toHaveBeenCalledWith("user-123", null, true, "PF");
       expect(mockSetState).toHaveBeenCalledWith("categorias", [mockData]);
       expect(result).toEqual([mockData]);
     });

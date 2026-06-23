@@ -12,7 +12,6 @@ interface State {
   usuarioAtual: Usuario | null;
   tipoPessoaAtivo: TipoPessoa;
   usarPjAtivo: boolean;
-  compartilharCategorias: boolean;
 }
 
 let state: State = {
@@ -26,7 +25,6 @@ let state: State = {
   usuarioAtual: null,
   tipoPessoaAtivo: "PF",
   usarPjAtivo: false,
-  compartilharCategorias: false,
 };
 
 function notify(channel: string, data: unknown): void {
@@ -63,7 +61,6 @@ function reiniciarState(): void {
     usuarioAtual: null,
     tipoPessoaAtivo: "PF",
     usarPjAtivo: false,
-    compartilharCategorias: false,
   };
 }
 
