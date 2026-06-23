@@ -95,7 +95,7 @@ async function carregarPerfil() {
     }
     const usarPjToggle = document.getElementById("usarPjToggle");
     if (usarPjToggle) {
-      usarPjToggle.checked = perfil.usar_pj !== false;
+      usarPjToggle.checked = false;
     }
     if (usuarioAuth?.role === "admin") {
       emailInput.removeAttribute("readonly");

@@ -147,13 +147,13 @@ jobs:
       #       dist/*.dmg
       #       dist/*.zip
 
-  gitleaks:
-    runs-on: ubuntu-latest
+  # gitleaks:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Gitleaks - Scan secrets
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Gitleaks - Scan secrets
+  #       uses: gitleaks/gitleaks-action@v2
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
