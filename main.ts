@@ -88,7 +88,7 @@ button { flex: 1; padding: 0.75rem; border: none; border-radius: 8px; font-size:
 </head>
 <body>
 <div class="container">
-  <p id="mensagem"></p>
+  <p id="mensagem">{{mensagem}}</p>
   <input type="password" id="senha" autofocus placeholder="Digite sua senha">
   <div class="buttons">
     <button class="btn-cancelar" id="btnCancelar">Cancelar</button>
@@ -96,8 +96,6 @@ button { flex: 1; padding: 0.75rem; border: none; border-radius: 8px; font-size:
   </div>
 </div>
 <script>
-const params = new URLSearchParams(location.search);
-document.getElementById('mensagem').textContent = params.get('msg') || 'Confirme sua senha';
 document.getElementById('btnConfirmar').onclick = () => {
   window.electronDialog.confirmar(document.getElementById('senha').value);
 };
@@ -131,7 +129,8 @@ function promptSenha(mensagem: string): Promise<string> {
     });
 
     win.setMenu(null);
-    win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(HTML_PROMPT_SENHA)}&msg=${encodeURIComponent(mensagem)}`);
+    const html = HTML_PROMPT_SENHA.replace("{{mensagem}}", mensagem);
+    win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
 
     const onConfirmar = (_event: any, senha: string) => {
       if (resolvido) return;
