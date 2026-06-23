@@ -28,29 +28,6 @@ async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas 
     return { where, params };
   }
 
-  if (database.getDb()) {
-    try {
-      const { where, params } = montarQueryBaseLocal();
-      if (usuarioId) {
-        const globais = database.query(`SELECT * FROM financas_categorias WHERE deleted_at IS NULL AND ${where} AND (eh_global = 1 OR usuario_id = @usuarioId) ORDER BY nome`, {
-          ...params,
-          usuarioId,
-        });
-        const map = new Map<string, Record<string, unknown>>();
-        for (const item of globais) {
-          map.set(item.id as string, item);
-        }
-        const data = [...map.values()].map((r) => _doSQLite(r));
-        if (data.length > 0) return data as unknown as Categoria[];
-      } else {
-        const data = database.query(`SELECT * FROM financas_categorias WHERE deleted_at IS NULL AND ${where} AND eh_global = 1 ORDER BY nome`, params).map((r) => _doSQLite(r));
-        if (data.length > 0) return data as unknown as Categoria[];
-      }
-    } catch {
-      logger.warn("repository", "getCategorias cache local indisponível, fallback ao Supabase");
-    }
-  }
-
   function montarQueryBase() {
     let q = supabase.from("financas_categorias").select("*");
     if (!mostrarInativas) q = q.eq("ativo", true);
@@ -59,28 +36,59 @@ async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas 
     return q;
   }
 
-  let data: Categoria[];
-  if (usuarioId) {
-    validarUUID(usuarioId);
-    const [globais, proprias] = await Promise.all([
-      montarQueryBase().eq("eh_global", true).order("nome", { ascending: true }),
-      montarQueryBase().eq("usuario_id", usuarioId).order("nome", { ascending: true }),
-    ]);
-    if (globais.error) throw globais.error;
-    if (proprias.error) throw proprias.error;
-    const map = new Map<string, Categoria>();
-    for (const item of [...globais.data, ...proprias.data]) {
-      map.set(item.id, item);
+  // 1. Supabase first (online)
+  try {
+    let data: Categoria[];
+    if (usuarioId) {
+      validarUUID(usuarioId);
+      const [globais, proprias] = await Promise.all([
+        montarQueryBase().eq("eh_global", true).order("nome", { ascending: true }),
+        montarQueryBase().eq("usuario_id", usuarioId).order("nome", { ascending: true }),
+      ]);
+      if (globais.error) throw globais.error;
+      if (proprias.error) throw proprias.error;
+      const map = new Map<string, Categoria>();
+      for (const item of [...globais.data, ...proprias.data]) {
+        map.set(item.id, item);
+      }
+      data = [...map.values()];
+    } else {
+      const res = await montarQueryBase().eq("eh_global", true).order("nome", { ascending: true });
+      if (res.error) throw res.error;
+      data = res.data;
     }
-    data = [...map.values()];
-  } else {
-    const res = await montarQueryBase().eq("eh_global", true).order("nome", { ascending: true });
-    if (res.error) throw res.error;
-    data = res.data;
+
+    _popularCache("financas_categorias", data as unknown as Record<string, unknown>[]);
+    return data;
+  } catch (err) {
+    logger.warn("repository", "getCategorias Supabase indisponível, fallback ao cache local", err);
   }
 
-  _popularCache("financas_categorias", data as unknown as Record<string, unknown>[]);
-  return data;
+  // 2. Fallback SQLite (offline)
+  if (database.getDb()) {
+    try {
+      const { where, params } = montarQueryBaseLocal();
+      if (usuarioId) {
+        const rows = database.query(`SELECT * FROM financas_categorias WHERE deleted_at IS NULL AND ${where} AND (eh_global = 1 OR usuario_id = @usuarioId) ORDER BY nome`, {
+          ...params,
+          usuarioId,
+        });
+        const map = new Map<string, Record<string, unknown>>();
+        for (const item of rows) {
+          map.set(item.id as string, item);
+        }
+        const data = [...map.values()].map((r) => _doSQLite(r));
+        return data as unknown as Categoria[];
+      } else {
+        const data = database.query(`SELECT * FROM financas_categorias WHERE deleted_at IS NULL AND ${where} AND eh_global = 1 ORDER BY nome`, params).map((r) => _doSQLite(r));
+        return data as unknown as Categoria[];
+      }
+    } catch {
+      logger.warn("repository", "getCategorias cache local indisponível");
+    }
+  }
+
+  return [];
 }
 
 async function criarCategoria(payload: CriarCategoriaPayload): Promise<Categoria> {
@@ -275,6 +283,26 @@ async function updateSubcategoria(id: string, patch: { nome?: string }): Promise
 }
 
 async function getSubcategorias(usuarioId?: string, categoriaId?: string, tipoPessoa?: string, compartilhar?: boolean): Promise<Subcategoria[]> {
+  // 1. Supabase first (online)
+  try {
+    let query = supabase.from("financas_subcategorias").select("*").order("nome") as any;
+
+    query = adicionarFiltroUsuario(query, usuarioId);
+    query = adicionarFiltroCategoriaTipoPessoa(query, tipoPessoa, compartilhar);
+
+    if (categoriaId) {
+      query = query.eq("categoria_id", categoriaId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    _popularCache("financas_subcategorias", data as unknown as Record<string, unknown>[]);
+    return data;
+  } catch (err) {
+    logger.warn("repository", "getSubcategorias Supabase indisponível, fallback ao cache local", err);
+  }
+
+  // 2. Fallback SQLite (offline)
   if (database.getDb()) {
     try {
       let where = "1=1";
@@ -289,25 +317,13 @@ async function getSubcategorias(usuarioId?: string, categoriaId?: string, tipoPe
         params.tipoPessoaAtivo = r.params.tipoPessoaAtivo;
       }
       const data = database.query(`SELECT * FROM financas_subcategorias WHERE deleted_at IS NULL AND ${where} ORDER BY nome`, params).map((r) => _doSQLite(r));
-      if (data.length > 0) return data as unknown as Subcategoria[];
+      return data as unknown as Subcategoria[];
     } catch {
-      logger.warn("repository", "getSubcategorias cache local indisponível, fallback");
+      logger.warn("repository", "getSubcategorias cache local indisponível");
     }
   }
 
-  let query = supabase.from("financas_subcategorias").select("*").order("nome") as any;
-
-  query = adicionarFiltroUsuario(query, usuarioId);
-  query = adicionarFiltroCategoriaTipoPessoa(query, tipoPessoa, compartilhar);
-
-  if (categoriaId) {
-    query = query.eq("categoria_id", categoriaId);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  _popularCache("financas_subcategorias", data as unknown as Record<string, unknown>[]);
-  return data;
+  return [];
 }
 
 async function deletarSubcategoria(id: string): Promise<{ success: boolean }> {
