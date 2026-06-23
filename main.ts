@@ -69,46 +69,7 @@ function createWindow() {
   });
 }
 
-const HTML_PROMPT_SENHA = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #1a1a2e; color: #eee; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-.container { background: #16213e; padding: 2rem; border-radius: 12px; width: 320px; }
-p { margin-bottom: 1.5rem; font-size: 1rem; text-align: center; }
-input { width: 100%; padding: 0.75rem; border: 1px solid #0f3460; border-radius: 8px; background: #1a1a2e; color: #eee; font-size: 1rem; margin-bottom: 1rem; outline: none; }
-input:focus { border-color: #e94560; }
-.buttons { display: flex; gap: 0.75rem; }
-button { flex: 1; padding: 0.75rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; }
-.btn-confirmar { background: #e94560; color: #fff; }
-.btn-cancelar { background: #0f3460; color: #eee; }
-</style>
-</head>
-<body>
-<div class="container">
-  <p id="mensagem">{{mensagem}}</p>
-  <input type="password" id="senha" autofocus placeholder="Digite sua senha">
-  <div class="buttons">
-    <button class="btn-cancelar" id="btnCancelar">Cancelar</button>
-    <button class="btn-confirmar" id="btnConfirmar">Confirmar</button>
-  </div>
-</div>
-<script>
-document.getElementById('btnConfirmar').onclick = () => {
-  window.electronDialog.confirmar(document.getElementById('senha').value);
-};
-document.getElementById('btnCancelar').onclick = () => {
-  window.electronDialog.cancelar();
-};
-document.getElementById('senha').onkeydown = (e) => {
-  if (e.key === 'Enter') document.getElementById('btnConfirmar').click();
-  if (e.key === 'Escape') document.getElementById('btnCancelar').click();
-};
-</script>
-</body>
-</html>`;
+
 
 function promptSenha(mensagem: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -129,8 +90,9 @@ function promptSenha(mensagem: string): Promise<string> {
     });
 
     win.setMenu(null);
-    const html = HTML_PROMPT_SENHA.replace("{{mensagem}}", mensagem);
-    win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+    win.loadFile(path.join(__dirname, "..", "public", "dialog-senha.html"), {
+      query: { msg: mensagem },
+    });
 
     const onConfirmar = (_event: any, senha: string) => {
       if (resolvido) return;
