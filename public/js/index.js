@@ -13,52 +13,6 @@ window.addEventListener("beforeunload", () => {
   _cleanups.length = 0;
 });
 
-/**
- * @returns {void}
- */
-function configurarSyncStatus() {
-  const badge = document.getElementById("conflitosBadge");
-  const btn = document.getElementById("btnConflitos");
-  if (!badge) return;
-
-  if (btn) btn.hidden = true;
-
-  try {
-    const salvo = localStorage.getItem(STORAGE_KEYS.CONFLITOS_COUNT);
-    if (salvo && salvo !== "0") {
-      badge.hidden = false;
-      badge.textContent = salvo;
-      if (btn) btn.hidden = false;
-    }
-  } catch {
-    /* ok */
-  }
-
-  _cleanups.push(
-    window.electronAPI.onSyncStatus(async (status) => {
-      const indicator = document.getElementById("syncIndicator");
-      if (indicator) {
-        indicator.hidden = !status.syncing;
-      }
-
-      const count = status.conflitos || 0;
-      badge.hidden = count === 0;
-      badge.textContent = count;
-      if (btn) btn.hidden = count === 0;
-
-      try {
-        localStorage.setItem(STORAGE_KEYS.CONFLITOS_COUNT, String(count));
-      } catch {
-        /* ok */
-      }
-
-      if (status.dadosAtualizados) {
-        await recarregarTudo();
-      }
-    }),
-  );
-}
-
 function atualizarToggle(container, tp) {
   container.dataset.tp = tp;
   const span = container.querySelector("span");
@@ -144,7 +98,6 @@ const STORAGE_KEYS = {
   FILTRO_TIPO: NS + "filtro_tipo",
   FILTRO_STATUS: NS + "filtro_status",
   FILTRO_ESTADO: NS + "filtro_estado",
-  CONFLITOS_COUNT: NS + "conflitos_count",
   TIPO_PESSOA: NS + "tipo_pessoa",
 };
 // ====== FUNÇÕES DE GESTÃO DE FILTROS ======
@@ -1412,9 +1365,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 5. Tipo Pessoa toggle
   configurarTipoPessoaToggle();
-
-  // 6. Sync status badge
-  configurarSyncStatus();
 
   // 6. Forçar reativação do input
   desbloquearCampoValor();

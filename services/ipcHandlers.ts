@@ -36,7 +36,6 @@ function createHandlers(
   auth: Record<string, Function> = require("./auth"),
   adminService: Record<string, Function> = require("./admin"),
   promptSenha?: (msg: string) => Promise<string>,
-  sync?: Record<string, Function>,
 ): Record<string, Function> {
   function obterUsuarioId(): string | null {
     const usuario = getState("usuarioAtual") as { id: string } | null;
@@ -534,7 +533,12 @@ function createHandlers(
     handleConfigGetSessoes: async () => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      return await repository.getSessoes(usuarioId);
+      try {
+        return await repository.getSessoes(usuarioId);
+      } catch (err) {
+        logger.error("ipcHandlers", "Erro ao listar sessões", err);
+        return { error: "FALHA_AO_LISTAR_SESSOES" };
+      }
     },
 
     handleConfigEncerrarSessao: async (_event: unknown, sessaoId: string) => {
@@ -701,27 +705,6 @@ function createHandlers(
       }
     },
 
-    handleSyncForce: async () => {
-      if (!sync) return { error: "SYNC_NAO_INICIALIZADO" };
-      await sync.forcarSync();
-      return { success: true };
-    },
-
-    handleSyncConflitos: async () => {
-      if (!sync) return { error: "SYNC_NAO_INICIALIZADO" };
-      return sync.getConflitos();
-    },
-
-    handleSyncResolverConflito: async (_event: unknown, id: string, decisao: string, payloadMesclado: Record<string, unknown>) => {
-      if (!sync) return { error: "SYNC_NAO_INICIALIZADO" };
-      try {
-        await sync.resolverConflito(id, decisao, payloadMesclado);
-        return { success: true };
-      } catch (err) {
-        return { error: (err as Error).message };
-      }
-    },
-
     handleTipoPessoaGet: async () => {
       return obterTipoPessoaAtivo();
     },
@@ -768,7 +751,6 @@ function createHandlers(
     },
 
     handleLimparCache: async () => {
-      repository.limparCacheGeral();
       return { success: true };
     },
 
@@ -795,8 +777,7 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   const { setState, getState, reiniciarState } = require("./state");
   const auth = require("./auth");
   const admin = require("./admin");
-  const sync = require("./sync");
-  const handlers = createHandlers(repository, setState, getState, reiniciarState, auth, admin, promptSenha, sync);
+  const handlers = createHandlers(repository, setState, getState, reiniciarState, auth, admin, promptSenha);
 
   ipcMain.handle("log:error", handlers.handleLogError);
   ipcMain.handle("log:warn", handlers.handleLogWarn);
@@ -867,10 +848,6 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("tipo-pessoa:set", handlers.handleTipoPessoaSet);
   ipcMain.handle("usar-pj:get", handlers.handleUsarPjGet);
   ipcMain.handle("usar-pj:set", handlers.handleUsarPjSet);
-  ipcMain.handle("sync:force", handlers.handleSyncForce);
-  ipcMain.handle("sync:conflitos", handlers.handleSyncConflitos);
-  ipcMain.handle("sync:resolver-conflito", handlers.handleSyncResolverConflito);
-  ipcMain.handle("sync:limpar-cache", handlers.handleLimparCache);
   ipcMain.handle("trial:status", handlers.handleTrialStatus);
 }
 

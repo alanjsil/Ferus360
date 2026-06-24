@@ -114,17 +114,6 @@ const api = {
   // ==================== TRIAL ====================
   getTrialStatus: () => ipcRenderer.invoke("trial:status"),
 
-  // ==================== SYNC ====================
-  forcarSync: () => ipcRenderer.invoke("sync:force"),
-  getConflitos: () => ipcRenderer.invoke("sync:conflitos"),
-  resolverConflito: (id: string, decisao: string, payloadMesclado: any) => ipcRenderer.invoke("sync:resolver-conflito", id, decisao, payloadMesclado),
-  onSyncStatus: (callback: (data: any) => void) => {
-    const handler = (_e: any, data: any) => callback(data);
-    ipcRenderer.on("sync:status", handler);
-    return () => ipcRenderer.removeListener("sync:status", handler);
-  },
-  limparCache: () => ipcRenderer.invoke("sync:limpar-cache"),
-
   // ==================== ADMIN ====================
   adminGetDashboard: () => ipcRenderer.invoke("admin:getDashboard"),
   adminGetClientes: () => ipcRenderer.invoke("admin:getClientes"),

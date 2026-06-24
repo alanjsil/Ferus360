@@ -22,9 +22,7 @@ console.error = function (...args: unknown[]) {
 
 const auth = require("./services/auth");
 const { registerHandlers } = require("./services/ipcHandlers");
-const database = require("./services/database");
 const expiracao = require("./services/expiration");
-const sync = require("./services/sync");
 const { iniciarMonitoramento, pararMonitoramento } = require("./services/conexao");
 const { promptSenha } = require("./services/prompt-senha");
 
@@ -123,29 +121,8 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
-    database.iniciar(app.getPath("userData"), isDev);
-
     const appRoot = app.isPackaged ? path.join(process.resourcesPath, "app") : path.join(__dirname, "..");
     expiracao.init(appRoot);
-
-    const repository = require("./services/repository");
-    if (database.getDb()) {
-      sync.init(database.getDb()!, repository);
-      sync.start();
-
-      repository.limparCacheGeral();
-
-      setInterval(() => repository.limparCacheGeral(), 3600000);
-
-      sync.onSyncStatus((status: any) => {
-        const wins = BrowserWindow.getAllWindows();
-        wins.forEach((win: any) => {
-          if (!win.isDestroyed()) {
-            win.webContents.send("sync:status", status);
-          }
-        });
-      });
-    }
 
     iniciarMonitoramento();
 
@@ -169,7 +146,5 @@ app.on("window-all-closed", () => {
 });
 
 app.on("will-quit", () => {
-  sync.stop();
   pararMonitoramento();
-  database.fechar();
 });

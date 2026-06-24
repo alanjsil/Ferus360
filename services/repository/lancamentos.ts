@@ -1,43 +1,15 @@
 import type { Lancamento, Orcamento, DashboardData, DashboardDadosResult, CriarLancamentoPayload, CriarTransferenciaPayload, ImportarOrcamentoItem } from "../../src/types";
 import crypto from "crypto";
-import * as database from "../database";
 import * as logger from "../logger";
 import {
   supabase,
-  _doSQLite,
-  _popularCache,
-  _atualizarLocal,
-  _syncAposEscrita,
-  _marcarPendente,
-  _inserirLocal,
   adicionarFiltroUsuario,
   adicionarFiltroTipoPessoaRestrito,
-  adicionarWhereTipoPessoa,
   validarMes,
 } from "./utils";
 import { logAuditoria } from "./auditoria";
 
 async function getLancamentos(mes?: string, usuarioId?: string, tipoPessoa?: string): Promise<Lancamento[]> {
-  if (database.getDb()) {
-    try {
-      let where = "1=1";
-      const params: Record<string, unknown> = {};
-      if (mes) {
-        where += " AND data_busca LIKE @mes";
-        params.mes = mes + "%";
-      }
-      if (usuarioId) {
-        where += " AND usuario_id = @usuarioId";
-        params.usuarioId = usuarioId;
-      }
-      const r = adicionarWhereTipoPessoa(where, params, tipoPessoa);
-      const data = database.query(`SELECT * FROM financas_lancamentos WHERE deleted_at IS NULL AND ${r.where} ORDER BY data DESC`, r.params).map((r2) => _doSQLite(r2));
-      if (data.length > 0) return data as unknown as Lancamento[];
-    } catch {
-      logger.warn("repository", "getLancamentos cache local indisponível, fallback");
-    }
-  }
-
   let query = supabase.from("financas_lancamentos").select("*").order("data", { ascending: false }).limit(5000) as any;
 
   query = adicionarFiltroUsuario(query, usuarioId);
@@ -51,31 +23,10 @@ async function getLancamentos(mes?: string, usuarioId?: string, tipoPessoa?: str
   const { data, error } = await query;
   if (error) throw error;
 
-  _popularCache("financas_lancamentos", data as unknown as Record<string, unknown>[]);
   return data;
 }
 
 async function getOrcamento(mes?: string, usuarioId?: string, tipoPessoa?: string): Promise<Orcamento[]> {
-  if (database.getDb()) {
-    try {
-      let where = "1=1";
-      const params: Record<string, unknown> = {};
-      if (usuarioId) {
-        where += " AND usuario_id = @usuarioId";
-        params.usuarioId = usuarioId;
-      }
-      if (mes) {
-        where += " AND data_busca LIKE @mes";
-        params.mes = mes + "%";
-      }
-      const r = adicionarWhereTipoPessoa(where, params, tipoPessoa);
-      const data = database.query(`SELECT * FROM financas_orcamento WHERE deleted_at IS NULL AND ${r.where} ORDER BY data ASC`, r.params).map((r2) => _doSQLite(r2));
-      if (data.length > 0) return data as unknown as Orcamento[];
-    } catch {
-      logger.warn("repository", "getOrcamento cache local indisponível, fallback");
-    }
-  }
-
   let query = supabase.from("financas_orcamento").select("*").order("data", { ascending: true }) as any;
 
   query = adicionarFiltroUsuario(query, usuarioId);
@@ -88,34 +39,10 @@ async function getOrcamento(mes?: string, usuarioId?: string, tipoPessoa?: strin
 
   const { data, error } = await query;
   if (error) throw error;
-  _popularCache("financas_orcamento", data as unknown as Record<string, unknown>[]);
   return data;
 }
 
 async function getAnosDisponiveis(usuarioId?: string, tipoPessoa?: string): Promise<number[]> {
-  if (database.getDb()) {
-    try {
-      let lWhere = "deleted_at IS NULL";
-      let oWhere = "deleted_at IS NULL";
-      const lParams: Record<string, unknown> = {};
-      const oParams: Record<string, unknown> = {};
-      if (usuarioId) {
-        lWhere += " AND usuario_id = @usuarioId";
-        lParams.usuarioId = usuarioId;
-        oWhere += " AND usuario_id = @usuarioIdO";
-        oParams.usuarioIdO = usuarioId;
-      }
-      const lr = adicionarWhereTipoPessoa(lWhere, lParams, tipoPessoa);
-      const or = adicionarWhereTipoPessoa(oWhere, oParams, tipoPessoa);
-      const lancamentos = database.query(`SELECT DISTINCT substr(data, 1, 4) as ano FROM financas_lancamentos WHERE ${lr.where}`, lr.params).map((r: Record<string, unknown>) => Number(r.ano));
-      const orcamentos = database.query(`SELECT DISTINCT substr(data, 1, 4) as ano FROM financas_orcamento WHERE ${or.where}`, or.params).map((r: Record<string, unknown>) => Number(r.ano));
-      const anos = new Set([...lancamentos, ...orcamentos]);
-      if (anos.size > 0) return [...anos].sort((a, b) => b - a);
-    } catch {
-      logger.warn("repository", "getAnosDisponiveis cache local indisponível, fallback");
-    }
-  }
-
   let lancamentosQuery = supabase.from("financas_lancamentos").select("data") as any;
   lancamentosQuery = adicionarFiltroUsuario(lancamentosQuery, usuarioId);
   lancamentosQuery = adicionarFiltroTipoPessoaRestrito(lancamentosQuery, tipoPessoa);
@@ -137,52 +64,6 @@ async function getAnosDisponiveis(usuarioId?: string, tipoPessoa?: string): Prom
 }
 
 async function getDashboardDados(ano: string | number, mes?: string | number, categoria?: string, usuarioId?: string, tipoPessoa?: string): Promise<DashboardDadosResult> {
-  if (database.getDb()) {
-    try {
-      let lWhere = "deleted_at IS NULL AND status = 'PAGO' AND data >= @anoInicio AND data <= @anoFim";
-      const params: Record<string, unknown> = { anoInicio: `${ano}-01-01`, anoFim: `${ano}-12-31` };
-      if (usuarioId) {
-        lWhere += " AND usuario_id = @usuarioId";
-        params.usuarioId = usuarioId;
-      }
-      if (mes && mes !== "all") {
-        const mesF = mes.toString().padStart(2, "0");
-        lWhere += " AND data_busca LIKE @mesBusca";
-        params.mesBusca = `${ano}-${mesF}%`;
-      }
-      if (categoria && categoria !== "all") {
-        lWhere += " AND categoria_id = @categoria";
-        params.categoria = categoria;
-      }
-      const lr = adicionarWhereTipoPessoa(lWhere, params, tipoPessoa);
-      const lancamentos = database.query(`SELECT * FROM financas_lancamentos WHERE ${lr.where} ORDER BY data ASC`, lr.params).map((r) => _doSQLite(r));
-
-      let oWhere = "deleted_at IS NULL AND data >= @anoInicio2 AND data <= @anoFim2";
-      const oParams: Record<string, unknown> = { anoInicio2: `${ano}-01-01`, anoFim2: `${ano}-12-31` };
-      if (usuarioId) {
-        oWhere += " AND usuario_id = @usuarioIdO";
-        oParams.usuarioIdO = usuarioId;
-      }
-      if (mes && mes !== "all") {
-        oWhere += " AND mes = @mesN";
-        oParams.mesN = parseInt(mes.toString());
-      }
-      const or = adicionarWhereTipoPessoa(oWhere, oParams, tipoPessoa);
-      const orcamentos = database.query(`SELECT * FROM financas_orcamento WHERE ${or.where} ORDER BY data ASC`, or.params).map((r) => _doSQLite(r));
-
-      if (lancamentos.length > 0 || orcamentos.length > 0) {
-        return {
-          lancamentos: lancamentos as unknown as Lancamento[],
-          orcamentos: orcamentos as unknown as Orcamento[],
-          totalLancamentos: lancamentos.length,
-          totalOrcamentos: orcamentos?.length || 0,
-        };
-      }
-    } catch {
-      logger.warn("repository", "getDashboardDados cache local indisponível, fallback");
-    }
-  }
-
   let lancamentosQuery = supabase
     .from("financas_lancamentos")
     .select("*, categoria:financas_categorias (nome), subcategoria:financas_subcategorias (nome)")
@@ -236,51 +117,6 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
 }
 
 async function getDashboard(mes?: string, usuarioId?: string, tipoPessoa?: string): Promise<DashboardData> {
-  if (database.getDb()) {
-    try {
-      let lWhere = "deleted_at IS NULL AND status = 'PAGO'";
-      const lParams: Record<string, unknown> = {};
-      let oWhere = "deleted_at IS NULL";
-      const oParams: Record<string, unknown> = {};
-      if (usuarioId) {
-        lWhere += " AND usuario_id = @usuarioId";
-        lParams.usuarioId = usuarioId;
-        oWhere += " AND usuario_id = @usuarioIdO";
-        oParams.usuarioIdO = usuarioId;
-      }
-      if (mes) {
-        lWhere += " AND data_busca LIKE @mes";
-        lParams.mes = mes + "%";
-        oWhere += " AND data_busca LIKE @mesO";
-        oParams.mesO = mes + "%";
-      }
-      const lr = adicionarWhereTipoPessoa(lWhere, lParams, tipoPessoa);
-      const or = adicionarWhereTipoPessoa(oWhere, oParams, tipoPessoa);
-      const orcamento = database.query(`SELECT * FROM financas_orcamento WHERE ${or.where} ORDER BY data ASC`, { ...or.params, ...lr.params }).map((r) => _doSQLite(r));
-      const realizados = database.query(`SELECT * FROM financas_lancamentos WHERE ${lr.where} ORDER BY data DESC`, { ...lr.params, ...or.params }).map((r) => _doSQLite(r));
-
-      if (orcamento.length > 0 || realizados.length > 0) {
-        const totais = {
-          receitas_planejadas: 0,
-          receitas_realizadas: 0,
-          despesas_planejadas: 0,
-          despesas_realizadas: 0,
-        };
-        (orcamento as Record<string, unknown>[]).forEach((item) => {
-          if (item.tipo === "RECEITA") totais.receitas_planejadas += Number(item.valor_planejado);
-          else totais.despesas_planejadas += Number(item.valor_planejado);
-        });
-        (realizados as Record<string, unknown>[]).forEach((item) => {
-          if (item.tipo === "RECEITA" && !item.transferencia_grupo_id) totais.receitas_realizadas += Number(item.valor);
-          else if (item.tipo === "DESPESA" && !item.transferencia_grupo_id) totais.despesas_realizadas += Number(item.valor);
-        });
-        return { totais, orcamento: orcamento as unknown as Orcamento[], realizados: realizados as unknown as Lancamento[] };
-      }
-    } catch {
-      logger.warn("repository", "getDashboard cache local indisponível, fallback");
-    }
-  }
-
   let orcamentoSP = supabase.from("financas_orcamento").select("*").limit(5000) as any;
   orcamentoSP = adicionarFiltroUsuario(orcamentoSP, usuarioId);
   orcamentoSP = adicionarFiltroTipoPessoaRestrito(orcamentoSP, tipoPessoa);
@@ -364,16 +200,10 @@ async function criarLancamento(payload: CriarLancamentoPayload, usuarioId?: stri
   if (!insertPayload.id) insertPayload.id = crypto.randomUUID();
   if (!insertPayload.tipo_pessoa) insertPayload.tipo_pessoa = "PF";
 
-  _syncAposEscrita("financas_lancamentos", insertPayload);
-
   const { data, error } = await supabase.from("financas_lancamentos").insert(insertPayload).select().single();
 
-  if (error) {
-    _marcarPendente("financas_lancamentos", insertPayload.id as string);
-    throw error;
-  }
+  if (error) throw error;
 
-  _inserirLocal("financas_lancamentos", data as unknown as Record<string, unknown>, "synced");
   if (usuarioId) {
     logAuditoria(usuarioId, "LANCAMENTO_CRIADO", {
       entidade: "lancamento",
@@ -385,15 +215,10 @@ async function criarLancamento(payload: CriarLancamentoPayload, usuarioId?: stri
 }
 
 async function deletarLancamento(id: string, usuarioId?: string): Promise<{ success: boolean }> {
-  database.run("UPDATE financas_lancamentos SET deleted_at = datetime('now'), sync_status = 'pending' WHERE id = ?", id);
-
   let query = supabase.from("financas_lancamentos").delete().eq("id", id) as any;
   query = adicionarFiltroUsuario(query, usuarioId);
   const { error } = await query;
-  if (error) {
-    _marcarPendente("financas_lancamentos", id);
-    throw error;
-  }
+  if (error) throw error;
   return { success: true };
 }
 
@@ -401,18 +226,12 @@ async function updateLancamento(id: string, payload: Partial<CriarLancamentoPayl
   const hoje = new Date().toISOString();
   const updateData: Record<string, unknown> = payload.status === "PAGO" ? { ...payload, data_pagamento: hoje } : { ...payload };
 
-  _atualizarLocal("financas_lancamentos", id, { ...updateData, sync_status: "pending" });
-
   let query = supabase.from("financas_lancamentos").update(updateData).eq("id", id) as any;
   query = adicionarFiltroUsuario(query, usuarioId);
   const { data, error } = await query.select().single();
 
-  if (error) {
-    _marcarPendente("financas_lancamentos", id);
-    throw error;
-  }
+  if (error) throw error;
 
-  _atualizarLocal("financas_lancamentos", id, { ...data, sync_status: "synced" });
   return data;
 }
 
@@ -450,40 +269,22 @@ async function criarTransferencia(payload: CriarTransferenciaPayload, usuarioId?
   const debitoFinal: Record<string, unknown> = { id: id1, ...debito, usuario_id: usuarioId || null };
   const creditoFinal: Record<string, unknown> = { id: id2, ...credito, usuario_id: usuarioId || null };
 
-  _syncAposEscrita("financas_lancamentos", debitoFinal);
-  _syncAposEscrita("financas_lancamentos", creditoFinal);
-
   const { data: data1, error: err1 } = await supabase.from("financas_lancamentos").insert(debitoFinal).select().single();
 
-  if (err1) {
-    _marcarPendente("financas_lancamentos", id1);
-    _marcarPendente("financas_lancamentos", id2);
-    throw err1;
-  }
+  if (err1) throw err1;
 
   const { data: data2, error: err2 } = await supabase.from("financas_lancamentos").insert(creditoFinal).select().single();
 
-  if (err2) {
-    _marcarPendente("financas_lancamentos", id1);
-    _marcarPendente("financas_lancamentos", id2);
-    throw err2;
-  }
+  if (err2) throw err2;
 
-  _inserirLocal("financas_lancamentos", data1 as unknown as Record<string, unknown>, "synced");
-  _inserirLocal("financas_lancamentos", data2 as unknown as Record<string, unknown>, "synced");
   return [data1, data2];
 }
 
 async function deletarTransferencia(grupoId: string, usuarioId?: string): Promise<{ success: boolean }> {
-  database.run("UPDATE financas_lancamentos SET deleted_at = datetime('now'), sync_status = 'pending' WHERE transferencia_grupo_id = ?", grupoId);
-
   let query = supabase.from("financas_lancamentos").delete().eq("transferencia_grupo_id", grupoId) as any;
   query = adicionarFiltroUsuario(query, usuarioId);
   const { error } = await query;
-  if (error) {
-    _marcarPendente("financas_lancamentos", grupoId);
-    throw error;
-  }
+  if (error) throw error;
   return { success: true };
 }
 
@@ -508,13 +309,7 @@ async function updateTransferencia(grupoId: string, payload: Partial<CriarTransf
     throw new Error("Transferência não encontrada.");
   }
 
-  const updatedLocal = async () => {
-    for (const entry of existing) {
-      _atualizarLocal("financas_lancamentos", entry.id, { ...baseUpdate, sync_status: "pending" });
-    }
-  };
 
-  await updatedLocal();
 
   for (const entry of existing) {
     const patch: Record<string, unknown> = { ...baseUpdate };
@@ -529,17 +324,10 @@ async function updateTransferencia(grupoId: string, payload: Partial<CriarTransf
     let q = supabase.from("financas_lancamentos").update(patch).eq("id", entry.id) as any;
     q = adicionarFiltroUsuario(q, usuarioId);
     const { error } = await q;
-    if (error) {
-      _marcarPendente("financas_lancamentos", entry.id);
-      throw error;
-    }
+    if (error) throw error;
   }
 
   const { data: updated } = await supabase.from("financas_lancamentos").select("*").eq("transferencia_grupo_id", grupoId);
-
-  for (const item of updated || []) {
-    _inserirLocal("financas_lancamentos", item as unknown as Record<string, unknown>, "synced");
-  }
 
   return (updated || []) as unknown as Lancamento[];
 }
@@ -567,22 +355,9 @@ async function importarOrcamento(itens: ImportarOrcamentoItem[], usuarioId?: str
     id: item.id || crypto.randomUUID(),
   }));
 
-  for (const item of itensProcessados) {
-    _syncAposEscrita("financas_orcamento", item);
-  }
-
   const { data, error } = await supabase.from("financas_orcamento").insert(itensProcessados).select();
 
-  if (error) {
-    for (const item of itensProcessados) {
-      _marcarPendente("financas_orcamento", item.id);
-    }
-    throw error;
-  }
-
-  for (const item of data || []) {
-    _inserirLocal("financas_orcamento", item as unknown as Record<string, unknown>, "synced");
-  }
+  if (error) throw error;
 
   return { success: true, data, importados: data.length };
 }

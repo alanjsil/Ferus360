@@ -43,9 +43,11 @@ async function getSessoes(usuarioId: string): Promise<Sessao[]> {
     const error = err as Error;
     logger.warn("repository", "getSessoes edge function falhou, fallback para supabaseAdmin", error);
     if (!supabaseAdminInstance) return [];
-    const { data, error: rpcError } = await supabaseAdminInstance.rpc("get_user_sessions", {
-      p_user_id: usuarioId,
-    });
+    const { data, error: rpcError } = await supabaseAdminInstance
+      .from("auth_sessions")
+      .select("id, user_agent, ip, created_at")
+      .eq("user_id", usuarioId)
+      .order("created_at", { ascending: false });
     if (rpcError) throw rpcError;
     return (data || []).map((s: Record<string, unknown>) => ({
       id: s.id as string,
@@ -65,10 +67,8 @@ async function deletarSessao(sessaoId: string): Promise<{ success: boolean }> {
     return { success: true };
   } catch (err) {
     if (!supabaseAdminInstance) throw err;
-    const { error } = await supabaseAdminInstance.rpc("delete_user_session", {
-      p_session_id: sessaoId,
-    });
-    if (error) throw error;
+    await supabaseAdminInstance.from("auth_refresh_tokens").delete().eq("session_id", sessaoId);
+    await supabaseAdminInstance.from("auth_sessions").delete().eq("id", sessaoId);
     return { success: true };
   }
 }
