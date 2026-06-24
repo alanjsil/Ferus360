@@ -70,12 +70,12 @@ describe("Fluxo Integrado: Login → Perfil → Auditoria", () => {
       nome: "Nome Atualizado",
     });
 
-    expect(perfilAtualizado.nome).toBe("Nome atualizado");
+    expect(perfilAtualizado.nome).toBe("Nome Atualizado");
     expect(perfilAtualizado.email).toBe("usuario@test.com");
 
     // Relogin deve refletir o novo nome
     const loginResult = await auth.login("usuario@test.com", "senha");
-    expect(loginResult.usuario.nome).toBe("Nome atualizado");
+    expect(loginResult.usuario.nome).toBe("Nome Atualizado");
   });
 
   /* ─────────────────────────────────────────────────────────── */

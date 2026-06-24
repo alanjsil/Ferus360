@@ -1,6 +1,6 @@
 import type { Usuario, Lancamento, Sessao, UpdatePerfilPayload } from "../../src/types";
 import * as logger from "../logger";
-import { supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionResult, normalizarNome } from "./utils";
+import { supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionResult } from "./utils";
 import { logAuditoria } from "./auditoria";
 
 async function getPerfil(usuarioId: string): Promise<Usuario | null> {
@@ -13,11 +13,11 @@ async function getPerfil(usuarioId: string): Promise<Usuario | null> {
 async function updatePerfil(usuarioId: string, payload: UpdatePerfilPayload): Promise<Usuario | null> {
   const allowedFields: Record<string, unknown> = {};
   if (payload.nome !== undefined) {
-    const nomeNormalizado = normalizarNome(payload.nome);
-    if (nomeNormalizado.length < 2 || nomeNormalizado.length > 40) {
+    const nomeApenasTrim = payload.nome.trim();
+    if (nomeApenasTrim.length < 2 || nomeApenasTrim.length > 40) {
       throw new Error("Nome deve ter entre 2 e 40 caracteres");
     }
-    allowedFields.nome = nomeNormalizado;
+    allowedFields.nome = nomeApenasTrim;
   }
   if (payload.email !== undefined) allowedFields.email = payload.email;
   if (payload.avatar_url !== undefined) allowedFields.avatar_url = payload.avatar_url;

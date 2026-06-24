@@ -154,20 +154,20 @@
 ### 4. Dashboard (`dashboard.html`)
 
 - [x] 4.1 Carregar dashboard (gráficos sem erro)
-- [ ] 4.2 Filtrar por ano
-- [ ] 4.3 Filtrar por mês
-- [ ] 4.4 Filtrar por categoria (select carrega, filtra)
-- [ ] 4.5 Gráfico de categorias (toggle Receita/Despesa)
+- [x] 4.2 Filtrar por ano
+- [x] 4.3 Filtrar por mês
+- [x] 4.4 Filtrar por categoria (select carrega, filtra)
+- [x] 4.5 Gráfico de categorias (toggle Receita/Despesa)
 
 ---
 
 ### 5. Configurações (`configuracoes.html`)
 
-- [x ] 5.1 Carregar perfil (nome, email, email recuperação)
-- [ ] 5.2 Alterar nome
-- [ ] 5.3 Alterar email recuperação
+- [x] 5.1 Carregar perfil (nome, email, email recuperação)
+- [x] 5.2 Alterar nome
+- [x] 5.3 Alterar email recuperação (obsoleto)
 - [ ] 5.4 Alterar email (admin — ver item 6.14)
-- [ ] 5.5 Upload avatar (>2MB erro, PNG/JPG preview)
+- [x] 5.5 Upload avatar (>2MB erro, PNG/JPG preview)
 - [ ] 5.6 Trocar senha — confirmação errada
 - [ ] 5.7 Trocar senha — senha atual errada
 - [ ] 5.8 Trocar senha — sucesso

@@ -6,6 +6,7 @@ npm audit
 npx asar list .\app.asar
 
 git config core.autocrlf false
+git config core.autocrlf && git add --renormalize . && git status --short | head -20
 
 const fs = require("fs");
 const path = require("path");
