@@ -1,8 +1,8 @@
-import type { Usuario, AuthResult } from "../src/types";
-import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { supabase as defaultSupabase, SUPABASE_URL, SUPABASE_ANON_KEY, createClient } from "./conexao";
-import { setAuthSession, limparSessaoAuth, logAuditoria as logAuditoriaRepo } from "./repository";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AuthResult, Usuario } from "../src/types";
+import { createClient, supabase as defaultSupabase, SUPABASE_ANON_KEY, SUPABASE_URL } from "./conexao";
 import * as logger from "./logger";
+import { limparSessaoAuth, logAuditoria as logAuditoriaRepo, setAuthSession } from "./repository";
 
 interface RecTokens {
   accessToken: string;
@@ -147,19 +147,23 @@ function construirAuthService(dependencies: AuthDependencies = {}): AuthService 
     const email = sessionData?.session?.user?.email;
     if (!email) throw new AuthError("USUARIO_INVALIDO");
 
-    const client = _createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const client = _createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
     const { error: loginError } = await client.auth.signInWithPassword({
       email,
       password: senhaAtual,
     });
 
     if (loginError) {
-      await client.auth.signOut().catch(() => {});
       throw new AuthError("SENHA_ATUAL_INCORRETA");
     }
 
     const { error: updateError } = await client.auth.updateUser({ password: novaSenha });
-    await client.auth.signOut().catch(() => {});
 
     if (updateError) throw new AuthError(mapearErroSupabase(updateError) || "ERRO_INTERNO");
 
@@ -290,13 +294,17 @@ function construirAuthService(dependencies: AuthDependencies = {}): AuthService 
     const email = sessionData?.session?.user?.email;
     if (!email) throw new AuthError("USUARIO_INVALIDO");
 
-    const client = _createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const client = _createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
     const { error } = await client.auth.signInWithPassword({
       email,
       password: senha,
     });
-
-    await client.auth.signOut().catch(() => {});
 
     if (error) throw new AuthError("SENHA_INVALIDA");
     return { success: true };
@@ -356,7 +364,7 @@ function construirAuthServicePadrao(): AuthService {
 
 const defaultService = construirAuthServicePadrao();
 
-export { defaultService as createAuthService, construirAuthService, AuthError };
+export { AuthError, construirAuthService, defaultService as createAuthService };
 export const {
   login,
   logout,

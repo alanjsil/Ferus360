@@ -158,6 +158,7 @@ function createHandlers(
         if (err instanceof AuthError && err.code === "SENHA_INVALIDA") {
           return { error: "SENHA_INVALIDA" };
         }
+        logger.error("ipcHandlers", "handleAuthVerificarSenha erro inesperado", err);
         return { error: "ERRO_INTERNO" };
       }
     },
@@ -575,6 +576,7 @@ function createHandlers(
         return result;
       } catch (err) {
         const code = err instanceof AuthError ? err.code : (err as Error)?.message || "ERRO_INTERNO";
+        logger.error("ipcHandlers", "handleConfigExcluirConta erro", err);
         return { error: code };
       }
     },
