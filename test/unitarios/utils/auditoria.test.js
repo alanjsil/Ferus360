@@ -77,9 +77,13 @@ describe("auditoria (spec-11)", () => {
 
       // Act & Assert
       await expect(auth.login("wrong@t.com", "badpw")).rejects.toThrow("CREDENCIAIS_INVALIDAS");
-      expect(logSpy).toHaveBeenCalledWith(null, "LOGIN_FAILED", expect.objectContaining({
-        dados_novos: { email: "wrong@t.com" },
-      }));
+      expect(logSpy).toHaveBeenCalledWith(
+        null,
+        "LOGIN_FAILED",
+        expect.objectContaining({
+          dados_novos: { email: "wrong@t.com" },
+        }),
+      );
     });
 
     it("chama logAuditoria no LOGOUT", async () => {
@@ -166,9 +170,7 @@ describe("auditoria (spec-11)", () => {
     it("retorna logs filtrados", async () => {
       // Arrange
       const mockRepo = {
-        getAuditoria: vi.fn().mockResolvedValue([
-          { id: "aud-1", acao: "LOGIN", usuario_id: "00000000-0000-0000-0000-000000000001" },
-        ]),
+        getAuditoria: vi.fn().mockResolvedValue([{ id: "aud-1", acao: "LOGIN", usuario_id: "00000000-0000-0000-0000-000000000001" }]),
       };
       const mockAuth = {
         verificarSessao: vi.fn().mockResolvedValue({ id: "admin-1", role: "admin" }),

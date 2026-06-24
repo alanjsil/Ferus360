@@ -26,19 +26,9 @@ export {
   deletarSubcategoria,
 } from "./categorias";
 
-export {
-  getContas,
-  criarConta,
-  updateConta,
-  deletarConta,
-} from "./contas";
+export { getContas, criarConta, updateConta, deletarConta } from "./contas";
 
-export {
-  getPessoas,
-  criarPessoa,
-  updatePessoa,
-  deletarPessoa,
-} from "./pessoas";
+export { getPessoas, criarPessoa, updatePessoa, deletarPessoa } from "./pessoas";
 
 export {
   getLancamentos,
@@ -55,29 +45,8 @@ export {
   importarOrcamento,
 } from "./lancamentos";
 
-export {
-  getPerfil,
-  updatePerfil,
-  getSessoes,
-  deletarSessao,
-  exportarDados,
-  excluirConta,
-  revokeOtherSessions,
-} from "./perfil";
+export { getPerfil, updatePerfil, getSessoes, deletarSessao, exportarDados, excluirConta, revokeOtherSessions } from "./perfil";
 
-export {
-  getAdminDashboard,
-  getTransacoesCliente,
-  getChamadoById,
-  getChamados,
-  criarChamado,
-  updateChamado,
-  getClientes,
-  getResumoCliente,
-  toggleClienteStatus,
-} from "./admin";
+export { getAdminDashboard, getTransacoesCliente, getChamadoById, getChamados, criarChamado, updateChamado, getClientes, getResumoCliente, toggleClienteStatus } from "./admin";
 
-export {
-  logAuditoria,
-  getAuditoria,
-} from "./auditoria";
+export { logAuditoria, getAuditoria } from "./auditoria";

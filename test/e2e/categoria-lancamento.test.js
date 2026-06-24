@@ -55,23 +55,13 @@ describe("Categoria -> Lancamentos [REAL]", () => {
   /* TESTE 2: LISTAR CATEGORIAS POR TIPO     */
   /* ─────────────────────────────────────── */
   it("Step 2: Listar categorias com filtro por tipo", async () => {
-    await clientUser
-      .from("financas_categorias")
-      .insert({ nome: "Gasolina", tipo: "DESPESA", eh_global: false, ativo: true, usuario_id: normalUser.id });
+    await clientUser.from("financas_categorias").insert({ nome: "Gasolina", tipo: "DESPESA", eh_global: false, ativo: true, usuario_id: normalUser.id });
 
-    await clientUser
-      .from("financas_categorias")
-      .insert({ nome: "Freelance", tipo: "RECEITA", eh_global: false, ativo: true, usuario_id: normalUser.id });
+    await clientUser.from("financas_categorias").insert({ nome: "Freelance", tipo: "RECEITA", eh_global: false, ativo: true, usuario_id: normalUser.id });
 
-    const { data: despesas } = await clientUser
-      .from("financas_categorias")
-      .select("nome")
-      .eq("tipo", "DESPESA");
+    const { data: despesas } = await clientUser.from("financas_categorias").select("nome").eq("tipo", "DESPESA");
 
-    const { data: receitas } = await clientUser
-      .from("financas_categorias")
-      .select("nome")
-      .eq("tipo", "RECEITA");
+    const { data: receitas } = await clientUser.from("financas_categorias").select("nome").eq("tipo", "RECEITA");
 
     expect(despesas.some((c) => c.nome === "Gasolina")).toBe(true);
     expect(receitas.some((c) => c.nome === "Freelance")).toBe(true);
@@ -81,9 +71,7 @@ describe("Categoria -> Lancamentos [REAL]", () => {
   /* TESTE 3: ISOLAMENTO DE CATEGORIAS       */
   /* ─────────────────────────────────────── */
   it("Step 3: Isolamento de categoria pessoal entre usuarios", async () => {
-    await clientUser
-      .from("financas_categorias")
-      .insert({ nome: "Categoria secreta", tipo: "DESPESA", eh_global: false, ativo: true, usuario_id: normalUser.id });
+    await clientUser.from("financas_categorias").insert({ nome: "Categoria secreta", tipo: "DESPESA", eh_global: false, ativo: true, usuario_id: normalUser.id });
 
     const outroSeed = await criarUsuario(supabaseAdmin, {
       email: "outro-cat",
@@ -93,15 +81,9 @@ describe("Categoria -> Lancamentos [REAL]", () => {
     const autenticado = await autenticarUsuario(outroSeed.email, outroSeed.senha);
     const clientOutro = autenticado.client;
 
-    const { data: catsUser1 } = await clientUser
-      .from("financas_categorias")
-      .select("nome")
-      .eq("eh_global", false);
+    const { data: catsUser1 } = await clientUser.from("financas_categorias").select("nome").eq("eh_global", false);
 
-    const { data: catsOutro } = await clientOutro
-      .from("financas_categorias")
-      .select("nome")
-      .eq("eh_global", false);
+    const { data: catsOutro } = await clientOutro.from("financas_categorias").select("nome").eq("eh_global", false);
 
     expect(catsUser1.some((c) => c.nome === "Categoria secreta")).toBe(true);
     expect(catsOutro.some((c) => c.nome === "Categoria secreta")).toBe(false);
@@ -111,12 +93,7 @@ describe("Categoria -> Lancamentos [REAL]", () => {
   /* TESTE 4: LANCAMENTO VINCULADO A CAT     */
   /* ─────────────────────────────────────── */
   it("Step 4: Criar lancamento vinculado a categoria existente", async () => {
-    const { data: globais } = await supabaseAdmin
-      .from("financas_categorias")
-      .select("id")
-      .eq("eh_global", true)
-      .eq("nome", "Alimentação")
-      .single();
+    const { data: globais } = await supabaseAdmin.from("financas_categorias").select("id").eq("eh_global", true).eq("nome", "Alimentação").single();
 
     const { data: lanc, error } = await clientUser
       .from("financas_lancamentos")
@@ -142,11 +119,7 @@ describe("Categoria -> Lancamentos [REAL]", () => {
   /* TESTE 5: MULTIPLAS CATEGORIAS E TOTAIS  */
   /* ─────────────────────────────────────── */
   it("Step 5: Lancamentos em categorias diferentes e total por categoria", async () => {
-    const { data: categorias } = await supabaseAdmin
-      .from("financas_categorias")
-      .select("id, nome")
-      .eq("eh_global", true)
-      .in("nome", ["Alimentação", "Transporte"]);
+    const { data: categorias } = await supabaseAdmin.from("financas_categorias").select("id, nome").eq("eh_global", true).in("nome", ["Alimentação", "Transporte"]);
 
     const alimentacao = categorias.find((c) => c.nome === "Alimentação");
     const transporte = categorias.find((c) => c.nome === "Transporte");
@@ -157,17 +130,10 @@ describe("Categoria -> Lancamentos [REAL]", () => {
       { data: "2026-06-15", tipo: "DESPESA", valor: 20, status: "PENDENTE", usuario_id: normalUser.id, categoria_id: transporte.id },
     ]);
 
-    const { data: lancamentos } = await supabaseAdmin
-      .from("financas_lancamentos")
-      .select("valor, categoria_id")
-      .eq("usuario_id", normalUser.id);
+    const { data: lancamentos } = await supabaseAdmin.from("financas_lancamentos").select("valor, categoria_id").eq("usuario_id", normalUser.id);
 
-    const totalAlimentacao = lancamentos
-      .filter((l) => l.categoria_id === alimentacao.id)
-      .reduce((s, l) => s + Number(l.valor), 0);
-    const totalTransporte = lancamentos
-      .filter((l) => l.categoria_id === transporte.id)
-      .reduce((s, l) => s + Number(l.valor), 0);
+    const totalAlimentacao = lancamentos.filter((l) => l.categoria_id === alimentacao.id).reduce((s, l) => s + Number(l.valor), 0);
+    const totalTransporte = lancamentos.filter((l) => l.categoria_id === transporte.id).reduce((s, l) => s + Number(l.valor), 0);
 
     // Step 4 já criou 1 lançamento de 45.90 em Alimentação + 50 + 30 = 125.90
     expect(totalAlimentacao).toBe(125.9);
@@ -187,38 +153,36 @@ describe("Categoria -> Lancamentos [REAL]", () => {
     const client = autenticado.client;
 
     // Criar categoria pessoal
-    const { data: categoria } = await client
-      .from("financas_categorias")
-      .insert({ nome: "Salario extra", tipo: "RECEITA", eh_global: false, ativo: true, usuario_id: novoUser.id })
-      .select()
-      .single();
+    const { data: categoria } = await client.from("financas_categorias").insert({ nome: "Salario extra", tipo: "RECEITA", eh_global: false, ativo: true, usuario_id: novoUser.id }).select().single();
 
     expect(categoria.id).toBeTruthy();
 
     // Criar lancamento de receita PAGO com a nova categoria
     await client.from("financas_lancamentos").insert({
-      data: "2026-06-15", tipo: "RECEITA", valor: 1000, status: "PAGO", descricao: "Freela",
-      usuario_id: novoUser.id, categoria_id: categoria.id,
+      data: "2026-06-15",
+      tipo: "RECEITA",
+      valor: 1000,
+      status: "PAGO",
+      descricao: "Freela",
+      usuario_id: novoUser.id,
+      categoria_id: categoria.id,
     });
 
     // Criar lancamento de despesa PAGO com categoria global
-    const { data: catAlimentacao } = await supabaseAdmin
-      .from("financas_categorias")
-      .select("id")
-      .eq("eh_global", true)
-      .eq("nome", "Alimentação")
-      .single();
+    const { data: catAlimentacao } = await supabaseAdmin.from("financas_categorias").select("id").eq("eh_global", true).eq("nome", "Alimentação").single();
 
     await client.from("financas_lancamentos").insert({
-      data: "2026-06-15", tipo: "DESPESA", valor: 200, status: "PAGO", descricao: "Supermercado",
-      usuario_id: novoUser.id, categoria_id: catAlimentacao.id,
+      data: "2026-06-15",
+      tipo: "DESPESA",
+      valor: 200,
+      status: "PAGO",
+      descricao: "Supermercado",
+      usuario_id: novoUser.id,
+      categoria_id: catAlimentacao.id,
     });
 
     // Validar via dashboard (apenas lancamentos PAGOS)
-    const { data: realizados } = await client
-      .from("financas_lancamentos")
-      .select("valor, tipo, status, categoria_id")
-      .eq("status", "PAGO");
+    const { data: realizados } = await client.from("financas_lancamentos").select("valor, tipo, status, categoria_id").eq("status", "PAGO");
 
     const totalReceitas = realizados.filter((l) => l.tipo === "RECEITA").reduce((s, l) => s + Number(l.valor), 0);
     const totalDespesas = realizados.filter((l) => l.tipo === "DESPESA").reduce((s, l) => s + Number(l.valor), 0);
@@ -234,15 +198,10 @@ describe("Categoria -> Lancamentos [REAL]", () => {
   /* TESTE 7: CATEGORIAS GLOBAIS VISIVEIS    */
   /* ─────────────────────────────────────── */
   it("Step 7: Categorias globais visiveis para qualquer usuario", async () => {
-    const { data: globais } = await clientUser
-      .from("financas_categorias")
-      .select("nome, tipo, ativo")
-      .eq("eh_global", true);
+    const { data: globais } = await clientUser.from("financas_categorias").select("nome, tipo, ativo").eq("eh_global", true);
 
     expect(globais.length).toBeGreaterThanOrEqual(5);
-    expect(globais.map((c) => c.nome)).toEqual(
-      expect.arrayContaining(["Alimentação", "Salário", "Transporte", "Moradia", "Lazer"]),
-    );
+    expect(globais.map((c) => c.nome)).toEqual(expect.arrayContaining(["Alimentação", "Salário", "Transporte", "Moradia", "Lazer"]));
     globais.forEach((c) => expect(c.ativo).toBe(true));
   });
 });

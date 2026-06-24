@@ -40,7 +40,9 @@ async function estaOnline(): Promise<boolean> {
 
 function onStatusChange(callback: (online: boolean) => void): () => void {
   emitter.on("conexao:status", callback);
-  return () => { emitter.removeListener("conexao:status", callback); };
+  return () => {
+    emitter.removeListener("conexao:status", callback);
+  };
 }
 
 function iniciarMonitoramento(): void {
@@ -71,15 +73,4 @@ function isOnline(): boolean {
   return _online;
 }
 
-export {
-  supabase,
-  supabaseAdmin,
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
-  createClient,
-  estaOnline,
-  onStatusChange,
-  iniciarMonitoramento,
-  pararMonitoramento,
-  isOnline,
-};
+export { supabase, supabaseAdmin, SUPABASE_URL, SUPABASE_ANON_KEY, createClient, estaOnline, onStatusChange, iniciarMonitoramento, pararMonitoramento, isOnline };

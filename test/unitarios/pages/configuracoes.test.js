@@ -17,16 +17,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import fs from "fs";
 import path from "path";
 
-const html = fs.readFileSync(
-  path.resolve(__dirname, "../../../public/configuracoes.html"),
-  "utf-8"
-);
+const html = fs.readFileSync(path.resolve(__dirname, "../../../public/configuracoes.html"), "utf-8");
 
 HTMLDialogElement.prototype.showModal = vi.fn();
 HTMLDialogElement.prototype.close = vi.fn();
 
-const FAKE_TOKEN =
-  "header." + btoa(JSON.stringify({ sid: "sessao-atual" })) + ".sig";
+const FAKE_TOKEN = "header." + btoa(JSON.stringify({ sid: "sessao-atual" })) + ".sig";
 
 vi.mock("../../../public/js/auth-guard.js", () => ({
   ensureAuthenticated: vi.fn().mockResolvedValue({
@@ -35,12 +31,7 @@ vi.mock("../../../public/js/auth-guard.js", () => ({
   }),
   escapeHtml: (str) => {
     if (str == null) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   },
   clearAuthSession: vi.fn(),
   getAccessToken: vi.fn(() => FAKE_TOKEN),
@@ -71,7 +62,9 @@ describe("configurações (página de perfil)", () => {
 
     window.electronAPI = {
       getPerfil: vi.fn().mockResolvedValue({
-        nome: "Teste", email: "teste@t.com", usar_pj: true,
+        nome: "Teste",
+        email: "teste@t.com",
+        usar_pj: true,
       }),
       updatePerfil: vi.fn().mockResolvedValue({}),
       verificarAuth: vi.fn().mockResolvedValue({ id: "user-1" }),
@@ -81,10 +74,18 @@ describe("configurações (página de perfil)", () => {
       exportarDados: vi.fn().mockResolvedValue({
         lancamentos: [
           {
-            data: "2026-06-01", tipo: "RECEITA", valor: 100, status: "PAGO",
-            descricao: "Salário", categoria: { nome: "Salário" },
-            subcategoria: null, conta_origem: null, conta_destino: null,
-            pessoa: null, data_pagamento: null, criado_em: "2026-06-01T10:00:00Z",
+            data: "2026-06-01",
+            tipo: "RECEITA",
+            valor: 100,
+            status: "PAGO",
+            descricao: "Salário",
+            categoria: { nome: "Salário" },
+            subcategoria: null,
+            conta_origem: null,
+            conta_destino: null,
+            pessoa: null,
+            data_pagamento: null,
+            criado_em: "2026-06-01T10:00:00Z",
           },
         ],
       }),
@@ -161,12 +162,8 @@ describe("configurações (página de perfil)", () => {
       const segBtn = document.querySelector('[data-section="seguranca"]');
       segBtn.click();
       expect(segBtn.classList.contains("active")).toBe(true);
-      expect(
-        document.getElementById("section-perfil").classList.contains("active")
-      ).toBe(false);
-      expect(
-        document.getElementById("section-seguranca").classList.contains("active")
-      ).toBe(true);
+      expect(document.getElementById("section-perfil").classList.contains("active")).toBe(false);
+      expect(document.getElementById("section-seguranca").classList.contains("active")).toBe(true);
     });
   });
 
@@ -201,9 +198,7 @@ describe("configurações (página de perfil)", () => {
         value: { files: [bigFile] },
       });
       input.dispatchEvent(ev);
-      expect(document.getElementById("perfilMessage").textContent).toBe(
-        "Arquivo excede 2 MB."
-      );
+      expect(document.getElementById("perfilMessage").textContent).toBe("Arquivo excede 2 MB.");
     });
 
     it("rejeita formato inválido", async () => {
@@ -215,9 +210,7 @@ describe("configurações (página de perfil)", () => {
         value: { files: [badFile] },
       });
       input.dispatchEvent(ev);
-      expect(document.getElementById("perfilMessage").textContent).toBe(
-        "Formato inválido. Use PNG ou JPG."
-      );
+      expect(document.getElementById("perfilMessage").textContent).toBe("Formato inválido. Use PNG ou JPG.");
     });
 
     it("aceita PNG válido e atualiza preview", async () => {
@@ -230,9 +223,7 @@ describe("configurações (página de perfil)", () => {
       });
       Object.defineProperty(ev.target, "value", { value: "" });
       input.dispatchEvent(ev);
-      expect(document.getElementById("perfilMessage").textContent).not.toBe(
-        "Formato inválido. Use PNG ou JPG."
-      );
+      expect(document.getElementById("perfilMessage").textContent).not.toBe("Formato inválido. Use PNG ou JPG.");
     });
   });
 
@@ -244,9 +235,7 @@ describe("configurações (página de perfil)", () => {
       // Act
       document.getElementById("perfilForm").dispatchEvent(new Event("submit"));
       await vi.waitFor(() => {
-        expect(window.electronAPI.updatePerfil).toHaveBeenCalledWith(
-          expect.objectContaining({ nome: "Nome Atualizado" })
-        );
+        expect(window.electronAPI.updatePerfil).toHaveBeenCalledWith(expect.objectContaining({ nome: "Nome Atualizado" }));
       });
       const msg = document.getElementById("perfilMessage");
       expect(msg.textContent).toContain("sucesso");
@@ -269,9 +258,7 @@ describe("configurações (página de perfil)", () => {
       document.getElementById("novaSenha").value = "NovaSenha1";
       document.getElementById("confirmarSenha").value = "OutraSenha1";
       document.getElementById("senhaForm").dispatchEvent(new Event("submit"));
-      expect(document.getElementById("senhaMessage").textContent).toBe(
-        "Nova senha e confirmação não conferem."
-      );
+      expect(document.getElementById("senhaMessage").textContent).toBe("Nova senha e confirmação não conferem.");
     });
 
     it("troca senha com sucesso", async () => {
@@ -280,9 +267,7 @@ describe("configurações (página de perfil)", () => {
       document.getElementById("confirmarSenha").value = "NovaSenha1";
       document.getElementById("senhaForm").dispatchEvent(new Event("submit"));
       await vi.waitFor(() => {
-        expect(window.electronAPI.trocarSenha).toHaveBeenCalledWith(
-          "user-1", "NovaSenha1"
-        );
+        expect(window.electronAPI.trocarSenha).toHaveBeenCalledWith("user-1", "NovaSenha1");
       });
     });
 
@@ -295,9 +280,7 @@ describe("configurações (página de perfil)", () => {
       document.getElementById("confirmarSenha").value = "fraca1";
       document.getElementById("senhaForm").dispatchEvent(new Event("submit"));
       await vi.waitFor(() => {
-        expect(document.getElementById("senhaMessage").textContent).toContain(
-          "8+ caracteres"
-        );
+        expect(document.getElementById("senhaMessage").textContent).toContain("8+ caracteres");
       });
     });
 
@@ -310,18 +293,14 @@ describe("configurações (página de perfil)", () => {
       document.getElementById("confirmarSenha").value = "NovaSenha1";
       document.getElementById("senhaForm").dispatchEvent(new Event("submit"));
       await vi.waitFor(() => {
-        expect(document.getElementById("senhaMessage").textContent).toBe(
-          "Senha atual incorreta."
-        );
+        expect(document.getElementById("senhaMessage").textContent).toBe("Senha atual incorreta.");
       });
     });
   });
 
   describe("sessões", () => {
     it("carrega sessões na inicialização", async () => {
-      window.electronAPI.getSessoes.mockResolvedValue([
-        { id: "s1", user_agent: "Chrome", ip: "1.2.3.4", criado_em: "2025-01-01T10:00:00Z" },
-      ]);
+      window.electronAPI.getSessoes.mockResolvedValue([{ id: "s1", user_agent: "Chrome", ip: "1.2.3.4", criado_em: "2025-01-01T10:00:00Z" }]);
       const auth = await import("../../../public/js/auth-guard.js");
       auth.getAccessToken.mockReturnValue(FAKE_TOKEN);
       await loadModule();
@@ -332,25 +311,19 @@ describe("configurações (página de perfil)", () => {
 
     it("mostra empty state quando não há sessões", async () => {
       await loadModule();
-      expect(document.getElementById("sessoesList").innerHTML).toContain(
-        "Nenhuma sessão ativa"
-      );
+      expect(document.getElementById("sessoesList").innerHTML).toContain("Nenhuma sessão ativa");
     });
 
     it("mostra erro ao carregar sessões", async () => {
       window.electronAPI.getSessoes.mockRejectedValue(new Error("fail"));
       await loadModule();
       await vi.waitFor(() => {
-        expect(document.getElementById("sessoesList").innerHTML).toContain(
-          "Erro ao carregar sessões"
-        );
+        expect(document.getElementById("sessoesList").innerHTML).toContain("Erro ao carregar sessões");
       });
     });
 
     it("encerra sessão individual pelo botão", async () => {
-      window.electronAPI.getSessoes.mockResolvedValue([
-        { id: "s1", user_agent: "Firefox", ip: "5.6.7.8", criado_em: "2025-01-01T10:00:00Z" },
-      ]);
+      window.electronAPI.getSessoes.mockResolvedValue([{ id: "s1", user_agent: "Firefox", ip: "5.6.7.8", criado_em: "2025-01-01T10:00:00Z" }]);
       const auth = await import("../../../public/js/auth-guard.js");
       auth.getAccessToken.mockReturnValue(FAKE_TOKEN);
       await loadModule();
@@ -407,9 +380,7 @@ describe("configurações (página de perfil)", () => {
       document.getElementById("excluirEmail").value = "wrong@t.com";
       document.getElementById("excluirForm").dispatchEvent(new Event("submit"));
       await vi.waitFor(() => {
-        expect(document.getElementById("excluirMessage").textContent).toBe(
-          "Email não corresponde ao cadastrado."
-        );
+        expect(document.getElementById("excluirMessage").textContent).toBe("Email não corresponde ao cadastrado.");
       });
     });
 
@@ -561,14 +532,15 @@ describe("configurações (página de perfil)", () => {
       document.getElementById("novaCategoriaBtn").click();
       document.getElementById("newCatNome").value = "A";
       document.getElementById("salvarNovaCat").click();
-      expect(document.getElementById("newCatMessage").textContent).toBe(
-        "Nome precisa ter entre 2 e 40 caracteres."
-      );
+      expect(document.getElementById("newCatMessage").textContent).toBe("Nome precisa ter entre 2 e 40 caracteres.");
     });
 
     it("cria categoria via API", async () => {
       window.electronAPI.criarCategoria.mockResolvedValue({
-        id: "cat-n", nome: "Nova", tipo: "RECEITA", ativo: true,
+        id: "cat-n",
+        nome: "Nova",
+        tipo: "RECEITA",
+        ativo: true,
       });
       await loadModule();
       document.getElementById("novaCategoriaBtn").click();
@@ -576,7 +548,8 @@ describe("configurações (página de perfil)", () => {
       document.getElementById("salvarNovaCat").click();
       await vi.waitFor(() => {
         expect(window.electronAPI.criarCategoria).toHaveBeenCalledWith({
-          nome: "Nova", tipo: "RECEITA",
+          nome: "Nova",
+          tipo: "RECEITA",
         });
       });
     });

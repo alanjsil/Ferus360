@@ -7,7 +7,7 @@ import { clearAuthSession, ensureAuthenticated, getAccessToken } from "./auth-gu
 const _cleanups = [];
 
 window.addEventListener("beforeunload", () => {
-  _cleanups.forEach(fn => fn());
+  _cleanups.forEach((fn) => fn());
   _cleanups.length = 0;
 });
 
@@ -70,14 +70,16 @@ function configurarTipoPessoaToggle() {
   });
 
   if (typeof window.electronAPI?.onTipoPessoaChanged === "function") {
-    _cleanups.push(window.electronAPI.onTipoPessoaChanged((value) => {
-      if (!value) return;
-      tipoPessoa = value;
-      container.dataset.tp = value;
-      const span = container.querySelector("span");
-      if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
-      localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, value);
-    }));
+    _cleanups.push(
+      window.electronAPI.onTipoPessoaChanged((value) => {
+        if (!value) return;
+        tipoPessoa = value;
+        container.dataset.tp = value;
+        const span = container.querySelector("span");
+        if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+        localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, value);
+      }),
+    );
   }
 
   if (typeof window.electronAPI?.getTipoPessoa === "function") {
@@ -92,16 +94,18 @@ function configurarTipoPessoaToggle() {
   }
 
   if (typeof window.electronAPI?.onUsarPjChanged === "function") {
-    _cleanups.push(window.electronAPI.onUsarPjChanged((value) => {
-      container.hidden = !value;
-      if (!value) {
-        tipoPessoa = "PF";
-        container.dataset.tp = "PF";
-        const span = container.querySelector("span");
-        if (span) span.textContent = "Pessoa Física";
-        localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, "PF");
-      }
-    }));
+    _cleanups.push(
+      window.electronAPI.onUsarPjChanged((value) => {
+        container.hidden = !value;
+        if (!value) {
+          tipoPessoa = "PF";
+          container.dataset.tp = "PF";
+          const span = container.querySelector("span");
+          if (span) span.textContent = "Pessoa Física";
+          localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, "PF");
+        }
+      }),
+    );
   }
 
   if (typeof window.electronAPI?.getUsarPj === "function") {
@@ -118,7 +122,11 @@ function configurarLogout() {
   logoutBtn.addEventListener("click", async () => {
     const token = getAccessToken();
     if (token) {
-      try { await window.electronAPI.logout(token); } catch { /* ok */ }
+      try {
+        await window.electronAPI.logout(token);
+      } catch {
+        /* ok */
+      }
     }
     clearAuthSession();
     window.location.href = "login.html";
@@ -196,11 +204,7 @@ function popularMeses() {
   mesesDisponiveis.sort();
   select.innerHTML = '<option value="all">Todos</option>';
 
-  const nomes = [
-    "Janeiro", "Fevereiro", "Março", "Abril",
-    "Maio", "Junho", "Julho", "Agosto",
-    "Setembro", "Outubro", "Novembro", "Dezembro",
-  ];
+  const nomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
   mesesDisponiveis.forEach((mes) => {
     const opt = document.createElement("option");
@@ -218,13 +222,7 @@ async function carregarDashboard() {
 
     mostrarLoading();
 
-    const dados = await window.electronAPI.adminGetDashboardDadosCliente(
-      usuarioIdCliente,
-      ano,
-      mes !== "all" ? mes : undefined,
-      categoria !== "all" ? categoria : undefined,
-      tipoPessoa,
-    );
+    const dados = await window.electronAPI.adminGetDashboardDadosCliente(usuarioIdCliente, ano, mes !== "all" ? mes : undefined, categoria !== "all" ? categoria : undefined, tipoPessoa);
 
     dadosDashboard = dados;
     renderizarGraficos();

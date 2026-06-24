@@ -1,9 +1,6 @@
 import type { Lancamento, Orcamento, Chamado, AdminDashboard, Usuario } from "../../src/types";
 import * as logger from "../logger";
-import {
-  supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionResult,
-  _marcarPendente,
-} from "./utils";
+import { supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionResult, _marcarPendente } from "./utils";
 
 async function getAdminDashboard(): Promise<AdminDashboard> {
   const anoCorrente = new Date().getFullYear();
@@ -15,9 +12,13 @@ async function getAdminDashboard(): Promise<AdminDashboard> {
 
   if (err2) throw err2;
 
-  const receitas = (lancamentos || []).filter((l: Record<string, unknown>) => l.tipo === "RECEITA" && l.status === "PAGO" && !l.transferencia_grupo_id).reduce((s: number, l: Record<string, unknown>) => s + Number(l.valor), 0);
+  const receitas = (lancamentos || [])
+    .filter((l: Record<string, unknown>) => l.tipo === "RECEITA" && l.status === "PAGO" && !l.transferencia_grupo_id)
+    .reduce((s: number, l: Record<string, unknown>) => s + Number(l.valor), 0);
 
-  const despesas = (lancamentos || []).filter((l: Record<string, unknown>) => l.tipo === "DESPESA" && l.status === "PAGO" && !l.transferencia_grupo_id).reduce((s: number, l: Record<string, unknown>) => s + Number(l.valor), 0);
+  const despesas = (lancamentos || [])
+    .filter((l: Record<string, unknown>) => l.tipo === "DESPESA" && l.status === "PAGO" && !l.transferencia_grupo_id)
+    .reduce((s: number, l: Record<string, unknown>) => s + Number(l.valor), 0);
 
   return {
     totalReceitas: receitas,
@@ -166,15 +167,4 @@ async function toggleClienteStatus(id: string): Promise<Usuario> {
   return data;
 }
 
-export {
-  getAdminDashboard,
-  getTransacoesCliente,
-  getChamadoById,
-  getChamados,
-  criarChamado,
-  updateChamado,
-  getClientes,
-  getResumoCliente,
-  toggleClienteStatus,
-  revokeUserSessions,
-};
+export { getAdminDashboard, getTransacoesCliente, getChamadoById, getChamados, criarChamado, updateChamado, getClientes, getResumoCliente, toggleClienteStatus, revokeUserSessions };

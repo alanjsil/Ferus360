@@ -12,10 +12,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import fs from "fs";
 import path from "path";
 
-const html = fs.readFileSync(
-  path.resolve(__dirname, "../../../public/dashboard.html"),
-  "utf-8"
-);
+const html = fs.readFileSync(path.resolve(__dirname, "../../../public/dashboard.html"), "utf-8");
 
 const mockElectronAPI = {
   getCategorias: vi.fn(),
@@ -143,9 +140,7 @@ describe("dashboard (painel principal)", () => {
       await dashboard.carregarCategorias();
       await dashboard.popularAnos();
       mockElectronAPI.getDashboardDados.mockResolvedValue({
-        lancamentos: [
-          { data: "2026-06-15", tipo: "DESPESA", valor: 100, categoria: { nome: "X" }, subcategoria: {}, status: "PAGO" },
-        ],
+        lancamentos: [{ data: "2026-06-15", tipo: "DESPESA", valor: 100, categoria: { nome: "X" }, subcategoria: {}, status: "PAGO" }],
         orcamentos: [],
         totalLancamentos: 1,
         totalOrcamentos: 0,
@@ -160,20 +155,14 @@ describe("dashboard (painel principal)", () => {
       await dashboard.carregarDashboard();
 
       // Assert
-      expect(mockElectronAPI.getDashboardDados).toHaveBeenCalledWith(
-        "2026",
-        "06",
-        "1"
-      );
+      expect(mockElectronAPI.getDashboardDados).toHaveBeenCalledWith("2026", "06", "1");
     });
 
     it("passa undefined para mes quando 'all' está selecionado", async () => {
       // Arrange
       await dashboard.popularAnos();
       mockElectronAPI.getDashboardDados.mockResolvedValue({
-        lancamentos: [
-          { data: "2026-06-15", tipo: "DESPESA", valor: 100, categoria: { nome: "X" }, subcategoria: {}, status: "PAGO" },
-        ],
+        lancamentos: [{ data: "2026-06-15", tipo: "DESPESA", valor: 100, categoria: { nome: "X" }, subcategoria: {}, status: "PAGO" }],
         orcamentos: [],
         totalLancamentos: 1,
         totalOrcamentos: 0,
@@ -187,11 +176,7 @@ describe("dashboard (painel principal)", () => {
       await dashboard.carregarDashboard();
 
       // Assert
-      expect(mockElectronAPI.getDashboardDados).toHaveBeenCalledWith(
-        "2026",
-        undefined,
-        undefined
-      );
+      expect(mockElectronAPI.getDashboardDados).toHaveBeenCalledWith("2026", undefined, undefined);
     });
   });
 

@@ -86,8 +86,6 @@ describe("auth-guard (guardião de autenticação)", () => {
     expect(getAccessToken()).toBe(SESSION.token);
   });
 
-
-
   it("getAccessToken prefers sessionStorage over localStorage", () => {
     // Arrange
     sessionStorage.setItem(ACCESS_TOKEN_KEY, "session-token");
@@ -257,9 +255,7 @@ describe("auth-guard (guardião de autenticação)", () => {
 
   it("escapeHtml replaces special characters", () => {
     // Act & Assert
-    expect(escapeHtml('<script>alert("xss")</script>')).toBe(
-      "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
-    );
+    expect(escapeHtml('<script>alert("xss")</script>')).toBe("&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;");
     expect(escapeHtml("it's a test")).toBe("it&#39;s a test");
     expect(escapeHtml("a & b")).toBe("a &amp; b");
   });

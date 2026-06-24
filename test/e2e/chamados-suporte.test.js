@@ -63,13 +63,13 @@ describe("Chamados (Suporte) [REAL]", () => {
 
     for (const c of chamados) {
       await clientUser.from("financas_chamados").insert({
-        ...c, status: "aberto", usuario_id: normalUser.id,
+        ...c,
+        status: "aberto",
+        usuario_id: normalUser.id,
       });
     }
 
-    const { data: meus } = await clientUser
-      .from("financas_chamados")
-      .select("titulo, status");
+    const { data: meus } = await clientUser.from("financas_chamados").select("titulo, status");
 
     expect(meus.length).toBeGreaterThanOrEqual(3);
     expect(meus.map((c) => c.titulo)).toContain("Bug no dashboard");
@@ -83,7 +83,10 @@ describe("Chamados (Suporte) [REAL]", () => {
   /* ─────────────────────────────────────── */
   it("Step 3: Isolamento de chamados entre usuarios", async () => {
     await clientUser.from("financas_chamados").insert({
-      titulo: "Chamado do User1", descricao: "Problema A", status: "aberto", usuario_id: normalUser.id,
+      titulo: "Chamado do User1",
+      descricao: "Problema A",
+      status: "aberto",
+      usuario_id: normalUser.id,
     });
 
     const outroSeed = await criarUsuario(supabaseAdmin, {
@@ -95,7 +98,10 @@ describe("Chamados (Suporte) [REAL]", () => {
     const clientOutro = autenticado.client;
 
     await clientOutro.from("financas_chamados").insert({
-      titulo: "Chamado do User2", descricao: "Problema B", status: "aberto", usuario_id: outroSeed.id,
+      titulo: "Chamado do User2",
+      descricao: "Problema B",
+      status: "aberto",
+      usuario_id: outroSeed.id,
     });
 
     const { data: cU1 } = await clientUser.from("financas_chamados").select("titulo");
@@ -110,18 +116,20 @@ describe("Chamados (Suporte) [REAL]", () => {
   /* TESTE 4: ATUALIZAR STATUS CHAMADO       */
   /* ─────────────────────────────────────── */
   it("Step 4: Atualizar status do chamado (aberto -> em_andamento -> resolvido)", async () => {
-    const { data: chamado } = await clientUser.from("financas_chamados").insert({
-      titulo: "Bug critico", descricao: "Sistema quebrado", status: "aberto", usuario_id: normalUser.id,
-    }).select().single();
+    const { data: chamado } = await clientUser
+      .from("financas_chamados")
+      .insert({
+        titulo: "Bug critico",
+        descricao: "Sistema quebrado",
+        status: "aberto",
+        usuario_id: normalUser.id,
+      })
+      .select()
+      .single();
 
     const chamadoId = chamado.id;
 
-    const { data: emAndamento, error: e1 } = await clientUser
-      .from("financas_chamados")
-      .update({ status: "em_andamento" })
-      .eq("id", chamadoId)
-      .select()
-      .single();
+    const { data: emAndamento, error: e1 } = await clientUser.from("financas_chamados").update({ status: "em_andamento" }).eq("id", chamadoId).select().single();
 
     expect(e1).toBeNull();
     expect(emAndamento.status).toBe("em_andamento");
@@ -156,7 +164,9 @@ describe("Chamados (Suporte) [REAL]", () => {
 
     for (const d of dados) {
       await clientUser.from("financas_chamados").insert({
-        ...d, descricao: "Descricao " + d.titulo, usuario_id: normalUser.id,
+        ...d,
+        descricao: "Descricao " + d.titulo,
+        usuario_id: normalUser.id,
       });
     }
 

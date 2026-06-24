@@ -10,10 +10,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import fs from "fs";
 import path from "path";
 
-const html = fs.readFileSync(
-  path.resolve(__dirname, "../../../public/conflitos.html"),
-  "utf-8"
-);
+const html = fs.readFileSync(path.resolve(__dirname, "../../../public/conflitos.html"), "utf-8");
 
 HTMLDialogElement.prototype.showModal = vi.fn();
 HTMLDialogElement.prototype.close = vi.fn();
@@ -172,9 +169,7 @@ describe("conflitos (página de conflitos de sincronia)", () => {
       renderizarCards([conflito]);
       const local = { descricao: "local", valor: 100 };
       const remote = { descricao: "remote", valor: 200 };
-      const diffs = [
-        { chave: "descricao", valorLocal: "local", valorRemote: "remote", diferente: true },
-      ];
+      const diffs = [{ chave: "descricao", valorLocal: "local", valorRemote: "remote", diferente: true }];
 
       abrirMergeDialog(conflito, local, remote, diffs);
 

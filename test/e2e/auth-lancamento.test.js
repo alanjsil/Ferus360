@@ -100,23 +100,13 @@ describe("Auth -> Lancamentos -> Dashboard [REAL]", () => {
       role: "user",
     });
 
-    await clientUser
-      .from("financas_lancamentos")
-      .insert({ data: "2026-06-15", tipo: "DESPESA", valor: 100, status: "PENDENTE", usuario_id: normalUser.id, categoria_id: catAlimentacao.id });
+    await clientUser.from("financas_lancamentos").insert({ data: "2026-06-15", tipo: "DESPESA", valor: 100, status: "PENDENTE", usuario_id: normalUser.id, categoria_id: catAlimentacao.id });
 
-    await clientUser
-      .from("financas_lancamentos")
-      .insert({ data: "2026-06-15", tipo: "DESPESA", valor: 200, status: "PENDENTE", usuario_id: normalUser.id, categoria_id: catAlimentacao.id });
+    await clientUser.from("financas_lancamentos").insert({ data: "2026-06-15", tipo: "DESPESA", valor: 200, status: "PENDENTE", usuario_id: normalUser.id, categoria_id: catAlimentacao.id });
 
-    const { data: lancUser1 } = await supabaseAdmin
-      .from("financas_lancamentos")
-      .select("valor")
-      .eq("usuario_id", normalUser.id);
+    const { data: lancUser1 } = await supabaseAdmin.from("financas_lancamentos").select("valor").eq("usuario_id", normalUser.id);
 
-    const { data: lancOutro } = await supabaseAdmin
-      .from("financas_lancamentos")
-      .select("valor")
-      .eq("usuario_id", outroSeed.id);
+    const { data: lancOutro } = await supabaseAdmin.from("financas_lancamentos").select("valor").eq("usuario_id", outroSeed.id);
 
     expect(lancUser1.length).toBeGreaterThanOrEqual(2);
     expect(lancOutro).toHaveLength(0);
@@ -126,9 +116,7 @@ describe("Auth -> Lancamentos -> Dashboard [REAL]", () => {
   /* TESTE 5: FLUXO COMPLETO COM DASHBOARD   */
   /* ─────────────────────────────────────── */
   it("Step 5: Fluxo completo - lancamentos PAGOS refletem no dashboard", async () => {
-    await clientUser
-      .from("financas_lancamentos")
-      .insert({ data: "2026-06-01", tipo: "RECEITA", valor: 3000, status: "PAGO", usuario_id: normalUser.id, categoria_id: catAlimentacao.id });
+    await clientUser.from("financas_lancamentos").insert({ data: "2026-06-01", tipo: "RECEITA", valor: 3000, status: "PAGO", usuario_id: normalUser.id, categoria_id: catAlimentacao.id });
 
     await clientUser
       .from("financas_lancamentos")
@@ -138,10 +126,7 @@ describe("Auth -> Lancamentos -> Dashboard [REAL]", () => {
       .from("financas_lancamentos")
       .insert({ data: "2026-06-15", tipo: "DESPESA", valor: 300, status: "PAGO", descricao: "Transporte", usuario_id: normalUser.id, categoria_id: catAlimentacao.id });
 
-    const { data: realizados, error } = await clientUser
-      .from("financas_lancamentos")
-      .select("valor, tipo, status")
-      .eq("status", "PAGO");
+    const { data: realizados, error } = await clientUser.from("financas_lancamentos").select("valor, tipo, status").eq("status", "PAGO");
 
     expect(error).toBeNull();
     const totalReceitas = realizados.filter((l) => l.tipo === "RECEITA").reduce((s, l) => s + Number(l.valor), 0);
@@ -162,12 +147,7 @@ describe("Auth -> Lancamentos -> Dashboard [REAL]", () => {
       .select()
       .single();
 
-    const { data: atualizado, error } = await clientUser
-      .from("financas_lancamentos")
-      .update({ valor: 200, status: "PAGO" })
-      .eq("id", lanc.id)
-      .select()
-      .single();
+    const { data: atualizado, error } = await clientUser.from("financas_lancamentos").update({ valor: 200, status: "PAGO" }).eq("id", lanc.id).select().single();
 
     expect(error).toBeNull();
     expect(Number(atualizado.valor)).toBe(200);
@@ -184,17 +164,11 @@ describe("Auth -> Lancamentos -> Dashboard [REAL]", () => {
       .select()
       .single();
 
-    const { error: delError } = await clientUser
-      .from("financas_lancamentos")
-      .delete()
-      .eq("id", lanc.id);
+    const { error: delError } = await clientUser.from("financas_lancamentos").delete().eq("id", lanc.id);
 
     expect(delError).toBeNull();
 
-    const { data: aposDelete } = await clientUser
-      .from("financas_lancamentos")
-      .select("id")
-      .eq("id", lanc.id);
+    const { data: aposDelete } = await clientUser.from("financas_lancamentos").select("id").eq("id", lanc.id);
 
     expect(aposDelete).toHaveLength(0);
   });
@@ -203,23 +177,13 @@ describe("Auth -> Lancamentos -> Dashboard [REAL]", () => {
   /* TESTE 8: FILTRO POR MES                 */
   /* ─────────────────────────────────────── */
   it("Step 8: Filtrar lancamentos por mes (data_busca gerado)", async () => {
-    await clientUser
-      .from("financas_lancamentos")
-      .insert({ data: "2026-06-15", tipo: "DESPESA", valor: 100, status: "PENDENTE", usuario_id: normalUser.id, categoria_id: catAlimentacao.id });
+    await clientUser.from("financas_lancamentos").insert({ data: "2026-06-15", tipo: "DESPESA", valor: 100, status: "PENDENTE", usuario_id: normalUser.id, categoria_id: catAlimentacao.id });
 
-    await clientUser
-      .from("financas_lancamentos")
-      .insert({ data: "2026-07-15", tipo: "DESPESA", valor: 200, status: "PENDENTE", usuario_id: normalUser.id, categoria_id: catAlimentacao.id });
+    await clientUser.from("financas_lancamentos").insert({ data: "2026-07-15", tipo: "DESPESA", valor: 200, status: "PENDENTE", usuario_id: normalUser.id, categoria_id: catAlimentacao.id });
 
-    const { data: junho } = await clientUser
-      .from("financas_lancamentos")
-      .select("valor, data_busca")
-      .eq("data_busca", "2026-06");
+    const { data: junho } = await clientUser.from("financas_lancamentos").select("valor, data_busca").eq("data_busca", "2026-06");
 
-    const { data: julho } = await clientUser
-      .from("financas_lancamentos")
-      .select("valor, data_busca")
-      .eq("data_busca", "2026-07");
+    const { data: julho } = await clientUser.from("financas_lancamentos").select("valor, data_busca").eq("data_busca", "2026-07");
 
     expect(junho.length).toBeGreaterThanOrEqual(1);
     expect(julho.length).toBeGreaterThanOrEqual(1);
@@ -237,8 +201,6 @@ describe("Auth -> Lancamentos -> Dashboard [REAL]", () => {
   /* TESTE 10: LOGIN CREDENCIAIS INVALIDAS   */
   /* ─────────────────────────────────────── */
   it("Step 10: Login com credenciais invalidas falha", async () => {
-    await expect(
-      autenticarUsuario(normalUser.email, "senha-errada")
-    ).rejects.toThrow("Falha no login");
+    await expect(autenticarUsuario(normalUser.email, "senha-errada")).rejects.toThrow("Falha no login");
   });
 });

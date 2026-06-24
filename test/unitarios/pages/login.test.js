@@ -12,10 +12,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import fs from "fs";
 import path from "path";
 
-const html = fs.readFileSync(
-  path.resolve(__dirname, "../../../public/login.html"),
-  "utf-8"
-);
+const html = fs.readFileSync(path.resolve(__dirname, "../../../public/login.html"), "utf-8");
 
 HTMLDialogElement.prototype.showModal = vi.fn();
 HTMLDialogElement.prototype.close = vi.fn();
@@ -76,10 +73,7 @@ describe("login (página de autenticação)", () => {
         }),
         verificarAuth: vi.fn().mockRejectedValue(new Error("no token")),
       };
-      localStorage.setItem(
-        "financas.refresh_token",
-        "refresh:user-1:session-1"
-      );
+      localStorage.setItem("financas.refresh_token", "refresh:user-1:session-1");
 
       // Act
       await import("../../../public/js/login.js");
@@ -111,10 +105,7 @@ describe("login (página de autenticação)", () => {
       await login.fazerLogin(criarEvento());
 
       // Assert
-      expect(window.electronAPI.login).toHaveBeenCalledWith(
-        "admin@test.com",
-        "Senha1"
-      );
+      expect(window.electronAPI.login).toHaveBeenCalledWith("admin@test.com", "Senha1");
       expect(window.location.href).toBe("admin.html");
     });
 
@@ -168,7 +159,6 @@ describe("login (página de autenticação)", () => {
       expect(msg.textContent).toBe("Email ou senha incorretos");
       expect(msg.style.color).toBe("rgb(252, 165, 165)");
     });
-
   });
 
   describe("fazerLogin com erros especificos", () => {
@@ -285,9 +275,7 @@ describe("login (página de autenticação)", () => {
 
       // Assert
       expect(document.getElementById("captchaBox").hidden).toBe(false);
-      expect(document.getElementById("captchaPergunta").textContent).toMatch(
-        /Quanto é \d \+ \d\?/
-      );
+      expect(document.getElementById("captchaPergunta").textContent).toMatch(/Quanto é \d \+ \d\?/);
 
       // Arrange (prepara acerto)
       document.getElementById("captchaResposta").value = loginLocal.captchaResposta;
@@ -403,9 +391,7 @@ describe("login (página de autenticação)", () => {
 
       // Assert
       expect(window.electronAPI.login).not.toHaveBeenCalled();
-      expect(document.getElementById("loginMessage").textContent).toBe(
-        "Captcha inválido."
-      );
+      expect(document.getElementById("loginMessage").textContent).toBe("Captcha inválido.");
     });
 
     it("deve permitir submit com captcha correto", async () => {
@@ -458,19 +444,13 @@ describe("login (página de autenticação)", () => {
       await vi.runAllTimersAsync();
 
       // Assert
-      expect(window.electronAPI.solicitarRecuperacao).toHaveBeenCalledWith(
-        "user@test.com"
-      );
-      expect(document.getElementById("recuperacaoMessage").textContent).toBe(
-        "Se o email existir, você receberá um link de recuperação."
-      );
+      expect(window.electronAPI.solicitarRecuperacao).toHaveBeenCalledWith("user@test.com");
+      expect(document.getElementById("recuperacaoMessage").textContent).toBe("Se o email existir, você receberá um link de recuperação.");
     });
 
     it("deve exibir mensagem de erro na recuperacao", async () => {
       // Arrange
-      window.electronAPI.solicitarRecuperacao.mockRejectedValue(
-        new Error("ERRO")
-      );
+      window.electronAPI.solicitarRecuperacao.mockRejectedValue(new Error("ERRO"));
       document.getElementById("recuperacaoEmail").value = "user@test.com";
 
       // Act
@@ -479,9 +459,7 @@ describe("login (página de autenticação)", () => {
       await vi.runAllTimersAsync();
 
       // Assert
-      expect(document.getElementById("recuperacaoMessage").textContent).toBe(
-        "Não foi possível processar a recuperação."
-      );
+      expect(document.getElementById("recuperacaoMessage").textContent).toBe("Não foi possível processar a recuperação.");
     });
   });
 
@@ -492,9 +470,7 @@ describe("login (página de autenticação)", () => {
 
       // Assert
       expect(document.getElementById("captchaBox").hidden).toBe(false);
-      expect(document.getElementById("captchaPergunta").textContent).toMatch(
-        /Quanto é \d \+ \d\?/
-      );
+      expect(document.getElementById("captchaPergunta").textContent).toMatch(/Quanto é \d \+ \d\?/);
     });
 
     it("deve limpar captcha", () => {

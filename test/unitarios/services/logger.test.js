@@ -31,7 +31,9 @@ describe("logger (serviço de log CSV)", () => {
       if (fs.existsSync(dirTmp)) {
         fs.rmSync(dirTmp, { recursive: true, force: true });
       }
-    } catch { /* ok */ }
+    } catch {
+      /* ok */
+    }
   });
 
   describe("init", () => {

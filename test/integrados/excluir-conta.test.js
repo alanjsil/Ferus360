@@ -55,22 +55,21 @@ describe("Fluxo Integrado: Login → Excluir Conta", () => {
     const db = mockSupabase.__db();
 
     // Lançamento
-    await repo.criarLancamento(
-      { tipo: "DESPESA", valor: 100, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 },
-      usuario.id,
-    );
+    await repo.criarLancamento({ tipo: "DESPESA", valor: 100, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 }, usuario.id);
 
     // Orçamento
     await repo.importarOrcamento(
-      [{
-        data: "2026-06-01",
-        tipo: "DESPESA",
-        descricao: "Aluguel",
-        valor_planejado: 1500,
-        valor_realizado: 0,
-        categoria_id: 1,
-        data_busca: "2026-06",
-      }],
+      [
+        {
+          data: "2026-06-01",
+          tipo: "DESPESA",
+          descricao: "Aluguel",
+          valor_planejado: 1500,
+          valor_realizado: 0,
+          categoria_id: 1,
+          data_busca: "2026-06",
+        },
+      ],
       usuario.id,
     );
 
@@ -102,14 +101,8 @@ describe("Fluxo Integrado: Login → Excluir Conta", () => {
     const db = mockSupabase.__db();
 
     // Popular dados
-    await repo.criarLancamento(
-      { tipo: "DESPESA", valor: 100, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 },
-      usuario.id,
-    );
-    await repo.importarOrcamento(
-      [{ data: "2026-06-01", tipo: "DESPESA", valor_planejado: 500, categoria_id: 1, data_busca: "2026-06" }],
-      usuario.id,
-    );
+    await repo.criarLancamento({ tipo: "DESPESA", valor: 100, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 }, usuario.id);
+    await repo.importarOrcamento([{ data: "2026-06-01", tipo: "DESPESA", valor_planejado: 500, categoria_id: 1, data_busca: "2026-06" }], usuario.id);
     await repo.criarConta(usuario.id, { nome: "NuBank" });
     await repo.criarPessoa(usuario.id, { nome: "João" });
 
@@ -133,10 +126,7 @@ describe("Fluxo Integrado: Login → Excluir Conta", () => {
     const db = mockSupabase.__db();
 
     // Usuário 1 cria dados
-    await repo.criarLancamento(
-      { tipo: "DESPESA", valor: 100, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 },
-      usuario.id,
-    );
+    await repo.criarLancamento({ tipo: "DESPESA", valor: 100, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 }, usuario.id);
     await repo.criarConta(usuario.id, { nome: "Conta U1" });
 
     // Criar outro usuário
@@ -146,10 +136,7 @@ describe("Fluxo Integrado: Login → Excluir Conta", () => {
     });
 
     // Usuário 2 cria dados
-    await repo.criarLancamento(
-      { tipo: "DESPESA", valor: 999, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 },
-      outroUser.user.id,
-    );
+    await repo.criarLancamento({ tipo: "DESPESA", valor: 999, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06", categoria_id: 1 }, outroUser.user.id);
     await repo.criarConta(outroUser.user.id, { nome: "Conta U2" });
 
     // Restaurar sessão do usuário 1 e excluir

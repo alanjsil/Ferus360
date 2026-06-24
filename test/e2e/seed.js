@@ -69,16 +69,7 @@ async function limparDadosTeste(supabase) {
 
   const ids = usuariosTeste.map((u) => u.id);
 
-  const tabelas = [
-    "financas_lancamentos",
-    "financas_orcamento",
-    "financas_subcategorias",
-    "financas_auditoria",
-    "financas_chamados",
-    "financas_contas",
-    "financas_pessoas",
-    "financas_categorias",
-  ];
+  const tabelas = ["financas_lancamentos", "financas_orcamento", "financas_subcategorias", "financas_auditoria", "financas_chamados", "financas_contas", "financas_pessoas", "financas_categorias"];
 
   for (const tabela of tabelas) {
     const { error } = await supabase.from(tabela).delete().in("usuario_id", ids);

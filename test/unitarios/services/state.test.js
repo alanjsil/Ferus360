@@ -105,5 +105,4 @@ describe("state (serviço de estado)", () => {
       expect(state.getState("dashboard")).toBeNull();
     });
   });
-
 });

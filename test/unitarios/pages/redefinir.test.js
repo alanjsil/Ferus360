@@ -12,10 +12,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from "vite
 import fs from "fs";
 import path from "path";
 
-const html = fs.readFileSync(
-  path.resolve(__dirname, "../../../public/redefinir.html"),
-  "utf-8"
-);
+const html = fs.readFileSync(path.resolve(__dirname, "../../../public/redefinir.html"), "utf-8");
 
 let locationHref;
 let locationHash;
@@ -61,8 +58,7 @@ describe("redefinir.js", () => {
 
   function preencherForm({ senha, confirmacao }) {
     if (senha !== undefined) document.getElementById("senha").value = senha;
-    if (confirmacao !== undefined)
-      document.getElementById("confirmacao").value = confirmacao;
+    if (confirmacao !== undefined) document.getElementById("confirmacao").value = confirmacao;
   }
 
   function submeterForm() {
@@ -134,9 +130,7 @@ describe("redefinir.js", () => {
       await vi.advanceTimersByTimeAsync(0);
 
       // Assert
-      expect(getMensagem()).toBe(
-        "Senha redefinida com sucesso! Redirecionando..."
-      );
+      expect(getMensagem()).toBe("Senha redefinida com sucesso! Redirecionando...");
 
       // Act
       vi.advanceTimersByTime(2000);
@@ -222,9 +216,7 @@ describe("redefinir.js", () => {
 
     it("exibe mensagem para SENHA_FRACA", async () => {
       // Arrange
-      window.electronAPI.redefinirSenha.mockRejectedValue(
-        new Error("SENHA_FRACA")
-      );
+      window.electronAPI.redefinirSenha.mockRejectedValue(new Error("SENHA_FRACA"));
 
       // Act
       preencherForm({ senha: "fracaSemMaiuscula", confirmacao: "fracaSemMaiuscula" });
@@ -232,16 +224,12 @@ describe("redefinir.js", () => {
       await vi.advanceTimersByTimeAsync(0);
 
       // Assert
-      expect(getMensagem()).toBe(
-        "A senha não atende os requisitos de segurança."
-      );
+      expect(getMensagem()).toBe("A senha não atende os requisitos de segurança.");
     });
 
     it("exibe mensagem genérica para erro desconhecido", async () => {
       // Arrange
-      window.electronAPI.redefinirSenha.mockRejectedValue(
-        new Error("ERRO_DESCONHECIDO")
-      );
+      window.electronAPI.redefinirSenha.mockRejectedValue(new Error("ERRO_DESCONHECIDO"));
 
       // Act
       preencherForm({ senha: "NovaSenha1", confirmacao: "NovaSenha1" });

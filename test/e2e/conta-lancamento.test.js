@@ -52,15 +52,10 @@ describe("Conta -> Lancamentos [REAL]", () => {
   it("Step 2: Criar multiplas contas", async () => {
     const contas = ["NuBank", "Poupanca", "Inter"];
     for (const nome of contas) {
-      await clientUser
-        .from("financas_contas")
-        .insert({ nome, usuario_id: normalUser.id });
+      await clientUser.from("financas_contas").insert({ nome, usuario_id: normalUser.id });
     }
 
-    const { data: minhas } = await clientUser
-      .from("financas_contas")
-      .select("nome")
-      .eq("usuario_id", normalUser.id);
+    const { data: minhas } = await clientUser.from("financas_contas").select("nome").eq("usuario_id", normalUser.id);
 
     expect(minhas.length).toBeGreaterThanOrEqual(3);
     expect(minhas.map((c) => c.nome)).toEqual(expect.arrayContaining(contas));
@@ -70,11 +65,7 @@ describe("Conta -> Lancamentos [REAL]", () => {
   /* TESTE 3: LANCAMENTO VINCULADO A CONTA   */
   /* ─────────────────────────────────────── */
   it("Step 3: Criar lancamento com conta de origem", async () => {
-    const { data: conta } = await clientUser
-      .from("financas_contas")
-      .insert({ nome: "Conta Despesa", usuario_id: normalUser.id })
-      .select()
-      .single();
+    const { data: conta } = await clientUser.from("financas_contas").insert({ nome: "Conta Despesa", usuario_id: normalUser.id }).select().single();
 
     const { data: lanc, error } = await clientUser
       .from("financas_lancamentos")
@@ -100,17 +91,9 @@ describe("Conta -> Lancamentos [REAL]", () => {
   /* TESTE 4: TRANSFERENCIA ENTRE CONTAS     */
   /* ─────────────────────────────────────── */
   it("Step 4: Criar transferencia entre duas contas", async () => {
-    const { data: contaO } = await clientUser
-      .from("financas_contas")
-      .insert({ nome: "Origem", usuario_id: normalUser.id })
-      .select()
-      .single();
+    const { data: contaO } = await clientUser.from("financas_contas").insert({ nome: "Origem", usuario_id: normalUser.id }).select().single();
 
-    const { data: contaD } = await clientUser
-      .from("financas_contas")
-      .insert({ nome: "Destino", usuario_id: normalUser.id })
-      .select()
-      .single();
+    const { data: contaD } = await clientUser.from("financas_contas").insert({ nome: "Destino", usuario_id: normalUser.id }).select().single();
 
     const grupoId = crypto.randomUUID();
 
@@ -158,10 +141,7 @@ describe("Conta -> Lancamentos [REAL]", () => {
     expect(Number(entrada.valor)).toBe(Number(saida.valor));
     expect(entrada.descricao).toBe(saida.descricao);
 
-    const { data: grupo } = await supabaseAdmin
-      .from("financas_lancamentos")
-      .select("id, tipo")
-      .eq("transferencia_grupo_id", grupoId);
+    const { data: grupo } = await supabaseAdmin.from("financas_lancamentos").select("id, tipo").eq("transferencia_grupo_id", grupoId);
 
     expect(grupo).toHaveLength(2);
   });
@@ -170,17 +150,9 @@ describe("Conta -> Lancamentos [REAL]", () => {
   /* TESTE 5: LISTAR LANCAMENTOS POR CONTA   */
   /* ─────────────────────────────────────── */
   it("Step 5: Listar lancamentos filtrados por conta", async () => {
-    const { data: conta1 } = await clientUser
-      .from("financas_contas")
-      .insert({ nome: "Conta Listagem 1", usuario_id: normalUser.id })
-      .select()
-      .single();
+    const { data: conta1 } = await clientUser.from("financas_contas").insert({ nome: "Conta Listagem 1", usuario_id: normalUser.id }).select().single();
 
-    const { data: conta2 } = await clientUser
-      .from("financas_contas")
-      .insert({ nome: "Conta Listagem 2", usuario_id: normalUser.id })
-      .select()
-      .single();
+    const { data: conta2 } = await clientUser.from("financas_contas").insert({ nome: "Conta Listagem 2", usuario_id: normalUser.id }).select().single();
 
     await clientUser.from("financas_lancamentos").insert([
       { data: "2026-06-15", tipo: "DESPESA", valor: 100, status: "PENDENTE", usuario_id: normalUser.id, conta_origem_id: conta1.id },
@@ -188,15 +160,9 @@ describe("Conta -> Lancamentos [REAL]", () => {
       { data: "2026-06-15", tipo: "DESPESA", valor: 300, status: "PENDENTE", usuario_id: normalUser.id, conta_origem_id: conta2.id },
     ]);
 
-    const { data: lancConta1 } = await supabaseAdmin
-      .from("financas_lancamentos")
-      .select("valor")
-      .eq("conta_origem_id", conta1.id);
+    const { data: lancConta1 } = await supabaseAdmin.from("financas_lancamentos").select("valor").eq("conta_origem_id", conta1.id);
 
-    const { data: lancConta2 } = await supabaseAdmin
-      .from("financas_lancamentos")
-      .select("valor")
-      .eq("conta_origem_id", conta2.id);
+    const { data: lancConta2 } = await supabaseAdmin.from("financas_lancamentos").select("valor").eq("conta_origem_id", conta2.id);
 
     expect(lancConta1).toHaveLength(2);
     expect(lancConta2).toHaveLength(1);
@@ -209,11 +175,7 @@ describe("Conta -> Lancamentos [REAL]", () => {
   /* TESTE 6: ISOLAMENTO DE CONTAS           */
   /* ─────────────────────────────────────── */
   it("Step 6: Isolamento de contas entre usuarios", async () => {
-    const { data: minha } = await clientUser
-      .from("financas_contas")
-      .insert({ nome: "Minha Conta", usuario_id: normalUser.id })
-      .select()
-      .single();
+    const { data: minha } = await clientUser.from("financas_contas").insert({ nome: "Minha Conta", usuario_id: normalUser.id }).select().single();
 
     expect(minha.usuario_id).toBe(normalUser.id);
   });

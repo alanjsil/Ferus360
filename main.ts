@@ -69,10 +69,6 @@ function createWindow() {
   });
 }
 
-
-
-
-
 async function handleDeepLink(url: string) {
   try {
     const parsed = new URL(url);

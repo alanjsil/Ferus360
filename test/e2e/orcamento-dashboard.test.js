@@ -69,17 +69,12 @@ describe("Orcamento -> Dashboard [REAL]", () => {
   /* TESTE 3: TOTAIS PLANEJADOS              */
   /* ─────────────────────────────────────── */
   it("Step 3: Totais planejados do orcamento", async () => {
-    await clientUser
-      .from("financas_orcamento")
-      .insert([
-        { data: "2026-06-01", tipo: "RECEITA", descricao: "Salario", valor_planejado: 5000, usuario_id: normalUser.id, categoria_id: catSalario.id },
-        { data: "2026-06-01", tipo: "DESPESA", descricao: "Aluguel", valor_planejado: 1500, usuario_id: normalUser.id, categoria_id: catAlimentacao.id },
-      ]);
+    await clientUser.from("financas_orcamento").insert([
+      { data: "2026-06-01", tipo: "RECEITA", descricao: "Salario", valor_planejado: 5000, usuario_id: normalUser.id, categoria_id: catSalario.id },
+      { data: "2026-06-01", tipo: "DESPESA", descricao: "Aluguel", valor_planejado: 1500, usuario_id: normalUser.id, categoria_id: catAlimentacao.id },
+    ]);
 
-    const { data: planejados } = await supabaseAdmin
-      .from("financas_orcamento")
-      .select("tipo, valor_planejado")
-      .eq("usuario_id", normalUser.id);
+    const { data: planejados } = await supabaseAdmin.from("financas_orcamento").select("tipo, valor_planejado").eq("usuario_id", normalUser.id);
 
     const totalReceitas = planejados.filter((o) => o.tipo === "RECEITA").reduce((s, o) => s + Number(o.valor_planejado), 0);
     const totalDespesas = planejados.filter((o) => o.tipo === "DESPESA").reduce((s, o) => s + Number(o.valor_planejado), 0);
@@ -109,14 +104,14 @@ describe("Orcamento -> Dashboard [REAL]", () => {
 
     for (const v of vals) {
       await clientStep4.from("financas_lancamentos").insert({
-        ...v, data: "2026-06-15", usuario_id: userStep4.id, categoria_id: catAlimentacao.id,
+        ...v,
+        data: "2026-06-15",
+        usuario_id: userStep4.id,
+        categoria_id: catAlimentacao.id,
       });
     }
 
-    const { data: pagos } = await clientStep4
-      .from("financas_lancamentos")
-      .select("tipo, valor")
-      .eq("status", "PAGO");
+    const { data: pagos } = await clientStep4.from("financas_lancamentos").select("tipo, valor").eq("status", "PAGO");
 
     const totalReceitas = pagos.filter((l) => l.tipo === "RECEITA").reduce((s, l) => s + Number(l.valor), 0);
     const totalDespesas = pagos.filter((l) => l.tipo === "DESPESA").reduce((s, l) => s + Number(l.valor), 0);
@@ -151,10 +146,7 @@ describe("Orcamento -> Dashboard [REAL]", () => {
     ]);
 
     // Validar saldo do dashboard (totais de lancamentos PAGOS)
-    const { data: realizados } = await clientStep5
-      .from("financas_lancamentos")
-      .select("tipo, valor")
-      .eq("status", "PAGO");
+    const { data: realizados } = await clientStep5.from("financas_lancamentos").select("tipo, valor").eq("status", "PAGO");
 
     const totalReceitas = realizados.filter((l) => l.tipo === "RECEITA").reduce((s, l) => s + Number(l.valor), 0);
     const totalDespesas = realizados.filter((l) => l.tipo === "DESPESA").reduce((s, l) => s + Number(l.valor), 0);
@@ -174,23 +166,15 @@ describe("Orcamento -> Dashboard [REAL]", () => {
       role: "user",
     });
 
-    await supabaseAdmin.from("financas_orcamento").insert([
-      { data: "2026-06-01", tipo: "RECEITA", descricao: "Salario", valor_planejado: 5000, usuario_id: normalUser.id, categoria_id: catSalario.id },
-    ]);
-
-    await supabaseAdmin.from("financas_orcamento").insert([
-      { data: "2026-06-01", tipo: "RECEITA", descricao: "Freela", valor_planejado: 3000, usuario_id: outroSeed.id, categoria_id: catSalario.id },
-    ]);
-
-    const { data: orc1 } = await supabaseAdmin
+    await supabaseAdmin
       .from("financas_orcamento")
-      .select("valor_planejado")
-      .eq("usuario_id", normalUser.id);
+      .insert([{ data: "2026-06-01", tipo: "RECEITA", descricao: "Salario", valor_planejado: 5000, usuario_id: normalUser.id, categoria_id: catSalario.id }]);
 
-    const { data: orc2 } = await supabaseAdmin
-      .from("financas_orcamento")
-      .select("valor_planejado")
-      .eq("usuario_id", outroSeed.id);
+    await supabaseAdmin.from("financas_orcamento").insert([{ data: "2026-06-01", tipo: "RECEITA", descricao: "Freela", valor_planejado: 3000, usuario_id: outroSeed.id, categoria_id: catSalario.id }]);
+
+    const { data: orc1 } = await supabaseAdmin.from("financas_orcamento").select("valor_planejado").eq("usuario_id", normalUser.id);
+
+    const { data: orc2 } = await supabaseAdmin.from("financas_orcamento").select("valor_planejado").eq("usuario_id", outroSeed.id);
 
     expect(orc1.length).toBeGreaterThanOrEqual(1);
     expect(orc2.length).toBeGreaterThanOrEqual(1);

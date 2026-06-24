@@ -442,36 +442,36 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER set_atualizado_em_usuarios BEFORE
-UPDATE ON financas_usuarios FOR EACH ROW
+CREATE TRIGGER set_atualizado_em_usuarios
+BEFORE UPDATE ON financas_usuarios FOR EACH ROW
 EXECUTE FUNCTION trigger_set_atualizado_em ();
 
-CREATE TRIGGER set_atualizado_em_categorias BEFORE
-UPDATE ON financas_categorias FOR EACH ROW
+CREATE TRIGGER set_atualizado_em_categorias
+BEFORE UPDATE ON financas_categorias FOR EACH ROW
 EXECUTE FUNCTION trigger_set_atualizado_em ();
 
-CREATE TRIGGER set_atualizado_em_subcategorias BEFORE
-UPDATE ON financas_subcategorias FOR EACH ROW
+CREATE TRIGGER set_atualizado_em_subcategorias
+BEFORE UPDATE ON financas_subcategorias FOR EACH ROW
 EXECUTE FUNCTION trigger_set_atualizado_em ();
 
-CREATE TRIGGER set_atualizado_em_contas BEFORE
-UPDATE ON financas_contas FOR EACH ROW
+CREATE TRIGGER set_atualizado_em_contas
+BEFORE UPDATE ON financas_contas FOR EACH ROW
 EXECUTE FUNCTION trigger_set_atualizado_em ();
 
-CREATE TRIGGER set_atualizado_em_pessoas BEFORE
-UPDATE ON financas_pessoas FOR EACH ROW
+CREATE TRIGGER set_atualizado_em_pessoas
+BEFORE UPDATE ON financas_pessoas FOR EACH ROW
 EXECUTE FUNCTION trigger_set_atualizado_em ();
 
-CREATE TRIGGER set_atualizado_em_chamados BEFORE
-UPDATE ON financas_chamados FOR EACH ROW
+CREATE TRIGGER set_atualizado_em_chamados
+BEFORE UPDATE ON financas_chamados FOR EACH ROW
 EXECUTE FUNCTION trigger_set_atualizado_em ();
 
-CREATE TRIGGER set_atualizado_em_lancamentos BEFORE
-UPDATE ON financas_lancamentos FOR EACH ROW
+CREATE TRIGGER set_atualizado_em_lancamentos
+BEFORE UPDATE ON financas_lancamentos FOR EACH ROW
 EXECUTE FUNCTION trigger_set_atualizado_em ();
 
-CREATE TRIGGER set_atualizado_em_orcamento BEFORE
-UPDATE ON financas_orcamento FOR EACH ROW
+CREATE TRIGGER set_atualizado_em_orcamento
+BEFORE UPDATE ON financas_orcamento FOR EACH ROW
 EXECUTE FUNCTION trigger_set_atualizado_em ();
 
 -- ============================================================
@@ -484,32 +484,32 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER set_updated_at_categorias BEFORE
-UPDATE ON financas_categorias FOR EACH ROW
+CREATE TRIGGER set_updated_at_categorias
+BEFORE UPDATE ON financas_categorias FOR EACH ROW
 EXECUTE FUNCTION trigger_set_updated_at ();
 
-CREATE TRIGGER set_updated_at_subcategorias BEFORE
-UPDATE ON financas_subcategorias FOR EACH ROW
+CREATE TRIGGER set_updated_at_subcategorias
+BEFORE UPDATE ON financas_subcategorias FOR EACH ROW
 EXECUTE FUNCTION trigger_set_updated_at ();
 
-CREATE TRIGGER set_updated_at_contas BEFORE
-UPDATE ON financas_contas FOR EACH ROW
+CREATE TRIGGER set_updated_at_contas
+BEFORE UPDATE ON financas_contas FOR EACH ROW
 EXECUTE FUNCTION trigger_set_updated_at ();
 
-CREATE TRIGGER set_updated_at_pessoas BEFORE
-UPDATE ON financas_pessoas FOR EACH ROW
+CREATE TRIGGER set_updated_at_pessoas
+BEFORE UPDATE ON financas_pessoas FOR EACH ROW
 EXECUTE FUNCTION trigger_set_updated_at ();
 
-CREATE TRIGGER set_updated_at_chamados BEFORE
-UPDATE ON financas_chamados FOR EACH ROW
+CREATE TRIGGER set_updated_at_chamados
+BEFORE UPDATE ON financas_chamados FOR EACH ROW
 EXECUTE FUNCTION trigger_set_updated_at ();
 
-CREATE TRIGGER set_updated_at_lancamentos BEFORE
-UPDATE ON financas_lancamentos FOR EACH ROW
+CREATE TRIGGER set_updated_at_lancamentos
+BEFORE UPDATE ON financas_lancamentos FOR EACH ROW
 EXECUTE FUNCTION trigger_set_updated_at ();
 
-CREATE TRIGGER set_updated_at_orcamento BEFORE
-UPDATE ON financas_orcamento FOR EACH ROW
+CREATE TRIGGER set_updated_at_orcamento
+BEFORE UPDATE ON financas_orcamento FOR EACH ROW
 EXECUTE FUNCTION trigger_set_updated_at ();
 
 -- ============================================================
@@ -599,14 +599,9 @@ $$;
 -- ============================================================
 -- RPCs de gerenciamento de sessões (auth schema)
 -- ============================================================
-CREATE OR REPLACE FUNCTION get_user_sessions (p_user_id UUID)
-RETURNS TABLE (
-  id UUID,
-  user_agent TEXT,
-  ip INET,
-  created_at TIMESTAMPTZ
-) LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = auth AS $$
+CREATE OR REPLACE FUNCTION get_user_sessions (p_user_id UUID) RETURNS TABLE (id UUID, user_agent TEXT, ip INET, created_at TIMESTAMPTZ) LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = auth AS $$
 BEGIN
   RETURN QUERY
   SELECT s.id, s.user_agent, s.ip, s.created_at
@@ -616,9 +611,9 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION delete_user_session (p_session_id UUID)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = auth AS $$
+CREATE OR REPLACE FUNCTION delete_user_session (p_session_id UUID) RETURNS void LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = auth AS $$
 BEGIN
   DELETE FROM auth.refresh_tokens WHERE session_id = p_session_id;
   DELETE FROM auth.sessions WHERE id = p_session_id;
@@ -791,59 +786,35 @@ $$;
 
 -- Triggers AFTER em todas as tabelas de dados
 CREATE TRIGGER audit_lancamentos
-AFTER INSERT
-OR
-UPDATE
-OR DELETE ON financas_lancamentos FOR EACH ROW
+AFTER INSERT OR UPDATE OR DELETE ON financas_lancamentos FOR EACH ROW
 EXECUTE FUNCTION auditoria_trigger ();
 
 CREATE TRIGGER audit_orcamento
-AFTER INSERT
-OR
-UPDATE
-OR DELETE ON financas_orcamento FOR EACH ROW
+AFTER INSERT OR UPDATE OR DELETE ON financas_orcamento FOR EACH ROW
 EXECUTE FUNCTION auditoria_trigger ();
 
 CREATE TRIGGER audit_categorias
-AFTER INSERT
-OR
-UPDATE
-OR DELETE ON financas_categorias FOR EACH ROW
+AFTER INSERT OR UPDATE OR DELETE ON financas_categorias FOR EACH ROW
 EXECUTE FUNCTION auditoria_trigger ();
 
 CREATE TRIGGER audit_subcategorias
-AFTER INSERT
-OR
-UPDATE
-OR DELETE ON financas_subcategorias FOR EACH ROW
+AFTER INSERT OR UPDATE OR DELETE ON financas_subcategorias FOR EACH ROW
 EXECUTE FUNCTION auditoria_trigger ();
 
 CREATE TRIGGER audit_contas
-AFTER INSERT
-OR
-UPDATE
-OR DELETE ON financas_contas FOR EACH ROW
+AFTER INSERT OR UPDATE OR DELETE ON financas_contas FOR EACH ROW
 EXECUTE FUNCTION auditoria_trigger ();
 
 CREATE TRIGGER audit_pessoas
-AFTER INSERT
-OR
-UPDATE
-OR DELETE ON financas_pessoas FOR EACH ROW
+AFTER INSERT OR UPDATE OR DELETE ON financas_pessoas FOR EACH ROW
 EXECUTE FUNCTION auditoria_trigger ();
 
 CREATE TRIGGER audit_chamados
-AFTER INSERT
-OR
-UPDATE
-OR DELETE ON financas_chamados FOR EACH ROW
+AFTER INSERT OR UPDATE OR DELETE ON financas_chamados FOR EACH ROW
 EXECUTE FUNCTION auditoria_trigger ();
 
 CREATE TRIGGER audit_usuarios
-AFTER INSERT
-OR
-UPDATE
-OR DELETE ON financas_usuarios FOR EACH ROW
+AFTER INSERT OR UPDATE OR DELETE ON financas_usuarios FOR EACH ROW
 EXECUTE FUNCTION auditoria_trigger ();
 
 -- RLS: admin vê tudo; usuário vê apenas os próprios logs

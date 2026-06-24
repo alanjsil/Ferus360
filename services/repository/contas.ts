@@ -3,10 +3,18 @@ import crypto from "crypto";
 import * as database from "../database";
 import * as logger from "../logger";
 import {
-  supabase, _doSQLite, _popularCache, _atualizarLocal, _syncAposEscrita,
-  _marcarPendente, _inserirLocal,
-  adicionarFiltroUsuario, adicionarFiltroTipoPessoaRestrito, adicionarWhereTipoPessoa,
-  validarUUID, normalizarNome,
+  supabase,
+  _doSQLite,
+  _popularCache,
+  _atualizarLocal,
+  _syncAposEscrita,
+  _marcarPendente,
+  _inserirLocal,
+  adicionarFiltroUsuario,
+  adicionarFiltroTipoPessoaRestrito,
+  adicionarWhereTipoPessoa,
+  validarUUID,
+  normalizarNome,
 } from "./utils";
 
 async function getContas(usuarioId?: string, tipoPessoa?: string): Promise<Conta[]> {

@@ -394,10 +394,7 @@ describe("getSessoes", () => {
 
     const result = await repo.getSessoes("550e8400-e29b-41d4-a716-446655440000");
 
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/functions/v1/get-user-sessions"),
-      expect.objectContaining({ method: "POST" }),
-    );
+    expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining("/functions/v1/get-user-sessions"), expect.objectContaining({ method: "POST" }));
     expect(result).toHaveLength(2);
     expect(result[0].id).toBe("s-1");
     expect(result[0].criado_em).toBe("2026-06-01T00:00:00Z");
@@ -410,9 +407,7 @@ describe("getSessoes", () => {
     });
     globalThis.fetch.mockRejectedValue(new Error("network error"));
     mockSupabaseAdmin.rpc.mockResolvedValue({
-      data: [
-        { id: "s-1", user_agent: "Chrome", ip: "127.0.0.1", created_at: "2026-06-01T00:00:00Z" },
-      ],
+      data: [{ id: "s-1", user_agent: "Chrome", ip: "127.0.0.1", created_at: "2026-06-01T00:00:00Z" }],
       error: null,
     });
 
@@ -475,10 +470,7 @@ describe("deleteSessao", () => {
 
     const result = await repo.deletarSessao("sessao-1");
 
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/functions/v1/delete-user-session"),
-      expect.objectContaining({ method: "POST" }),
-    );
+    expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining("/functions/v1/delete-user-session"), expect.objectContaining({ method: "POST" }));
     expect(result).toEqual({ success: true });
   });
 

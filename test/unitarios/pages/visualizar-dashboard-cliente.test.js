@@ -10,10 +10,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import fs from "fs";
 import path from "path";
 
-const html = fs.readFileSync(
-  path.resolve(__dirname, "../../../public/visualizar-dashboard-cliente.html"),
-  "utf-8"
-);
+const html = fs.readFileSync(path.resolve(__dirname, "../../../public/visualizar-dashboard-cliente.html"), "utf-8");
 
 vi.mock("../../../public/js/auth-guard.js", () => ({
   clearAuthSession: vi.fn(),
@@ -26,7 +23,9 @@ vi.mock("../../../public/js/auth-guard.js", () => ({
 
 vi.mock("../../../public/js/helper.js", () => ({}));
 
-globalThis.Chart = vi.fn(function () { return { destroy: vi.fn() }; });
+globalThis.Chart = vi.fn(function () {
+  return { destroy: vi.fn() };
+});
 
 function baseMocks() {
   return {
@@ -81,10 +80,7 @@ describe("visualizar-dashboard-cliente (dashboard do cliente pelo admin)", () =>
     });
 
     it("adiciona meses encontrados nos dados", () => {
-      mod.dadosDashboard.lancamentos = [
-        { data: "2026-01-15" },
-        { data: "2026-03-10" },
-      ];
+      mod.dadosDashboard.lancamentos = [{ data: "2026-01-15" }, { data: "2026-03-10" }];
 
       mod.popularMeses();
 

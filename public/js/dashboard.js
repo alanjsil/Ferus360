@@ -7,7 +7,7 @@ import { clearAuthSession, ensureAuthenticated, getAccessToken } from "./auth-gu
 const _cleanups = [];
 
 window.addEventListener("beforeunload", () => {
-  _cleanups.forEach(fn => fn());
+  _cleanups.forEach((fn) => fn());
   _cleanups.length = 0;
 });
 
@@ -39,6 +39,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.electronAPI?.logError("dashboard", "Erro ao popular meses", e);
   }
 
+  restaurarFiltrosDashboard();
+
   configurarLogout();
   configurarTipoPessoaToggle();
 });
@@ -66,6 +68,38 @@ function configurarLogout() {
 }
 
 const STORAGE_KEY_TIPO_PESSOA = "fnc:v1:tipo_pessoa";
+const STORAGE_KEY_FILTRO_DASH = "fnc:v1:dashboard_filtros";
+
+function salvarFiltrosDashboard() {
+  try {
+    const estado = {
+      ano: document.getElementById("filtroAno")?.value || "all",
+      mes: document.getElementById("filtroMes")?.value || "all",
+      categoria: document.getElementById("filtroCategoria")?.value || "all",
+      tipoGrafico: document.getElementById("filtroTipoGrafico")?.value || "DESPESA",
+    };
+    localStorage.setItem(STORAGE_KEY_FILTRO_DASH, JSON.stringify(estado));
+  } catch {
+    /* ignora */
+  }
+}
+
+function restaurarFiltrosDashboard() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_FILTRO_DASH);
+    if (!raw) return;
+    const estado = JSON.parse(raw);
+    const map = { ano: "filtroAno", mes: "filtroMes", categoria: "filtroCategoria", tipoGrafico: "filtroTipoGrafico" };
+    for (const [campo, id] of Object.entries(map)) {
+      const el = document.getElementById(id);
+      if (el && estado[campo] && Array.from(el.options).some((o) => o.value === String(estado[campo]))) {
+        el.value = estado[campo];
+      }
+    }
+  } catch {
+    /* ignora */
+  }
+}
 
 function configurarTipoPessoaToggle() {
   const container = document.getElementById("tipoPessoaToggle");
@@ -86,16 +120,18 @@ function configurarTipoPessoaToggle() {
     popularMeses();
   });
 
-  _cleanups.push(window.electronAPI.onTipoPessoaChanged(async (value) => {
-    if (value) {
-      atualizarToggle(container, value);
-      localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, value);
-    }
-    await carregarCategorias();
-    await popularAnos();
-    await carregarDashboard();
-    popularMeses();
-  }));
+  _cleanups.push(
+    window.electronAPI.onTipoPessoaChanged(async (value) => {
+      if (value) {
+        atualizarToggle(container, value);
+        localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, value);
+      }
+      await carregarCategorias();
+      await popularAnos();
+      await carregarDashboard();
+      popularMeses();
+    }),
+  );
 
   window.electronAPI.getTipoPessoa().then((value) => {
     if (value) {
@@ -105,16 +141,18 @@ function configurarTipoPessoaToggle() {
   });
 
   if (typeof window.electronAPI?.onUsarPjChanged === "function") {
-    _cleanups.push(window.electronAPI.onUsarPjChanged(async (value) => {
-      container.hidden = !value;
-      if (!value) {
-        localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, "PF");
-        await carregarCategorias();
-        await popularAnos();
-        await carregarDashboard();
-        popularMeses();
-      }
-    }));
+    _cleanups.push(
+      window.electronAPI.onUsarPjChanged(async (value) => {
+        container.hidden = !value;
+        if (!value) {
+          localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, "PF");
+          await carregarCategorias();
+          await popularAnos();
+          await carregarDashboard();
+          popularMeses();
+        }
+      }),
+    );
   }
 
   if (typeof window.electronAPI?.getUsarPj === "function") {
@@ -137,6 +175,7 @@ function atualizarToggle(container, tp) {
 function adicionarEventListeners() {
   // Atualizar ao mudar ano
   document.getElementById("filtroAno").addEventListener("change", async function () {
+    salvarFiltrosDashboard();
     document.getElementById("filtroMes").value = "all";
     await carregarDashboard();
     popularMeses();
@@ -144,16 +183,18 @@ function adicionarEventListeners() {
 
   // Atualizar ao mudar mês
   document.getElementById("filtroMes").addEventListener("change", async function () {
+    salvarFiltrosDashboard();
     await carregarDashboard();
   });
 
   // Atualizar ao mudar categoria
   document.getElementById("filtroCategoria").addEventListener("change", async function () {
+    salvarFiltrosDashboard();
     const mesAtual = document.getElementById("filtroMes").value;
     await carregarDashboard();
     popularMeses();
     const select = document.getElementById("filtroMes");
-    if ([...select.options].some(o => o.value === mesAtual)) {
+    if ([...select.options].some((o) => o.value === mesAtual)) {
       select.value = mesAtual;
     }
   });
@@ -161,6 +202,7 @@ function adicionarEventListeners() {
   // O filtro tipo gráfico já tem onchange no HTML para renderizarGraficoCategorias()
   // Mas também vamos atualizar todos os gráficos se quiser
   document.getElementById("filtroTipoGrafico").addEventListener("change", async function () {
+    salvarFiltrosDashboard();
     // Atualiza apenas o gráfico de categorias (já está configurado)
     renderizarGraficoCategorias();
   });
@@ -252,7 +294,7 @@ function popularMeses() {
   });
 }
 
-// Carregar dados do dashboard
+// Carregar dados do dashboardFFFFFS
 /**
  * @returns {Promise<void>}
  */
@@ -269,7 +311,8 @@ async function carregarDashboard() {
 
     if (seq !== _carregarSeq) return;
     if (dados?.error) {
-      window.electronAPI?.logError("dashboard", "Erro retornado pelo backend", dados.detalhe || dados.error);
+      const mensagem = dados.detalhe || dados.error;
+      window.electronAPI?.logError("dashboard", "Erro retornado pelo backend", mensagem);
       esconderLoading();
       return;
     }
@@ -544,17 +587,17 @@ function renderizarGraficoSaldo() {
 }
 
 export {
+  adicionarEventListeners,
   carregarCategorias,
+  carregarDashboard,
+  esconderLoading,
+  mostrarLoading,
   popularAnos,
   popularMeses,
-  carregarDashboard,
-  renderizarGraficoMensal,
   renderizarGraficoCategorias,
-  renderizarGraficoSaldo,
+  renderizarGraficoMensal,
   renderizarGraficos,
-  mostrarLoading,
-  esconderLoading,
-  adicionarEventListeners,
+  renderizarGraficoSaldo,
 };
 
 window.renderizarGraficoCategorias = renderizarGraficoCategorias;

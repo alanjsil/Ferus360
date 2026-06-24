@@ -3,10 +3,17 @@ import crypto from "crypto";
 import * as database from "../database";
 import * as logger from "../logger";
 import {
-  supabase, _doSQLite, _popularCache, _atualizarLocal, _syncAposEscrita,
-  _marcarPendente, _inserirLocal,
-  adicionarFiltroUsuario, adicionarFiltroTipoPessoaRestrito, adicionarWhereTipoPessoa,
-  validarMes, validarUUID, normalizarNome,
+  supabase,
+  _doSQLite,
+  _popularCache,
+  _atualizarLocal,
+  _syncAposEscrita,
+  _marcarPendente,
+  _inserirLocal,
+  adicionarFiltroUsuario,
+  adicionarFiltroTipoPessoaRestrito,
+  adicionarWhereTipoPessoa,
+  validarMes,
 } from "./utils";
 import { logAuditoria } from "./auditoria";
 
@@ -140,9 +147,8 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
       }
       if (mes && mes !== "all") {
         const mesF = mes.toString().padStart(2, "0");
-        lWhere += " AND data >= @mesInicio AND data <= @mesFim";
-        params.mesInicio = `${ano}-${mesF}-01`;
-        params.mesFim = `${ano}-${mesF}-31`;
+        lWhere += " AND data_busca LIKE @mesBusca";
+        params.mesBusca = `${ano}-${mesF}%`;
       }
       if (categoria && categoria !== "all") {
         lWhere += " AND categoria_id = @categoria";
@@ -197,7 +203,7 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
 
   if (mes && mes !== "all") {
     const mesFormatado = mes.toString().padStart(2, "0");
-    lancamentosQuery = lancamentosQuery.gte("data", `${ano}-${mesFormatado}-01`).lte("data", `${ano}-${mesFormatado}-31`);
+    lancamentosQuery = lancamentosQuery.like("data_busca", `${ano}-${mesFormatado}%`);
     orcamentoQuery = orcamentoQuery.eq("mes", typeof mes === "number" ? mes : parseInt(mes));
   }
 
@@ -211,12 +217,14 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
   const [{ data: lancamentos, error: errorLancamentos }, { data: orcamentos, error: errorOrcamentos }] = await Promise.all([lancamentosQuery, orcamentoQuery]);
 
   if (errorLancamentos) {
-    logger.error("repository", "Erro Supabase ao buscar lançamentos no dashboard", errorLancamentos);
-    throw errorLancamentos;
+    const msg = `[${errorLancamentos.code || "??"}] ${errorLancamentos.message || "sem mensagem"}${errorLancamentos.details ? " — " + errorLancamentos.details : ""}`;
+    logger.error("repository", `Supabase lancamentos: ${msg}`);
+    throw new Error(msg);
   }
   if (errorOrcamentos) {
-    logger.error("repository", "Erro Supabase ao buscar orçamentos no dashboard", errorOrcamentos);
-    throw errorOrcamentos;
+    const msg = `[${errorOrcamentos.code || "??"}] ${errorOrcamentos.message || "sem mensagem"}${errorOrcamentos.details ? " — " + errorOrcamentos.details : ""}`;
+    logger.error("repository", `Supabase orçamentos: ${msg}`);
+    throw new Error(msg);
   }
 
   return {
@@ -281,7 +289,7 @@ async function getDashboard(mes?: string, usuarioId?: string, tipoPessoa?: strin
     validarMes(mes);
     orcamentoSP = orcamentoSP.like("data_busca", `${mes}%`);
   }
-  const { data: orcamento, error } = await orcamentoSP as { data: Orcamento[] | null; error: unknown };
+  const { data: orcamento, error } = (await orcamentoSP) as { data: Orcamento[] | null; error: unknown };
   if (error) throw error;
 
   let financasSP = supabase.from("financas_lancamentos").select("*").eq("status", "PAGO").limit(5000) as any;
@@ -292,7 +300,7 @@ async function getDashboard(mes?: string, usuarioId?: string, tipoPessoa?: strin
     validarMes(mes);
     financasSP = financasSP.like("data_busca", `${mes}%`);
   }
-  const { data: realizados, error: errorRealizados } = await financasSP as { data: Lancamento[] | null; error: unknown };
+  const { data: realizados, error: errorRealizados } = (await financasSP) as { data: Lancamento[] | null; error: unknown };
   if (errorRealizados) throw errorRealizados;
 
   const totais = {
@@ -367,7 +375,11 @@ async function criarLancamento(payload: CriarLancamentoPayload, usuarioId?: stri
 
   _inserirLocal("financas_lancamentos", data as unknown as Record<string, unknown>, "synced");
   if (usuarioId) {
-    logAuditoria(usuarioId, "LANCAMENTO_CRIADO", { entidade: "lancamento", entidade_id: insertPayload.id as string, dados_novos: { tipo: payloadNormalizado.tipo, valor: payloadNormalizado.valor } }).catch((err: unknown) => logger.error("repository", "auditoria LANCAMENTO_CRIADO falhou", err));
+    logAuditoria(usuarioId, "LANCAMENTO_CRIADO", {
+      entidade: "lancamento",
+      entidade_id: insertPayload.id as string,
+      dados_novos: { tipo: payloadNormalizado.tipo, valor: payloadNormalizado.valor },
+    }).catch((err: unknown) => logger.error("repository", "auditoria LANCAMENTO_CRIADO falhou", err));
   }
   return data;
 }

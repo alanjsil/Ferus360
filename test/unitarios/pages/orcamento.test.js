@@ -13,10 +13,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import fs from "fs";
 import path from "path";
 
-const html = fs.readFileSync(
-  path.resolve(__dirname, "../../../public/index.html"),
-  "utf-8"
-);
+const html = fs.readFileSync(path.resolve(__dirname, "../../../public/index.html"), "utf-8");
 
 const mockElectronAPI = {
   getCategorias: vi.fn(),
@@ -73,7 +70,7 @@ describe("orcamento (página de lançamentos)", () => {
     Element.prototype.scrollIntoView = vi.fn();
 
     // Clear all mock call counts between tests
-    Object.values(mockElectronAPI).forEach(m => m.mockClear?.());
+    Object.values(mockElectronAPI).forEach((m) => m.mockClear?.());
 
     orcamento = await import("../../../public/js/index.js");
   });
@@ -90,7 +87,6 @@ describe("orcamento (página de lançamentos)", () => {
       expect(orcamento.formatCurrency(0)).toBe("0,00");
       expect(orcamento.formatCurrency(null)).toBe("0,00");
     });
-
 
     it("formatDate formata data para pt-BR", () => {
       const result = orcamento.formatDate("2026-06-15");
@@ -114,9 +110,7 @@ describe("orcamento (página de lançamentos)", () => {
     });
 
     it("carrega categorias com filtro de tipo", async () => {
-      mockElectronAPI.getCategorias.mockResolvedValue([
-        { id: 1, nome: "Alimentação", tipo: "DESPESA" },
-      ]);
+      mockElectronAPI.getCategorias.mockResolvedValue([{ id: 1, nome: "Alimentação", tipo: "DESPESA" }]);
 
       await orcamento.carregarCategorias("DESPESA");
 
@@ -143,9 +137,7 @@ describe("orcamento (página de lançamentos)", () => {
 
   describe("carregarPessoas", () => {
     it("popula select de pessoa", async () => {
-      mockElectronAPI.getPessoas.mockResolvedValue([
-        { id: 1, nome: "João" },
-      ]);
+      mockElectronAPI.getPessoas.mockResolvedValue([{ id: 1, nome: "João" }]);
 
       await orcamento.carregarPessoas();
 
@@ -157,9 +149,7 @@ describe("orcamento (página de lançamentos)", () => {
 
   describe("carregarLancamentos", () => {
     it("carrega lançamentos e atualiza filtros", async () => {
-      mockElectronAPI.getLancamentos.mockResolvedValue([
-        { id: 1, data: "2026-06-01", tipo: "DESPESA", valor: 100, status: "PAGO" },
-      ]);
+      mockElectronAPI.getLancamentos.mockResolvedValue([{ id: 1, data: "2026-06-01", tipo: "DESPESA", valor: 100, status: "PAGO" }]);
 
       await orcamento.carregarLancamentos();
 
@@ -192,12 +182,8 @@ describe("orcamento (página de lançamentos)", () => {
 
     it("transformarItens mapeia itens com busca de categoria", async () => {
       // Arrange
-      mockElectronAPI.getCategorias.mockResolvedValue([
-        { id: 1, nome: "Alimentação", tipo: "DESPESA" },
-      ]);
-      mockElectronAPI.getSubcategorias.mockResolvedValue([
-        { id: 1, categoria_id: 1, nome: "Mercado" },
-      ]);
+      mockElectronAPI.getCategorias.mockResolvedValue([{ id: 1, nome: "Alimentação", tipo: "DESPESA" }]);
+      mockElectronAPI.getSubcategorias.mockResolvedValue([{ id: 1, categoria_id: 1, nome: "Mercado" }]);
 
       await orcamento.carregarCategorias();
       await orcamento.carregarSubcategoriasCache();
@@ -224,9 +210,7 @@ describe("orcamento (página de lançamentos)", () => {
     });
 
     it("transformarItens filtra itens inválidos", () => {
-      const itensBrutos = [
-        { data: "", descricao: "", tipo: "", valor: "", categoria: "", subcategoria: "", recorrente: "" },
-      ];
+      const itensBrutos = [{ data: "", descricao: "", tipo: "", valor: "", categoria: "", subcategoria: "", recorrente: "" }];
 
       const result = orcamento.transformarItens(itensBrutos, "2026-06");
       expect(result).toHaveLength(0);
@@ -315,7 +299,7 @@ describe("orcamento (página de lançamentos)", () => {
 
   describe("salvarEstadoFiltros / carregarEstadoFiltros", () => {
     beforeEach(() => {
-      document.querySelectorAll('.pill-filter').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll(".pill-filter").forEach((b) => b.classList.remove("active"));
     });
 
     it("salva e recupera estado completo dos filtros", () => {
@@ -352,9 +336,15 @@ describe("orcamento (página de lançamentos)", () => {
     });
 
     it("carregarEstadoFiltros retorna valores salvos", () => {
-      localStorage.setItem("fnc:v1:filtro_estado", JSON.stringify({
-        filtroAno: "2026", filtroMes: "06", filtroTipo: "RECEITA", filtroStatus: "PAGO",
-      }));
+      localStorage.setItem(
+        "fnc:v1:filtro_estado",
+        JSON.stringify({
+          filtroAno: "2026",
+          filtroMes: "06",
+          filtroTipo: "RECEITA",
+          filtroStatus: "PAGO",
+        }),
+      );
 
       const estado = orcamento.carregarEstadoFiltros();
 
@@ -374,7 +364,7 @@ describe("orcamento (página de lançamentos)", () => {
 
   describe("aplicarFiltroPill", () => {
     beforeEach(() => {
-      document.querySelectorAll('.pill-filter').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll(".pill-filter").forEach((b) => b.classList.remove("active"));
     });
 
     it("ativa pill de tipo correta", () => {
@@ -390,23 +380,22 @@ describe("orcamento (página de lançamentos)", () => {
 
     it("não faz nada se valor não existe", () => {
       orcamento.aplicarFiltroPill("tipo", "INEXISTENTE");
-      expect(document.querySelectorAll('.pill-filter.active').length).toBe(0);
+      expect(document.querySelectorAll(".pill-filter.active").length).toBe(0);
     });
   });
 
   describe("aplicarFiltrosSalvos", () => {
     beforeEach(() => {
-      document.querySelectorAll('.pill-filter').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll(".pill-filter").forEach((b) => b.classList.remove("active"));
     });
 
     it("aplica filtros e recarrega dados", async () => {
-      mockElectronAPI.getLancamentos.mockResolvedValue([
-        { id: 1, data: "2026-06-01", tipo: "RECEITA", valor: 1000, status: "PAGO" },
-      ]);
+      mockElectronAPI.getLancamentos.mockResolvedValue([{ id: 1, data: "2026-06-01", tipo: "RECEITA", valor: 1000, status: "PAGO" }]);
       mockElectronAPI.getOrcamento.mockResolvedValue([]);
       mockElectronAPI.getDashboard.mockResolvedValue({
         totais: { receitas_planejadas: 0, receitas_realizadas: 0, despesas_planejadas: 0, despesas_realizadas: 0 },
-        orcamento: [], realizados: [],
+        orcamento: [],
+        realizados: [],
       });
 
       const optAno = document.createElement("option");
@@ -417,9 +406,15 @@ describe("orcamento (página de lançamentos)", () => {
       opt.value = "06";
       document.getElementById("filtroMes").appendChild(opt);
 
-      localStorage.setItem("fnc:v1:filtro_estado", JSON.stringify({
-        filtroAno: "2026", filtroMes: "06", filtroTipo: "RECEITA", filtroStatus: "PAGO",
-      }));
+      localStorage.setItem(
+        "fnc:v1:filtro_estado",
+        JSON.stringify({
+          filtroAno: "2026",
+          filtroMes: "06",
+          filtroTipo: "RECEITA",
+          filtroStatus: "PAGO",
+        }),
+      );
 
       await orcamento.aplicarFiltrosSalvos();
 
@@ -441,7 +436,19 @@ describe("orcamento (página de lançamentos)", () => {
 
     it("editarLancamento preenche formulário e altera botão", async () => {
       orcamento.setLancamentos([
-        { id: 1, data: "2026-06-01", tipo: "RECEITA", valor: 1000, status: "PAGO", categoria_id: 1, descricao: "Salário", subcategoria_id: null, conta_origem_id: null, conta_destino_id: null, pessoa_id: null },
+        {
+          id: 1,
+          data: "2026-06-01",
+          tipo: "RECEITA",
+          valor: 1000,
+          status: "PAGO",
+          categoria_id: 1,
+          descricao: "Salário",
+          subcategoria_id: null,
+          conta_origem_id: null,
+          conta_destino_id: null,
+          pessoa_id: null,
+        },
       ]);
 
       await orcamento.editarLancamento(1);
@@ -509,7 +516,7 @@ describe("orcamento (página de lançamentos)", () => {
       orcamento.setLancamentos([]);
       orcamento.setFiltroAtualAno("all");
       orcamento.setFiltroAtualMes("all");
-      document.querySelectorAll('.pill-filter').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll(".pill-filter").forEach((b) => b.classList.remove("active"));
     });
 
     it("calcula receitas, despesas e saldo corretamente", () => {
@@ -575,8 +582,10 @@ describe("orcamento (página de lançamentos)", () => {
 
     it("aplica classe negative quando despesa ultrapassa planejado", () => {
       const totais = {
-        receitas_planejadas: 2000, receitas_realizadas: 1500,
-        despesas_planejadas: 1000, despesas_realizadas: 1500,
+        receitas_planejadas: 2000,
+        receitas_realizadas: 1500,
+        despesas_planejadas: 1000,
+        despesas_realizadas: 1500,
       };
 
       orcamento.atualizarComparacao(totais);
@@ -587,8 +596,10 @@ describe("orcamento (página de lançamentos)", () => {
 
     it("define largura da barra de progresso", () => {
       const totais = {
-        receitas_planejadas: 1000, receitas_realizadas: 500,
-        despesas_planejadas: 1000, despesas_realizadas: 250,
+        receitas_planejadas: 1000,
+        receitas_realizadas: 500,
+        despesas_planejadas: 1000,
+        despesas_realizadas: 250,
       };
 
       orcamento.atualizarComparacao(totais);
@@ -599,8 +610,10 @@ describe("orcamento (página de lançamentos)", () => {
 
     it("limita progresso a 100%", () => {
       const totais = {
-        receitas_planejadas: 1000, receitas_realizadas: 2000,
-        despesas_planejadas: 1000, despesas_realizadas: 3000,
+        receitas_planejadas: 1000,
+        receitas_realizadas: 2000,
+        despesas_planejadas: 1000,
+        despesas_realizadas: 3000,
       };
 
       orcamento.atualizarComparacao(totais);
@@ -611,8 +624,10 @@ describe("orcamento (página de lançamentos)", () => {
 
     it("usa 0% quando planejado é 0", () => {
       const totais = {
-        receitas_planejadas: 0, receitas_realizadas: 0,
-        despesas_planejadas: 0, despesas_realizadas: 0,
+        receitas_planejadas: 0,
+        receitas_realizadas: 0,
+        despesas_planejadas: 0,
+        despesas_realizadas: 0,
       };
 
       orcamento.atualizarComparacao(totais);
@@ -648,9 +663,15 @@ describe("orcamento (página de lançamentos)", () => {
         { id: 1, data: "2026-06-15" },
         { id: 2, data: "2026-07-01" },
       ]);
-      localStorage.setItem("fnc:v1:filtro_estado", JSON.stringify({
-        filtroAno: "all", filtroMes: "06", filtroTipo: "all", filtroStatus: "all",
-      }));
+      localStorage.setItem(
+        "fnc:v1:filtro_estado",
+        JSON.stringify({
+          filtroAno: "all",
+          filtroMes: "06",
+          filtroTipo: "all",
+          filtroStatus: "all",
+        }),
+      );
 
       orcamento.atualizarMesesFiltro();
 
@@ -658,12 +679,16 @@ describe("orcamento (página de lançamentos)", () => {
     });
 
     it("volta para all se opção salva não existe mais", () => {
-      orcamento.setLancamentos([
-        { id: 1, data: "2026-07-01" },
-      ]);
-      localStorage.setItem("fnc:v1:filtro_estado", JSON.stringify({
-        filtroAno: "all", filtroMes: "06", filtroTipo: "all", filtroStatus: "all",
-      }));
+      orcamento.setLancamentos([{ id: 1, data: "2026-07-01" }]);
+      localStorage.setItem(
+        "fnc:v1:filtro_estado",
+        JSON.stringify({
+          filtroAno: "all",
+          filtroMes: "06",
+          filtroTipo: "all",
+          filtroStatus: "all",
+        }),
+      );
 
       orcamento.atualizarMesesFiltro();
 
@@ -756,16 +781,12 @@ describe("orcamento (página de lançamentos)", () => {
 
     it("pipeline completo: parse, transform, API e resultado", async () => {
       // Arrange
-      mockElectronAPI.getCategorias.mockResolvedValue([
-        { id: 1, nome: "Alimentação", tipo: "DESPESA" },
-      ]);
+      mockElectronAPI.getCategorias.mockResolvedValue([{ id: 1, nome: "Alimentação", tipo: "DESPESA" }]);
       mockElectronAPI.getSubcategorias.mockResolvedValue([]);
       await orcamento.carregarCategorias();
       await orcamento.carregarSubcategoriasCache();
 
-      document.getElementById("dadosImportacao").value =
-        "Data\tDescrição\tTipo\tValor\tCategoria\tSubcategoria\tRecorrente\n" +
-        "01\tMercado\tDESPESA\t500\tAlimentação\t\ttrue";
+      document.getElementById("dadosImportacao").value = "Data\tDescrição\tTipo\tValor\tCategoria\tSubcategoria\tRecorrente\n" + "01\tMercado\tDESPESA\t500\tAlimentação\t\ttrue";
       document.getElementById("mesImportacao").value = "2026-06";
       // Act
       await orcamento.processarImportacao();

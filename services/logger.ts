@@ -37,8 +37,7 @@ function escrever(level: string, context: string, message: string, err?: unknown
   const linha = [timestamp, level, context, message, stack].map(escaparCSV).join(",") + "\n";
   try {
     fs.appendFileSync(_caminhoLog, linha, "utf-8");
-  } catch {
-  }
+  } catch {}
 }
 
 function error(context: string, message: string, err?: unknown): void {

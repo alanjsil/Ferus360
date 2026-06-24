@@ -311,8 +311,7 @@ function construirAuthServicePadrao(): AuthService {
         auth: {
           signInWithPassword: () => Promise.reject(new Error("Auth default disabled in tests")),
           signOut: () => Promise.reject(new Error("Auth default disabled in tests")),
-          getUser: (token: string) =>
-            token ? Promise.reject(new Error("Auth default disabled in tests")) : Promise.reject(new Error("Auth default disabled in tests")),
+          getUser: (token: string) => (token ? Promise.reject(new Error("Auth default disabled in tests")) : Promise.reject(new Error("Auth default disabled in tests"))),
           updateUser: () => Promise.reject(new Error("Auth default disabled in tests")),
           resetPasswordForEmail: () => Promise.reject(new Error("Auth default disabled in tests")),
           refreshSession: () => Promise.reject(new Error("Auth default disabled in tests")),

@@ -10,7 +10,7 @@ import { confirmDialog, exibirToast, promptDialog } from "./toast.js";
 const _cleanups = [];
 
 window.addEventListener("beforeunload", () => {
-  _cleanups.forEach(fn => fn());
+  _cleanups.forEach((fn) => fn());
   _cleanups.length = 0;
 });
 
@@ -426,15 +426,17 @@ function configurarTipoPessoaToggle() {
   });
 
   if (typeof window.electronAPI?.onTipoPessoaChanged === "function") {
-    _cleanups.push(window.electronAPI.onTipoPessoaChanged(async (value) => {
-      if (value) {
-        container.dataset.tp = value;
-        const span = container.querySelector("span");
-        if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
-        localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, value);
-      }
-      await recarregarCadastros();
-    }));
+    _cleanups.push(
+      window.electronAPI.onTipoPessoaChanged(async (value) => {
+        if (value) {
+          container.dataset.tp = value;
+          const span = container.querySelector("span");
+          if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+          localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, value);
+        }
+        await recarregarCadastros();
+      }),
+    );
   }
 
   if (typeof window.electronAPI?.getTipoPessoa === "function") {
@@ -448,13 +450,15 @@ function configurarTipoPessoaToggle() {
   }
 
   if (typeof window.electronAPI?.onUsarPjChanged === "function") {
-    _cleanups.push(window.electronAPI.onUsarPjChanged(async (value) => {
-      container.hidden = !value;
-      if (!value) {
-        localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, "PF");
-        await recarregarCadastros();
-      }
-    }));
+    _cleanups.push(
+      window.electronAPI.onUsarPjChanged(async (value) => {
+        container.hidden = !value;
+        if (!value) {
+          localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, "PF");
+          await recarregarCadastros();
+        }
+      }),
+    );
   }
 
   if (typeof window.electronAPI?.getUsarPj === "function") {
@@ -472,11 +476,7 @@ async function recarregarCadastros() {
   const pessoasBody = document.getElementById("pessoasBody");
   const pessoasEmpty = document.getElementById("pessoasEmpty");
 
-  await Promise.all([
-    carregarCategorias(catBody, catEmpty),
-    carregarContas(contasBody, contasEmpty),
-    carregarPessoas(pessoasBody, pessoasEmpty),
-  ]);
+  await Promise.all([carregarCategorias(catBody, catEmpty), carregarContas(contasBody, contasEmpty), carregarPessoas(pessoasBody, pessoasEmpty)]);
 }
 
 /* ===== Categorias ===== */
