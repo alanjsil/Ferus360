@@ -186,6 +186,14 @@ export interface AuthResult {
   usuario: Usuario;
 }
 
+export interface ResultadoPaginado<T> {
+  dados: T[];
+  total: number;
+  pagina: number;
+  totalPaginas: number;
+  itensPorPagina: number;
+}
+
 export interface AdminDashboard {
   totalReceitas: number;
   totalDespesas: number;

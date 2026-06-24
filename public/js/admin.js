@@ -12,6 +12,7 @@ let editingCatGlobalId = null;
 let clienteVisualizadoId = null;
 let tipoPessoaResumo = "PF";
 let tipoPessoaDetalhes = "PF";
+let paginaAtualClientes = 1;
 
 document.addEventListener("DOMContentLoaded", async () => {
   const auth = await ensureAuthenticated({ requireAdmin: true });
@@ -121,8 +122,8 @@ async function carregarDashboard() {
 /* ---------- ABA 2 — CLIENTES ---------- */
 
 function configurarClientes() {
-  document.getElementById("filtroStatusCliente").addEventListener("change", carregarClientes);
-  document.getElementById("buscaCliente").addEventListener("input", carregarClientes);
+  document.getElementById("filtroStatusCliente").addEventListener("change", () => { paginaAtualClientes = 1; carregarClientes(); });
+  document.getElementById("buscaCliente").addEventListener("input", () => { paginaAtualClientes = 1; carregarClientes(); });
   document.getElementById("fecharResumo").addEventListener("click", () => {
     document.getElementById("resumoDialog").close();
   });
@@ -140,16 +141,18 @@ function configurarClientes() {
 async function carregarClientes() {
   const body = document.getElementById("clientesBody");
   const empty = document.getElementById("clientesEmpty");
+  const paginacao = document.getElementById("clientesPaginacao");
 
   try {
-    const data = await window.electronAPI.adminGetClientes();
+    const data = await window.electronAPI.adminGetClientes(paginaAtualClientes);
     if (data?.error) {
       body.innerHTML = "";
       empty.hidden = false;
+      paginacao.innerHTML = "";
       return;
     }
 
-    const clientes = data || [];
+    const clientes = data.dados || [];
     const filtroStatus = document.getElementById("filtroStatusCliente").value;
     const busca = document.getElementById("buscaCliente").value.toLowerCase();
 
@@ -160,9 +163,10 @@ async function carregarClientes() {
       return true;
     });
 
-    if (filtered.length === 0) {
+    if (filtered.length === 0 && data.total === 0) {
       body.innerHTML = "";
       empty.hidden = false;
+      paginacao.innerHTML = "";
       return;
     }
 
@@ -202,10 +206,41 @@ async function carregarClientes() {
         }
       });
     });
+
+    renderizarPaginacaoClientes(data);
   } catch {
     body.innerHTML = '<tr><td colspan="6" class="empty-state">Erro ao carregar clientes.</td></tr>';
     empty.hidden = true;
+    paginacao.innerHTML = "";
   }
+}
+
+function renderizarPaginacaoClientes(data) {
+  const paginacao = document.getElementById("clientesPaginacao");
+  const { pagina, totalPaginas, total, itensPorPagina } = data;
+
+  if (totalPaginas <= 1) {
+    paginacao.innerHTML = `<span class="paginacao-info">${total} cliente${total !== 1 ? "s" : ""}</span>`;
+    return;
+  }
+
+  const inicio = (pagina - 1) * itensPorPagina + 1;
+  const fim = Math.min(pagina * itensPorPagina, total);
+
+  paginacao.innerHTML = `
+    <span class="paginacao-info">${inicio}–${fim} de ${total}</span>
+    <div class="paginacao-botoes">
+      <button type="button" class="btn-secondary btn-pagina" data-pagina="${pagina - 1}" ${pagina <= 1 ? "disabled" : ""}>Anterior</button>
+      <button type="button" class="btn-secondary btn-pagina" data-pagina="${pagina + 1}" ${pagina >= totalPaginas ? "disabled" : ""}>Próximo</button>
+    </div>`;
+
+  paginacao.querySelectorAll(".btn-pagina").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (btn.disabled) return;
+      paginaAtualClientes = Number(btn.dataset.pagina);
+      carregarClientes();
+    });
+  });
 }
 
 async function visualizarCliente(id, nome) {
@@ -494,13 +529,13 @@ async function buscarParaRedefinir() {
   }
 
   try {
-    const data = await window.electronAPI.adminGetClientes();
+    const data = await window.electronAPI.adminGetClientes(1, 500);
     if (data?.error) {
       results.innerHTML = '<p class="empty-state">Erro na busca.</p>';
       return;
     }
 
-    const usuarios = (data || []).filter((u) => u.nome.toLowerCase().includes(busca) || u.email.toLowerCase().includes(busca));
+    const usuarios = (data.dados || []).filter((u) => u.nome.toLowerCase().includes(busca) || u.email.toLowerCase().includes(busca));
 
     if (usuarios.length === 0) {
       results.innerHTML = '<p class="empty-state">Nenhum usuário encontrado.</p>';

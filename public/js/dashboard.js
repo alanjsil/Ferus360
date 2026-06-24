@@ -17,6 +17,7 @@ let chartMensal, chartCategorias, chartSaldo;
 // Dados
 let dadosDashboard = [];
 let _carregarSeq = 0;
+let _todasCategorias = [];
 
 // Inicialização
 document.addEventListener("DOMContentLoaded", async function () {
@@ -215,6 +216,7 @@ function adicionarEventListeners() {
 async function carregarCategorias() {
   try {
     const categorias = await window.electronAPI.getCategorias();
+    _todasCategorias = categorias;
 
     const select = document.getElementById("filtroCategoria");
 
@@ -231,6 +233,46 @@ async function carregarCategorias() {
     });
   } catch (error) {
     window.electronAPI?.logError("dashboard", "Erro ao carregar categorias", error);
+  }
+}
+
+// Filtrar categorias para mostrar apenas as com lançamentos nos dados carregados
+/**
+ * @returns {void}
+ */
+function filtrarCategoriasComLancamentos() {
+  const select = document.getElementById("filtroCategoria");
+  if (!dadosDashboard?.lancamentos?.length || !_todasCategorias.length) return;
+
+  const idsComLancamentos = new Set(
+    dadosDashboard.lancamentos
+      .filter((l) => l.categoria_id)
+      .map((l) => String(l.categoria_id)),
+  );
+
+  const valorAtual = select.value;
+
+  if (valorAtual !== "all" && _todasCategorias.some((c) => String(c.id) === String(valorAtual))) {
+    idsComLancamentos.add(valorAtual);
+  }
+
+  const filtradas = _todasCategorias.filter((cat) => idsComLancamentos.has(String(cat.id)));
+
+  while (select.children.length > 1) {
+    select.removeChild(select.lastChild);
+  }
+
+  filtradas.forEach((cat) => {
+    const opt = document.createElement("option");
+    opt.value = cat.id;
+    opt.textContent = cat.nome;
+    select.appendChild(opt);
+  });
+
+  if (valorAtual !== "all" && [...select.options].some((o) => o.value === valorAtual)) {
+    select.value = valorAtual;
+  } else {
+    select.value = "all";
   }
 }
 
@@ -317,6 +359,7 @@ async function carregarDashboard() {
       return;
     }
     dadosDashboard = dados;
+    filtrarCategoriasComLancamentos();
     renderizarGraficos();
 
     // Esconder loading
@@ -591,6 +634,7 @@ export {
   carregarCategorias,
   carregarDashboard,
   esconderLoading,
+  filtrarCategoriasComLancamentos,
   mostrarLoading,
   popularAnos,
   popularMeses,
@@ -600,4 +644,5 @@ export {
   renderizarGraficoSaldo,
 };
 
+window.filtrarCategoriasComLancamentos = filtrarCategoriasComLancamentos;
 window.renderizarGraficoCategorias = renderizarGraficoCategorias;

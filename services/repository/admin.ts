@@ -1,4 +1,4 @@
-import type { Lancamento, Orcamento, Chamado, AdminDashboard, Usuario } from "../../src/types";
+import type { Lancamento, Orcamento, Chamado, AdminDashboard, ResultadoPaginado, Usuario } from "../../src/types";
 import * as logger from "../logger";
 import { supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionResult } from "./utils";
 
@@ -8,7 +8,7 @@ async function getAdminDashboard(): Promise<AdminDashboard> {
 
   if (err1) throw err1;
 
-  const { count: totalUsuariosAtivos, error: err2 } = await supabase.from("financas_usuarios").select("id", { count: "exact", head: true }).eq("ativo", true);
+  const { count: totalUsuariosAtivos, error: err2 } = await supabase.from("financas_usuarios").select("id", { count: "exact", head: true }).eq("ativo", true).eq("role", "user");
 
   if (err2) throw err2;
 
@@ -90,8 +90,23 @@ async function updateChamado(id: string, patch: Record<string, unknown>): Promis
   return data;
 }
 
-async function getClientes(): Promise<Usuario[]> {
-  const { data, error } = await supabase.from("financas_usuarios").select("id, nome, email, role, ativo, criado_em").order("criado_em", { ascending: false }).limit(5000);
+async function getClientes(pagina = 1, itensPorPagina = 10): Promise<ResultadoPaginado<Usuario>> {
+  const { count: total, error: errCount } = await supabase
+    .from("financas_usuarios")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "user");
+
+  if (errCount) throw errCount;
+
+  const from = (pagina - 1) * itensPorPagina;
+  const to = from + itensPorPagina - 1;
+
+  const { data, error } = await supabase
+    .from("financas_usuarios")
+    .select("id, nome, email, role, ativo, criado_em")
+    .eq("role", "user")
+    .order("criado_em", { ascending: false })
+    .range(from, to);
 
   if (error) throw error;
 
@@ -111,7 +126,13 @@ async function getClientes(): Promise<Usuario[]> {
     }
   }
 
-  return result;
+  return {
+    dados: result,
+    total: total || 0,
+    pagina,
+    totalPaginas: Math.ceil((total || 0) / itensPorPagina),
+    itensPorPagina,
+  };
 }
 
 async function getResumoCliente(usuarioId: string, tipoPessoa?: string): Promise<{ lancamentos: Lancamento[]; orcamento: Orcamento[] }> {

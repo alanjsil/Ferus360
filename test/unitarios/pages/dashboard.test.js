@@ -140,7 +140,7 @@ describe("dashboard (painel principal)", () => {
       await dashboard.carregarCategorias();
       await dashboard.popularAnos();
       mockElectronAPI.getDashboardDados.mockResolvedValue({
-        lancamentos: [{ data: "2026-06-15", tipo: "DESPESA", valor: 100, categoria: { nome: "X" }, subcategoria: {}, status: "PAGO" }],
+        lancamentos: [{ data: "2026-06-15", tipo: "DESPESA", valor: 100, categoria_id: "1", categoria: { nome: "X" }, subcategoria: {}, status: "PAGO" }],
         orcamentos: [],
         totalLancamentos: 1,
         totalOrcamentos: 0,

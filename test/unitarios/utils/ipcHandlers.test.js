@@ -662,14 +662,19 @@ describe("ipcHandlers (handlers de IPC)", () => {
     });
 
     it("handleAdminGetClientes retorna clientes", async () => {
-      const result = await handlers.handleAdminGetClientes(null);
-      expect(mockAdminService.getClientes).toHaveBeenCalledWith();
-      expect(result).toHaveLength(1);
+      mockAdminService.getClientes.mockResolvedValue({
+        dados: [{ id: "u-1", nome: "User", email: "u@t.com", ativo: true }],
+        total: 1, pagina: 1, totalPaginas: 1, itensPorPagina: 10,
+      });
+      const result = await handlers.handleAdminGetClientes(null, 1);
+      expect(mockAdminService.getClientes).toHaveBeenCalledWith(1);
+      expect(result.total).toBe(1);
+      expect(result.dados[0].nome).toBe("User");
     });
 
     it("handleAdminGetClientes retorna UNAUTHORIZED em erro", async () => {
       mockAdminService.getClientes.mockRejectedValue(new Error("UNAUTHORIZED"));
-      const result = await handlers.handleAdminGetClientes(null);
+      const result = await handlers.handleAdminGetClientes(null, 1);
       expect(result).toEqual({ error: "UNAUTHORIZED" });
     });
 

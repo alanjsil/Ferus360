@@ -39,7 +39,7 @@ function baseMocks() {
       saldo: 5000,
       totalUsuariosAtivos: 10,
     }),
-    adminGetClientes: vi.fn().mockResolvedValue([]),
+    adminGetClientes: vi.fn().mockResolvedValue({ dados: [], total: 0, pagina: 1, totalPaginas: 0, itensPorPagina: 10 }),
     adminToggleCliente: vi.fn(),
     adminGetResumoCliente: vi.fn(),
     adminGetTransacoesCliente: vi.fn(),
@@ -140,10 +140,13 @@ describe("admin (página administrativa)", () => {
   describe("clientes", () => {
     it("renderiza clientes na tabela", async () => {
       // Arrange
-      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([
-        { id: "u1", nome: "João", email: "joao@t.com", criado_em: "2025-01-01T10:00:00Z", ativo: true },
-        { id: "u2", nome: "Maria", email: "maria@t.com", criado_em: "2025-02-01T10:00:00Z", ativo: false },
-      ]);
+      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue({
+        dados: [
+          { id: "u1", nome: "João", email: "joao@t.com", criado_em: "2025-01-01T10:00:00Z", ativo: true },
+          { id: "u2", nome: "Maria", email: "maria@t.com", criado_em: "2025-02-01T10:00:00Z", ativo: false },
+        ],
+        total: 2, pagina: 1, totalPaginas: 1, itensPorPagina: 10,
+      });
       // Act
       await loadModule();
       // Assert
@@ -171,7 +174,10 @@ describe("admin (página administrativa)", () => {
 
     it("abre resumo ao clicar Visualizar", async () => {
       // Arrange
-      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([{ id: "u1", nome: "João", email: "joao@t.com", criado_em: "2025-01-01T10:00:00Z", ativo: true }]);
+      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue({
+        dados: [{ id: "u1", nome: "João", email: "joao@t.com", criado_em: "2025-01-01T10:00:00Z", ativo: true }],
+        total: 1, pagina: 1, totalPaginas: 1, itensPorPagina: 10,
+      });
       window.electronAPI.adminGetResumoCliente = vi.fn().mockResolvedValue({
         lancamentos: [],
         orcamento: [],
@@ -257,7 +263,7 @@ describe("admin (página administrativa)", () => {
     });
 
     it("busca usuários e exibe resultados", async () => {
-      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([{ id: "u1", nome: "João", email: "joao@t.com", role: "user" }]);
+      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue({ dados: [{ id: "u1", nome: "João", email: "joao@t.com", role: "user" }], total: 1, pagina: 1, totalPaginas: 1, itensPorPagina: 500 });
       await loadModule();
       document.getElementById("buscaRedefinir").value = "João";
       document.getElementById("btnBuscarRedefinir").click();
@@ -268,7 +274,7 @@ describe("admin (página administrativa)", () => {
     });
 
     it("chama adminResetSenha ao clicar Redefinir", async () => {
-      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([{ id: "u1", nome: "João", email: "joao@t.com", role: "user" }]);
+      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue({ dados: [{ id: "u1", nome: "João", email: "joao@t.com", role: "user" }], total: 1, pagina: 1, totalPaginas: 1, itensPorPagina: 500 });
       window.electronAPI.adminResetSenha = vi.fn().mockResolvedValue({
         success: true,
         message: "Email de recuperação enviado",
@@ -425,7 +431,7 @@ describe("admin (página administrativa)", () => {
 
   describe("toggle cliente", () => {
     it("chama adminToggleCliente ao clicar Inativar", async () => {
-      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([{ id: "u1", nome: "João", email: "joao@t.com", criado_em: "2025-01-01T10:00:00Z", ativo: true }]);
+      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue({ dados: [{ id: "u1", nome: "João", email: "joao@t.com", criado_em: "2025-01-01T10:00:00Z", ativo: true }], total: 1, pagina: 1, totalPaginas: 1, itensPorPagina: 10 });
       window.electronAPI.adminToggleCliente = vi.fn().mockResolvedValue({ success: true });
       await loadModule();
       await vi.waitFor(() => {

@@ -1,4 +1,4 @@
-import type { Usuario, AdminDashboard, FiltrosAuditoria, Auditoria, Chamado, Lancamento, Conta, Orcamento, DashboardDadosResult } from "../src/types";
+import type { Usuario, AdminDashboard, FiltrosAuditoria, Auditoria, Chamado, Lancamento, Conta, Orcamento, DashboardDadosResult, ResultadoPaginado } from "../src/types";
 import crypto from "crypto";
 import * as conexaoModule from "./conexao";
 import * as repositoryModule from "./repository";
@@ -48,7 +48,7 @@ interface AdminDependencies {
 interface AdminService {
   verificarAdmin: () => Promise<Usuario>;
   getDashboard: () => Promise<AdminDashboard>;
-  getClientes: () => Promise<Usuario[]>;
+  getClientes: (pagina?: number, itensPorPagina?: number) => Promise<ResultadoPaginado<Usuario>>;
   toggleCliente: (id: string) => Promise<Usuario>;
   getResumoCliente: (id: string, tipoPessoa?: string) => Promise<{ lancamentos: Lancamento[]; orcamento: Orcamento[] }>;
   getTransacoesCliente: (id: string, mes?: string | number, ano?: string | number, tipoPessoa?: string) => Promise<Lancamento[]>;
@@ -97,9 +97,9 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
     return await deps.repository.getAdminDashboard();
   }
 
-  async function getClientes(): Promise<Usuario[]> {
+  async function getClientes(pagina = 1, itensPorPagina = 10): Promise<ResultadoPaginado<Usuario>> {
     await verificarAdmin();
-    return await deps.repository.getClientes();
+    return await deps.repository.getClientes(pagina, itensPorPagina);
   }
 
   async function toggleCliente(id: string): Promise<Usuario> {
@@ -285,3 +285,23 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
 const defaultService = construirAdminService();
 
 export { defaultService as createAdminService, construirAdminService, AdminError };
+
+export const {
+  verificarAdmin,
+  getDashboard,
+  getClientes,
+  toggleCliente,
+  getResumoCliente,
+  getTransacoesCliente,
+  getOrcamentoCliente,
+  getDashboardDadosCliente,
+  getAnosDisponiveisCliente,
+  getContasCliente,
+  resetSenha,
+  getChamados,
+  responderChamado,
+  updateChamado,
+  criarChamado,
+  getAuditoria,
+  criarUsuario,
+} = defaultService;

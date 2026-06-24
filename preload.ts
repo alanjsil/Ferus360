@@ -116,7 +116,7 @@ const api = {
 
   // ==================== ADMIN ====================
   adminGetDashboard: () => ipcRenderer.invoke("admin:getDashboard"),
-  adminGetClientes: () => ipcRenderer.invoke("admin:getClientes"),
+  adminGetClientes: (pagina = 1) => ipcRenderer.invoke("admin:getClientes", pagina),
   adminToggleCliente: (id: string) => ipcRenderer.invoke("admin:toggleCliente", id),
   adminGetChamados: () => ipcRenderer.invoke("admin:getChamados"),
   adminResponderChamado: (id: string, msg: string) => ipcRenderer.invoke("admin:responderChamado", id, msg),

@@ -41,6 +41,8 @@ const { mockSupabase, resetData, pushResult } = vi.hoisted(() => {
     p.single = vi.fn(() => p);
     p.maybeSingle = vi.fn(() => p);
     p.limit = vi.fn(() => p);
+    p.range = vi.fn(() => p);
+    p.neq = vi.fn(() => p);
     return p;
   }
 
@@ -844,24 +846,31 @@ describe("updateChamado", () => {
 /* ─────────── getClientes ─────────── */
 
 describe("getClientes", () => {
-  it("retorna todos os clientes ordenados por criado_em desc", async () => {
-    resetData([{ id: "user-1", nome: "Alan", email: "alan@test.com", role: "user", ativo: true }]);
-    pushResult([]); // financas_auditoria retorna vazio
-    const result = await repo.getClientes();
-    expect(result).toEqual([{ id: "user-1", nome: "Alan", email: "alan@test.com", role: "user", ativo: true, ultimo_login: null }]);
+  it("retorna clientes paginados com role=user", async () => {
+    // 3 consultas: count, dados, auditoria
+    resetData([{ id: "user-1" }], null, 1);
+    pushResult([{ id: "user-1", nome: "Alan", email: "alan@test.com", role: "user", ativo: true }]);
+    pushResult([]);
+    const result = await repo.getClientes(1, 10);
+    expect(result.total).toBe(1);
+    expect(result.pagina).toBe(1);
+    expect(result.totalPaginas).toBe(1);
+    expect(result.itensPorPagina).toBe(10);
+    expect(result.dados).toEqual([{ id: "user-1", nome: "Alan", email: "alan@test.com", role: "user", ativo: true, ultimo_login: null }]);
     expect(mockSupabase.from).toHaveBeenCalledWith("financas_usuarios");
   });
 
   it("com ultimo_login da auditoria", async () => {
-    resetData([{ id: "user-1", nome: "Alan", email: "alan@test.com", role: "user", ativo: true }]);
+    resetData([{ id: "user-1" }], null, 1);
+    pushResult([{ id: "user-1", nome: "Alan", email: "alan@test.com", role: "user", ativo: true }]);
     pushResult([{ usuario_id: "user-1", criado_em: "2026-06-10T12:00:00Z" }]);
-    const result = await repo.getClientes();
-    expect(result).toEqual([{ id: "user-1", nome: "Alan", email: "alan@test.com", role: "user", ativo: true, ultimo_login: "2026-06-10T12:00:00Z" }]);
+    const result = await repo.getClientes(1, 10);
+    expect(result.dados).toEqual([{ id: "user-1", nome: "Alan", email: "alan@test.com", role: "user", ativo: true, ultimo_login: "2026-06-10T12:00:00Z" }]);
   });
 
   it("throws on error", async () => {
     resetData([], new Error("DB error"));
-    await expect(repo.getClientes()).rejects.toThrow("DB error");
+    await expect(repo.getClientes(1, 10)).rejects.toThrow("DB error");
   });
 });
 

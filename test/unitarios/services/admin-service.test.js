@@ -137,17 +137,21 @@ describe("admin (serviço de administração)", () => {
   /* ─────────── CLIENTES ─────────── */
 
   describe("getClientes", () => {
-    it("retorna lista de clientes", async () => {
+    it("retorna lista paginada de clientes", async () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({ id: "admin-1", role: "admin" });
-      mockRepository.getClientes.mockResolvedValue([{ id: "00000000-0000-0000-0000-000000000001", nome: "João", email: "joao@t.com", ativo: true }]);
+      mockRepository.getClientes.mockResolvedValue({
+        dados: [{ id: "00000000-0000-0000-0000-000000000001", nome: "João", email: "joao@t.com", ativo: true }],
+        total: 1, pagina: 1, totalPaginas: 1, itensPorPagina: 10,
+      });
 
       // Act
-      const result = await admin.getClientes();
+      const result = await admin.getClientes(1, 10);
 
       // Assert
-      expect(result).toHaveLength(1);
-      expect(result[0].nome).toBe("João");
+      expect(result.total).toBe(1);
+      expect(result.dados[0].nome).toBe("João");
+      expect(mockRepository.getClientes).toHaveBeenCalledWith(1, 10);
     });
   });
 

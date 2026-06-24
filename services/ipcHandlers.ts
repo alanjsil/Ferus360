@@ -593,9 +593,9 @@ function createHandlers(
       }
     },
 
-    handleAdminGetClientes: async () => {
+    handleAdminGetClientes: async (_event: unknown, pagina: number) => {
       try {
-        return await adminService.getClientes();
+        return await adminService.getClientes(pagina);
       } catch {
         return { error: "UNAUTHORIZED" };
       }
