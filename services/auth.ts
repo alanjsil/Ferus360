@@ -268,20 +268,19 @@ function construirAuthService(dependencies: AuthDependencies = {}): AuthService 
     };
   }
 
-  let _authCheckClient: ReturnType<typeof createClient> | null = null;
-
   async function verificarSenha(_usuarioId: string, senha: string): Promise<{ success: boolean }> {
     const { data: sessionData } = await supabase.auth.getSession();
     const email = sessionData?.session?.user?.email;
     if (!email) throw new AuthError("USUARIO_INVALIDO");
 
-    if (!_authCheckClient) {
-      _authCheckClient = _createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
-    const { error } = await _authCheckClient.auth.signInWithPassword({
+    const client = _createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { error } = await client.auth.signInWithPassword({
       email,
       password: senha,
     });
+
+    await client.auth.signOut().catch(() => {});
+
     if (error) throw new AuthError("SENHA_INVALIDA");
     return { success: true };
   }
