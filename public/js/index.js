@@ -69,30 +69,44 @@ function configurarTipoPessoaToggle() {
   const container = document.getElementById("tipoPessoaToggle");
   if (!container) return;
 
+  // Restaura do localStorage imediatamente (síncrono)
+  const salvo = localStorage.getItem(STORAGE_KEYS.TIPO_PESSOA);
+  if (salvo) atualizarToggle(container, salvo);
+
   container.addEventListener("click", async () => {
     const atual = container.dataset.tp;
     const novoTp = atual === "PF" ? "PJ" : "PF";
     atualizarToggle(container, novoTp);
+    localStorage.setItem(STORAGE_KEYS.TIPO_PESSOA, novoTp);
     await window.electronAPI.setTipoPessoa(novoTp);
     await recarregarTudo();
   });
 
   _cleanups.push(
     window.electronAPI.onTipoPessoaChanged(async (value) => {
-      if (value) atualizarToggle(container, value);
+      if (value) {
+        atualizarToggle(container, value);
+        localStorage.setItem(STORAGE_KEYS.TIPO_PESSOA, value);
+      }
       await recarregarTudo();
     }),
   );
 
   window.electronAPI.getTipoPessoa().then((value) => {
-    if (value) atualizarToggle(container, value);
+    if (value) {
+      atualizarToggle(container, value);
+      localStorage.setItem(STORAGE_KEYS.TIPO_PESSOA, value);
+    }
   });
 
   if (typeof window.electronAPI?.onUsarPjChanged === "function") {
     _cleanups.push(
       window.electronAPI.onUsarPjChanged(async (value) => {
         container.hidden = !value;
-        if (!value) await recarregarTudo();
+        if (!value) {
+          localStorage.setItem(STORAGE_KEYS.TIPO_PESSOA, "PF");
+          await recarregarTudo();
+        }
       }),
     );
   }
@@ -131,6 +145,7 @@ const STORAGE_KEYS = {
   FILTRO_STATUS: NS + "filtro_status",
   FILTRO_ESTADO: NS + "filtro_estado",
   CONFLITOS_COUNT: NS + "conflitos_count",
+  TIPO_PESSOA: NS + "tipo_pessoa",
 };
 // ====== FUNÇÕES DE GESTÃO DE FILTROS ======
 /**
@@ -151,10 +166,6 @@ function salvarEstadoFiltros() {
     };
 
     localStorage.setItem(STORAGE_KEYS.FILTRO_ESTADO, JSON.stringify(estadoFiltros));
-    localStorage.setItem(STORAGE_KEYS.FILTRO_ANO, estadoFiltros.filtroAno);
-    localStorage.setItem(STORAGE_KEYS.FILTRO_MES, estadoFiltros.filtroMes);
-    localStorage.setItem(STORAGE_KEYS.FILTRO_TIPO, estadoFiltros.filtroTipo);
-    localStorage.setItem(STORAGE_KEYS.FILTRO_STATUS, estadoFiltros.filtroStatus);
   } catch (error) {
     window.electronAPI?.logWarn("orcamento", "Erro ao salvar filtros", error);
   }

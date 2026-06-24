@@ -57,14 +57,20 @@ function configurarLogout() {
   });
 }
 
+const STORAGE_KEY_TIPO_PESSOA = "fnc:v1:tipo_pessoa";
+
 function configurarTipoPessoaToggle() {
   const container = document.getElementById("tipoPessoaToggle");
   if (!container) return;
+
+  const salvo = localStorage.getItem(STORAGE_KEY_TIPO_PESSOA);
+  if (salvo) atualizarToggle(container, salvo);
 
   container.addEventListener("click", async () => {
     const atual = container.dataset.tp;
     const novoTp = atual === "PF" ? "PJ" : "PF";
     atualizarToggle(container, novoTp);
+    localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, novoTp);
     await window.electronAPI.setTipoPessoa(novoTp);
     await carregarCategorias();
     await popularAnos();
@@ -73,7 +79,10 @@ function configurarTipoPessoaToggle() {
   });
 
   _cleanups.push(window.electronAPI.onTipoPessoaChanged(async (value) => {
-    if (value) atualizarToggle(container, value);
+    if (value) {
+      atualizarToggle(container, value);
+      localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, value);
+    }
     await carregarCategorias();
     await popularAnos();
     await carregarDashboard();
@@ -81,13 +90,17 @@ function configurarTipoPessoaToggle() {
   }));
 
   window.electronAPI.getTipoPessoa().then((value) => {
-    if (value) atualizarToggle(container, value);
+    if (value) {
+      atualizarToggle(container, value);
+      localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, value);
+    }
   });
 
   if (typeof window.electronAPI?.onUsarPjChanged === "function") {
     _cleanups.push(window.electronAPI.onUsarPjChanged(async (value) => {
       container.hidden = !value;
       if (!value) {
+        localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, "PF");
         await carregarCategorias();
         await popularAnos();
         await carregarDashboard();

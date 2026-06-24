@@ -10,6 +10,8 @@
 
 ---
 
+## INSPEÇÃO
+
 ### 0. Login / Autenticação (`login.html`, `redefinir.html`, `auth-guard.js`)
 
 - [x] 0.1 Login com email + senha (formulário valida campos obrigatórios)
@@ -67,9 +69,9 @@
 - [x] 0.20 Splash screen animada na inicialização do login
   - **Breakpoint:** `login.js:236` fade-out do splash
 
-```
 #### Autenticação Transversal (auth-guard)
 
+```
 - [ ] 0.21 `ensureAuthenticated()` — protege páginas (admin.html, index.html, etc.)
   - **Breakpoint:** `auth-guard.js:114`
 - [ ] 0.22 Guarda admin — `requireAdmin: true` bloqueia user comum e redireciona
@@ -96,13 +98,10 @@
 - [x] 1.10 Edição inline — botões Salvar/Cancelar na actions-cell (não embaixo do input)
 - [x] 1.11 Categoria global — botões Editar/Ativar ocultos para não-admin
 - [x] 1.12 Categoria global — bloqueio no backend (update/toggle rejeita se não admin)
-
-```
-- [ ] 1.13 Categorias compartilhadas PF↔PJ (toggle em configurações `compartilharCategorias`)
+- [x] 1.13 Categorias compartilhadas PF↔PJ (toggle em configurações `compartilharCategorias`)
   - Quando ativo: categorias/subcategorias ignoram filtro `tipo_pessoa`
   - Contas/pessoas/lançamentos/orçamento continuam filtrados por `tipo_pessoa`
   - **Breakpoint:** `services/repository/admin.ts:36` — `getTransacoesCliente()` pula `.eq("tipo_pessoa")` em categorias se compartilhado
-```
 
 #### Toast / Notificações
 
@@ -141,18 +140,20 @@
 
 ### 3. Orçamento (`index.html` — importação)
 
+```
 - [ ] 3.1 Importar CSV (modal, cola dados, processa, confirma)
   - **Breakpoint:** `index.js:800` `parseCSV()` — parser tabulado
   - **Breakpoint:** `index.js:863` `processarImportacao()` — fluxo completo
 - [ ] 3.2 Importar dados inválidos (linhas mal formatadas → filtradas)
 - [ ] 3.3 Comparativo planejado vs realizado (cards na página)
   - **Breakpoint:** `index.js` seção de render do comparativo
+```
 
 ---
 
 ### 4. Dashboard (`dashboard.html`)
 
-- [ ] 4.1 Carregar dashboard (gráficos sem erro)
+- [x] 4.1 Carregar dashboard (gráficos sem erro)
 - [ ] 4.2 Filtrar por ano
 - [ ] 4.3 Filtrar por mês
 - [ ] 4.4 Filtrar por categoria (select carrega, filtra)
@@ -162,7 +163,7 @@
 
 ### 5. Configurações (`configuracoes.html`)
 
-- [ ] 5.1 Carregar perfil (nome, email, email recuperação)
+- [x ] 5.1 Carregar perfil (nome, email, email recuperação)
 - [ ] 5.2 Alterar nome
 - [ ] 5.3 Alterar email recuperação
 - [ ] 5.4 Alterar email (admin — ver item 6.14)

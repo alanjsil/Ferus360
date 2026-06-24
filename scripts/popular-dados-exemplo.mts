@@ -16,26 +16,105 @@ const SUPABASE_URL = "https://lsjoopdtjjadfoqsaasu.supabase.co";
 
 const supabase = createClient(SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE);
 
-async function getCategoriaId(nome) {
-  const { data } = await supabase.from("financas_categorias").select("id").eq("eh_global", true).eq("nome", nome).maybeSingle();
+async function resolverCategoria(nome, usuarioId, tipo) {
+  const { data: existente } = await supabase
+    .from("financas_categorias")
+    .select("id")
+    .eq("nome", nome)
+    .or(`eh_global.eq.true,usuario_id.eq.${usuarioId}`)
+    .maybeSingle();
 
-  if (data) return data.id;
+  if (existente) return existente.id;
 
-  const { data: userCat } = await supabase.from("financas_categorias").select("id").eq("nome", nome).limit(1).maybeSingle();
+  const { data: criada, error } = await supabase
+    .from("financas_categorias")
+    .insert({ nome, usuario_id: usuarioId, tipo })
+    .select("id")
+    .single();
 
-  return userCat?.id || null;
+  if (error) {
+    console.error(`  Erro ao criar categoria "${nome}": ${error.message}`);
+    return null;
+  }
+
+  console.log(`  Categoria "${nome}" criada`);
+  return criada.id;
 }
 
-async function contaExiste(usuarioId, nome) {
-  const { data } = await supabase.from("financas_contas").select("id").eq("usuario_id", usuarioId).eq("nome", nome).maybeSingle();
+async function resolverSubcategoria(nome, categoriaId, usuarioId) {
+  const { data: existente } = await supabase
+    .from("financas_subcategorias")
+    .select("id")
+    .eq("categoria_id", categoriaId)
+    .eq("nome", nome)
+    .eq("usuario_id", usuarioId)
+    .maybeSingle();
 
-  return data?.id || null;
+  if (existente) return existente.id;
+
+  const { data: criada, error } = await supabase
+    .from("financas_subcategorias")
+    .insert({ nome, categoria_id: categoriaId, usuario_id: usuarioId })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error(`  Erro ao criar subcategoria "${nome}": ${error.message}`);
+    return null;
+  }
+
+  console.log(`  Subcategoria "${nome}" criada`);
+  return criada.id;
 }
 
-async function pessoaExiste(usuarioId, nome) {
-  const { data } = await supabase.from("financas_pessoas").select("id").eq("usuario_id", usuarioId).eq("nome", nome).maybeSingle();
+async function resolverConta(nome, usuarioId) {
+  const { data: existente } = await supabase
+    .from("financas_contas")
+    .select("id")
+    .eq("usuario_id", usuarioId)
+    .eq("nome", nome)
+    .maybeSingle();
 
-  return data?.id || null;
+  if (existente) return existente.id;
+
+  const { data: criada, error } = await supabase
+    .from("financas_contas")
+    .insert({ nome, usuario_id: usuarioId })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error(`  Erro ao criar conta "${nome}": ${error.message}`);
+    return null;
+  }
+
+  console.log(`  Conta "${nome}" criada`);
+  return criada.id;
+}
+
+async function resolverPessoa(nome, usuarioId) {
+  const { data: existente } = await supabase
+    .from("financas_pessoas")
+    .select("id")
+    .eq("usuario_id", usuarioId)
+    .eq("nome", nome)
+    .maybeSingle();
+
+  if (existente) return existente.id;
+
+  const { data: criada, error } = await supabase
+    .from("financas_pessoas")
+    .insert({ nome, usuario_id: usuarioId })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error(`  Erro ao criar pessoa "${nome}": ${error.message}`);
+    return null;
+  }
+
+  console.log(`  Pessoa "${nome}" criada`);
+  return criada.id;
 }
 
 async function processar() {
@@ -45,43 +124,33 @@ async function processar() {
   for (const usuario of usuarios) {
     console.log(`\n--- ${usuario.nome} (${usuario.id}) ---`);
 
-    for (const conta of usuario.contas) {
-      const existente = await contaExiste(usuario.id, conta.nome);
-      if (existente) {
-        console.log(`  Conta "${conta.nome}" já existe — ignorando`);
-        continue;
-      }
-      const { error } = await supabase.from("financas_contas").insert({ nome: conta.nome, usuario_id: usuario.id });
+    const contaCache = {};
+    const pessoaCache = {};
+    const catCache = {};
+    const subCache = {};
 
-      if (error) {
-        console.error(`  Erro ao criar conta "${conta.nome}":`, error.message);
-      } else {
-        console.log(`  Conta "${conta.nome}" criada`);
-      }
+    for (const conta of usuario.contas) {
+      contaCache[conta.nome] = await resolverConta(conta.nome, usuario.id);
     }
 
     for (const pessoa of usuario.pessoas) {
-      const existente = await pessoaExiste(usuario.id, pessoa.nome);
-      if (existente) {
-        console.log(`  Pessoa "${pessoa.nome}" já existe — ignorando`);
-        continue;
-      }
-      const { error } = await supabase.from("financas_pessoas").insert({ nome: pessoa.nome, usuario_id: usuario.id });
-
-      if (error) {
-        console.error(`  Erro ao criar pessoa "${pessoa.nome}":`, error.message);
-      } else {
-        console.log(`  Pessoa "${pessoa.nome}" criada`);
-      }
+      pessoaCache[pessoa.nome] = await resolverPessoa(pessoa.nome, usuario.id);
     }
-
-    const catCache = {};
 
     for (const lanc of usuario.lancamentos) {
       if (!catCache[lanc.categoria]) {
-        catCache[lanc.categoria] = await getCategoriaId(lanc.categoria);
+        catCache[lanc.categoria] = await resolverCategoria(lanc.categoria, usuario.id, lanc.tipo);
       }
       const categoriaId = catCache[lanc.categoria];
+
+      let subcategoriaId = null;
+      if (lanc.subcategoria && categoriaId) {
+        const cacheKey = `${categoriaId}:${lanc.subcategoria}`;
+        if (!subCache[cacheKey]) {
+          subCache[cacheKey] = await resolverSubcategoria(lanc.subcategoria, categoriaId, usuario.id);
+        }
+        subcategoriaId = subCache[cacheKey];
+      }
 
       const hoje = new Date().toISOString();
       const payload = {
@@ -92,8 +161,21 @@ async function processar() {
         usuario_id: usuario.id,
         descricao: lanc.descricao || null,
         categoria_id: categoriaId || null,
+        subcategoria_id: subcategoriaId,
         data_pagamento: lanc.status === "PAGO" ? hoje : null,
       };
+
+      if (lanc.conta && contaCache[lanc.conta]) {
+        if (lanc.tipo === "RECEITA") {
+          payload.conta_destino_id = contaCache[lanc.conta];
+        } else {
+          payload.conta_origem_id = contaCache[lanc.conta];
+        }
+      }
+
+      if (lanc.pessoa && pessoaCache[lanc.pessoa]) {
+        payload.pessoa_id = pessoaCache[lanc.pessoa];
+      }
 
       const { error } = await supabase.from("financas_lancamentos").insert(payload);
 
@@ -106,9 +188,18 @@ async function processar() {
 
     for (const orc of usuario.orcamentos) {
       if (!catCache[orc.categoria]) {
-        catCache[orc.categoria] = await getCategoriaId(orc.categoria);
+        catCache[orc.categoria] = await resolverCategoria(orc.categoria, usuario.id, orc.tipo);
       }
       const categoriaId = catCache[orc.categoria];
+
+      let subcategoriaId = null;
+      if (orc.subcategoria && categoriaId) {
+        const cacheKey = `${categoriaId}:${orc.subcategoria}`;
+        if (!subCache[cacheKey]) {
+          subCache[cacheKey] = await resolverSubcategoria(orc.subcategoria, categoriaId, usuario.id);
+        }
+        subcategoriaId = subCache[cacheKey];
+      }
 
       const payload = {
         data: orc.data,
@@ -118,7 +209,16 @@ async function processar() {
         valor_realizado: 0,
         usuario_id: usuario.id,
         categoria_id: categoriaId || null,
+        subcategoria_id: subcategoriaId,
       };
+
+      if (orc.conta && contaCache[orc.conta]) {
+        payload.conta_id = contaCache[orc.conta];
+      }
+
+      if (orc.pessoa && pessoaCache[orc.pessoa]) {
+        payload.pessoa_id = pessoaCache[orc.pessoa];
+      }
 
       const { error } = await supabase.from("financas_orcamento").insert(payload);
 

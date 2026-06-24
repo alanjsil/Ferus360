@@ -401,9 +401,18 @@ function configurarUsarPj() {
   });
 }
 
+const STORAGE_KEY_TIPO_PESSOA = "fnc:v1:tipo_pessoa";
+
 function configurarTipoPessoaToggle() {
   const container = document.getElementById("tipoPessoaToggle");
   if (!container) return;
+
+  const salvo = localStorage.getItem(STORAGE_KEY_TIPO_PESSOA);
+  if (salvo) {
+    container.dataset.tp = salvo;
+    const span = container.querySelector("span");
+    if (span) span.textContent = salvo === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+  }
 
   container.addEventListener("click", async () => {
     const atual = container.dataset.tp;
@@ -411,6 +420,7 @@ function configurarTipoPessoaToggle() {
     container.dataset.tp = novoTp;
     const span = container.querySelector("span");
     if (span) span.textContent = novoTp === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+    localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, novoTp);
     await window.electronAPI.setTipoPessoa(novoTp);
     await recarregarCadastros();
   });
@@ -421,6 +431,7 @@ function configurarTipoPessoaToggle() {
         container.dataset.tp = value;
         const span = container.querySelector("span");
         if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+        localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, value);
       }
       await recarregarCadastros();
     }));
@@ -432,6 +443,7 @@ function configurarTipoPessoaToggle() {
       container.dataset.tp = value;
       const span = container.querySelector("span");
       if (span) span.textContent = value === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
+      localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, value);
     });
   }
 
@@ -439,6 +451,7 @@ function configurarTipoPessoaToggle() {
     _cleanups.push(window.electronAPI.onUsarPjChanged(async (value) => {
       container.hidden = !value;
       if (!value) {
+        localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, "PF");
         await recarregarCadastros();
       }
     }));
