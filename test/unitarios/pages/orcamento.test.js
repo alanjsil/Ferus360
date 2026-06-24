@@ -91,10 +91,6 @@ describe("orcamento (página de lançamentos)", () => {
       expect(orcamento.formatCurrency(null)).toBe("0,00");
     });
 
-    it("getMonthKey extrai YYYY-MM de string de data", () => {
-      expect(orcamento.getMonthKey("2026-06-15")).toBe("2026-06");
-      expect(orcamento.getMonthKey("2026-01-01")).toBe("2026-01");
-    });
 
     it("formatDate formata data para pt-BR", () => {
       const result = orcamento.formatDate("2026-06-15");

@@ -27,7 +27,6 @@ const expiracao = require("./services/expiration");
 const sync = require("./services/sync");
 const { iniciarMonitoramento, pararMonitoramento } = require("./services/conexao");
 const { promptSenha } = require("./services/prompt-senha");
-const dbPath = path.join(app.getPath("userData"), "financas.db");
 
 let mainWindow: any;
 

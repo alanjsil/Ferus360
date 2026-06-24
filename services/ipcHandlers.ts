@@ -4,18 +4,24 @@ import { AuthError } from "./auth";
 import * as logger from "./logger";
 
 let _ipCache: string | undefined;
+let _ipCacheAt: number = 0;
 let _ipPromise: Promise<string | undefined> | undefined;
+const IP_CACHE_TTL_MS = 5 * 60 * 1000;
 
 async function _obterIpPublico(): Promise<string | undefined> {
-  if (_ipCache) return _ipCache;
+  if (_ipCache && Date.now() - _ipCacheAt < IP_CACHE_TTL_MS) {
+    return _ipCache;
+  }
   if (_ipPromise) return _ipPromise;
   _ipPromise = (async () => {
     try {
       const res = await fetch("https://api.ipify.org?format=json", { signal: AbortSignal.timeout(5000) });
       const data = await res.json() as { ip: string };
       _ipCache = data.ip;
+      _ipCacheAt = Date.now();
       return _ipCache;
     } catch {
+      _ipPromise = undefined;
       return undefined;
     }
   })();
@@ -139,27 +145,21 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       const tipoPessoa = obterTipoPessoaAtivo();
-      const data = await repository.getCategorias(usuarioId, tipo, false, tipoPessoa);
-      setState("categorias", data);
-      return data;
+      return await repository.getCategorias(usuarioId, tipo, false, tipoPessoa);
     },
 
     handleSubcategoriasGet: async (_event: unknown, categoriaId: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       const tipoPessoa = obterTipoPessoaAtivo();
-      const data = await repository.getSubcategorias(usuarioId, categoriaId, tipoPessoa);
-      setState("subcategorias", data);
-      return data;
+      return await repository.getSubcategorias(usuarioId, categoriaId, tipoPessoa);
     },
 
     handleContasGet: async () => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       const tipoPessoa = obterTipoPessoaAtivo();
-      const data = await repository.getContas(usuarioId, tipoPessoa);
-      setState("contas", data);
-      return data;
+      return await repository.getContas(usuarioId, tipoPessoa);
     },
 
     handleContaCreate: async (_event: unknown, payload: Record<string, unknown>) => {
@@ -212,9 +212,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       const tipoPessoa = obterTipoPessoaAtivo();
-      const data = await repository.getPessoas(usuarioId, tipoPessoa);
-      setState("pessoas", data);
-      return data;
+      return await repository.getPessoas(usuarioId, tipoPessoa);
     },
 
     handlePessoaCreate: async (_event: unknown, payload: Record<string, unknown>) => {
@@ -267,27 +265,21 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       const tipoPessoa = obterTipoPessoaAtivo();
-      const data = await repository.getLancamentos(mes, usuarioId, tipoPessoa);
-      setState("lancamentos", data);
-      return data;
+      return await repository.getLancamentos(mes, usuarioId, tipoPessoa);
     },
 
     handleOrcamentoGet: async (_event: unknown, mes: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       const tipoPessoa = obterTipoPessoaAtivo();
-      const data = await repository.getOrcamento(mes, usuarioId, tipoPessoa);
-      setState("orcamento", data);
-      return data;
+      return await repository.getOrcamento(mes, usuarioId, tipoPessoa);
     },
 
     handleDashboardDados: async (_event: unknown, ano: unknown, mes: unknown, categoria: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       const tipoPessoa = obterTipoPessoaAtivo();
-      const data = await repository.getDashboardDados(ano, mes, categoria, usuarioId, tipoPessoa);
-      setState("dashboard", data);
-      return data;
+      return await repository.getDashboardDados(ano, mes, categoria, usuarioId, tipoPessoa);
     },
 
     handleDashboardAnos: async () => {
@@ -543,7 +535,11 @@ function createHandlers(
       try {
         const senha = await promptSenha!("Digite sua senha para excluir sua conta");
         await auth.verificarSenha(usuarioId, senha);
-        return await repository.excluirConta(usuarioId);
+        const result = await repository.excluirConta(usuarioId);
+        resetStateFn();
+        setState("usuarioAtual", null);
+        await repository.limparSessaoAuth();
+        return result;
       } catch {
         return { error: "USUARIO_CANCELOU" };
       }

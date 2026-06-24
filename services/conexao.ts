@@ -1,6 +1,6 @@
 import "../src/env";
 import { createClient } from "@supabase/supabase-js";
-import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import EventEmitter from "events";
 
 const SUPABASE_URL = "https://lsjoopdtjjadfoqsaasu.supabase.co";

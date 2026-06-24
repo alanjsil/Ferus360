@@ -26,7 +26,9 @@ const api = {
   temTokenRecuperacao: () => ipcRenderer.invoke("auth:tem-token-recuperacao"),
   getTempoRestanteRecuperacao: () => ipcRenderer.invoke("auth:tempo-restante-recuperacao"),
   onRecoveryExpired: (callback: () => void) => {
-    ipcRenderer.on("recovery:expired", () => callback());
+    const handler = () => callback();
+    ipcRenderer.on("recovery:expired", handler);
+    return () => ipcRenderer.removeListener("recovery:expired", handler);
   },
   redefinirSenha: (novaSenha: string) => ipcRenderer.invoke("auth:redefinir-senha", novaSenha),
   trocarSenha: (usuarioId: string, novaSenha: string) => ipcRenderer.invoke("auth:trocar-senha", usuarioId, novaSenha),

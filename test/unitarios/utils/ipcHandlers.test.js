@@ -43,6 +43,7 @@ const mockRepository = {
   deletarPessoa: vi.fn(),
   getSessoes: vi.fn(),
   deletarSessao: vi.fn(),
+  limparSessaoAuth: vi.fn(),
 };
 
 const mockSetState = vi.fn();
@@ -257,7 +258,6 @@ describe("ipcHandlers (handlers de IPC)", () => {
       // Act
       const result = await handlers.handleCategoriasGet(null, "DESPESA");
       expect(mockRepository.getCategorias).toHaveBeenCalledWith("user-123", "DESPESA", false, "PF");
-      expect(mockSetState).toHaveBeenCalledWith("categorias", [mockData]);
       expect(result).toEqual([mockData]);
     });
 
@@ -269,14 +269,12 @@ describe("ipcHandlers (handlers de IPC)", () => {
       // Act
       const result = await handlers.handleContasGet(null);
       expect(mockRepository.getContas).toHaveBeenCalledWith("user-123", "PF");
-      expect(mockSetState).toHaveBeenCalledWith("contas", [mockData]);
       expect(result).toEqual([mockData]);
     });
 
     it("calls repository.getPessoas on pessoas:get", async () => {
       const result = await handlers.handlePessoasGet(null);
       expect(mockRepository.getPessoas).toHaveBeenCalledWith("user-123", "PF");
-      expect(mockSetState).toHaveBeenCalledWith("pessoas", [mockData]);
       expect(result).toEqual([mockData]);
     });
 
@@ -325,28 +323,24 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("calls repository.getLancamentos on lancamentos:get", async () => {
       const result = await handlers.handleLancamentosGet(null, "2026-06");
       expect(mockRepository.getLancamentos).toHaveBeenCalledWith("2026-06", "user-123", "PF");
-      expect(mockSetState).toHaveBeenCalledWith("lancamentos", [mockData]);
       expect(result).toEqual([mockData]);
     });
 
     it("calls repository.getOrcamento on orcamento:get", async () => {
       const result = await handlers.handleOrcamentoGet(null, "2026-06");
       expect(mockRepository.getOrcamento).toHaveBeenCalledWith("2026-06", "user-123", "PF");
-      expect(mockSetState).toHaveBeenCalledWith("orcamento", [mockData]);
       expect(result).toEqual([mockData]);
     });
 
     it("calls repository.getSubcategorias on subcategorias:get", async () => {
       const result = await handlers.handleSubcategoriasGet(null, "cat-1");
       expect(mockRepository.getSubcategorias).toHaveBeenCalledWith("user-123", "cat-1", "PF");
-      expect(mockSetState).toHaveBeenCalledWith("subcategorias", [mockData]);
       expect(result).toEqual([mockData]);
     });
 
     it("calls repository.getDashboardDados on dashboard:dados", async () => {
       const result = await handlers.handleDashboardDados(null, "2026", "06", "cat-1");
       expect(mockRepository.getDashboardDados).toHaveBeenCalledWith("2026", "06", "cat-1", "user-123", "PF");
-      expect(mockSetState).toHaveBeenCalledWith("dashboard", mockData);
       expect(result).toEqual(mockData);
     });
 
@@ -493,15 +487,22 @@ describe("ipcHandlers (handlers de IPC)", () => {
       expect(result).toEqual(mockExport);
     });
 
-    it("handleConfigExcluirConta obtém senha via promptSenha e exclui", async () => {
+    it("handleConfigExcluirConta obtém senha via promptSenha, exclui e limpa estado", async () => {
       mockPromptSenha.mockResolvedValue("senha-dialog");
       mockAuth.verificarSenha = vi.fn().mockResolvedValue({ success: true });
       mockRepository.excluirConta = vi.fn().mockResolvedValue({ success: true });
+      const mockResetStateFn = vi.fn();
+      const handlers = ipcHandlersModule.createHandlers(
+        mockRepository, mockSetState, mockGetState, mockResetStateFn, mockAuth, mockAdminService, mockPromptSenha
+      );
 
       const result = await handlers.handleConfigExcluirConta(null);
       expect(mockPromptSenha).toHaveBeenCalledWith("Digite sua senha para excluir sua conta");
       expect(mockAuth.verificarSenha).toHaveBeenCalledWith("user-123", "senha-dialog");
       expect(mockRepository.excluirConta).toHaveBeenCalledWith("user-123");
+      expect(mockResetStateFn).toHaveBeenCalled();
+      expect(mockSetState).toHaveBeenCalledWith("usuarioAtual", null);
+      expect(mockRepository.limparSessaoAuth).toHaveBeenCalled();
       expect(result).toEqual({ success: true });
     });
 

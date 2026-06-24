@@ -6,6 +6,7 @@ import { iniciarToggleSenha, avaliarRequisitos } from "./password-utils.js";
 
 let modoManual = false;
 let _recoveryInterval = null;
+let _cleanupRecovery = null;
 
 async function obterTokenRecuperacao() {
   const temToken = await window.electronAPI.temTokenRecuperacao();
@@ -185,7 +186,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("redefinirForm").addEventListener("submit", redefinir);
 
-  window.electronAPI.onRecoveryExpired(() => {
+  _cleanupRecovery = window.electronAPI.onRecoveryExpired(() => {
     if (_recoveryInterval) {
       clearInterval(_recoveryInterval);
       _recoveryInterval = null;
@@ -212,4 +213,5 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 window.addEventListener("beforeunload", () => {
   if (_recoveryInterval) clearInterval(_recoveryInterval);
+  if (_cleanupRecovery) _cleanupRecovery();
 });

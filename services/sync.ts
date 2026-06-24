@@ -111,6 +111,7 @@ function getStatus(extra: Record<string, unknown> = {}): SyncStatus {
 
   return {
     online: _isOnline(),
+    syncing: _syncing,
     pendentes: pendingCount,
     conflitos: conflictsCount,
     ultimoPush,
@@ -129,6 +130,7 @@ async function forcarSync(): Promise<void> {
 async function push(): Promise<void> {
   if (_syncing) return;
   _syncing = true;
+  notificarStatus({ syncing: true });
 
   try {
     if (!_isOnline()) return;

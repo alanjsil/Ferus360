@@ -156,6 +156,7 @@ export interface Auditoria {
 
 export interface SyncStatus {
   online: boolean;
+  syncing: boolean;
   pendentes: number;
   conflitos: number;
   ultimoPush: string | null;

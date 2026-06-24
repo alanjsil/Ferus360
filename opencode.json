@@ -78,19 +78,6 @@
     "external_directory": "deny"
   },
 
-  "agent": {
-    "code-reviewer": {
-      "description": "Revisa código para melhores práticas e potenciais problemas",
-      "model": "google/gemini-3.5-flash",
-      "prompt": "Você é um revisor de código. Foque em segurança, performance e manutenibilidade.",
-      "tools": {
-        // Desabilitar ferramentas de modificação de arquivo para agente de apenas revisão
-        "write": false,
-        "edit": false
-      }
-    }
-  },
-
   "compaction": {
     "auto": true,
     "prune": true,

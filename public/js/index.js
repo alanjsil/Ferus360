@@ -36,7 +36,11 @@ function configurarSyncStatus() {
 
   _cleanups.push(
     window.electronAPI.onSyncStatus(async (status) => {
-      // ← async aqui
+      const indicator = document.getElementById("syncIndicator");
+      if (indicator) {
+        indicator.hidden = !status.syncing;
+      }
+
       const count = status.conflitos || 0;
       badge.hidden = count === 0;
       badge.textContent = count;
@@ -49,7 +53,7 @@ function configurarSyncStatus() {
       }
 
       if (status.dadosAtualizados) {
-        await recarregarTudo(); // ← agora válido
+        await recarregarTudo();
       }
     }),
   );
@@ -1033,15 +1037,6 @@ function mostrarResultadoImportacao(resultado) {
 function formatCurrency(value) {
   return formatarMoeda(value);
 }
-// Retorna o mês no formato YYYY-MM
-/**
- * @param {string} dateStr
- * @returns {string}
- */
-function getMonthKey(dateStr) {
-  const parts = dateStr.split("-");
-  return `${parts[0]}-${parts[1]}`;
-}
 // Formatador de data
 /**
  * @param {string} dateStr
@@ -1477,7 +1472,6 @@ export {
   fecharModalImportacao,
   formatCurrency,
   formatDate,
-  getMonthKey,
   mostrarFeedback,
   mostrarResultadoImportacao,
   processarImportacao,

@@ -285,22 +285,3 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
 const defaultService = construirAdminService();
 
 export { defaultService as createAdminService, construirAdminService, AdminError };
-export const {
-  verificarAdmin,
-  getDashboard,
-  getClientes,
-  toggleCliente,
-  getResumoCliente,
-  getTransacoesCliente,
-  getOrcamentoCliente,
-  getDashboardDadosCliente,
-  getAnosDisponiveisCliente,
-  getContasCliente,
-  resetSenha,
-  getChamados,
-  responderChamado,
-  updateChamado,
-  criarChamado,
-  getAuditoria,
-  criarUsuario,
-} = defaultService;
