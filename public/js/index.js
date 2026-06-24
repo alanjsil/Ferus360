@@ -936,17 +936,21 @@ function transformarItens(itensBrutos, mesRef) {
 }
 // 3. Controlador principal (processarImportacao) fica mais limpo
 async function processarImportacao() {
-  // Coletar dados
-  const dadosCSV = document.getElementById("dadosImportacao").value.trim();
-  const mesRef = document.getElementById("mesImportacao").value;
-
-  // Validações básicas
-  if (!dadosCSV || !mesRef) {
-    exibirToast("Preencha todos os campos!", "warning");
-    return;
-  }
+  const btn = document.getElementById("btnImportarDados");
+  btn.disabled = true;
+  btn.textContent = "Importando...";
 
   try {
+    // Coletar dados
+    const dadosCSV = document.getElementById("dadosImportacao").value.trim();
+    const mesRef = document.getElementById("mesImportacao").value;
+
+    // Validações básicas
+    if (!dadosCSV || !mesRef) {
+      exibirToast("Preencha todos os campos!", "warning");
+      return;
+    }
+
     // Pipeline claro
     const itensBrutos = analisarCSV(dadosCSV);
     const itensProcessados = transformarItens(itensBrutos, mesRef);
@@ -967,6 +971,9 @@ async function processarImportacao() {
     mostrarResultadoImportacao(resultado);
   } catch (error) {
     exibirToast("Erro: " + error.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Importar";
   }
 }
 
