@@ -16,6 +16,7 @@ let chartMensal, chartCategorias, chartSaldo;
 
 // Dados
 let dadosDashboard = [];
+let _carregarSeq = 0;
 
 // Inicialização
 document.addEventListener("DOMContentLoaded", async function () {
@@ -27,10 +28,17 @@ document.addEventListener("DOMContentLoaded", async function () {
   await carregarCategorias();
   await popularAnos();
   await carregarDashboard();
-  popularMeses();
 
-  // Adicionar event listeners para os filtros
+  // Event listeners ANTES de popularMeses() para garantir que
+  // sempre sejam registrados, mesmo se popularMeses() falhar
   adicionarEventListeners();
+
+  try {
+    popularMeses();
+  } catch (e) {
+    window.electronAPI?.logError("dashboard", "Erro ao popular meses", e);
+  }
+
   configurarLogout();
   configurarTipoPessoaToggle();
 });
@@ -141,7 +149,13 @@ function adicionarEventListeners() {
 
   // Atualizar ao mudar categoria
   document.getElementById("filtroCategoria").addEventListener("change", async function () {
+    const mesAtual = document.getElementById("filtroMes").value;
     await carregarDashboard();
+    popularMeses();
+    const select = document.getElementById("filtroMes");
+    if ([...select.options].some(o => o.value === mesAtual)) {
+      select.value = mesAtual;
+    }
   });
 
   // O filtro tipo gráfico já tem onchange no HTML para renderizarGraficoCategorias()
@@ -250,8 +264,15 @@ async function carregarDashboard() {
 
     mostrarLoading();
 
-    const dados = await window.electronAPI.getDashboardDados(ano, mes !== "all" ? mes : undefined, categoria !== "all" ? categoria : undefined);
+    const seq = ++_carregarSeq;
+    const dados = await window.electronAPI.getDashboardDados(ano, mes && mes !== "all" ? mes : undefined, categoria && categoria !== "all" ? categoria : undefined);
 
+    if (seq !== _carregarSeq) return;
+    if (dados?.error) {
+      window.electronAPI?.logError("dashboard", "Erro retornado pelo backend", dados.detalhe || dados.error);
+      esconderLoading();
+      return;
+    }
     dadosDashboard = dados;
     renderizarGraficos();
 

@@ -210,8 +210,14 @@ async function getDashboardDados(ano: string | number, mes?: string | number, ca
 
   const [{ data: lancamentos, error: errorLancamentos }, { data: orcamentos, error: errorOrcamentos }] = await Promise.all([lancamentosQuery, orcamentoQuery]);
 
-  if (errorLancamentos) throw errorLancamentos;
-  if (errorOrcamentos) throw errorOrcamentos;
+  if (errorLancamentos) {
+    logger.error("repository", "Erro Supabase ao buscar lançamentos no dashboard", errorLancamentos);
+    throw errorLancamentos;
+  }
+  if (errorOrcamentos) {
+    logger.error("repository", "Erro Supabase ao buscar orçamentos no dashboard", errorOrcamentos);
+    throw errorOrcamentos;
+  }
 
   return {
     lancamentos: (lancamentos || []) as unknown as Lancamento[],

@@ -276,10 +276,15 @@ function createHandlers(
     },
 
     handleDashboardDados: async (_event: unknown, ano: unknown, mes: unknown, categoria: string) => {
-      const usuarioId = obterUsuarioId();
-      if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const tipoPessoa = obterTipoPessoaAtivo();
-      return await repository.getDashboardDados(ano, mes, categoria, usuarioId, tipoPessoa);
+      try {
+        const usuarioId = obterUsuarioId();
+        if (!usuarioId) return { error: "UNAUTHORIZED" };
+        const tipoPessoa = obterTipoPessoaAtivo();
+        return await repository.getDashboardDados(ano, mes, categoria, usuarioId, tipoPessoa);
+      } catch (err) {
+        logger.error("ipc", "Erro no dashboard:dados", err);
+        return { error: "ERRO_INTERNO", detalhe: err instanceof Error ? err.message : String(err) };
+      }
     },
 
     handleDashboardAnos: async () => {
