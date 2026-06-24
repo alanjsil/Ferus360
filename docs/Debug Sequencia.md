@@ -168,14 +168,14 @@
 - [x] 5.3 Alterar email recuperação (obsoleto)
 - [ ] 5.4 Alterar email (admin — ver item 6.14)
 - [x] 5.5 Upload avatar (>2MB erro, PNG/JPG preview)
-- [ ] 5.6 Trocar senha — confirmação errada
-- [ ] 5.7 Trocar senha — senha atual errada
-- [ ] 5.8 Trocar senha — sucesso
-- [ ] 5.9 Sessões (lista sessões)
-- [ ] 5.10 Exportar dados (download CSV)
-- [ ] 5.11 Excluir conta — email errado
-- [ ] 5.12 Excluir conta — senha errada
-- [ ] 5.13 Excluir conta — sucesso
+- [x] 5.6 Trocar senha — confirmação errada
+- [x] 5.7 Trocar senha — senha atual errada
+- [x] 5.8 Trocar senha — sucesso
+- [x] 5.9 Sessões (lista sessões)
+- [x] 5.10 Exportar dados (download CSV)
+- [x] 5.11 Excluir conta — email errado
+- [x] 5.12 Excluir conta — senha errada
+- [x] 5.13 Excluir conta — sucesso
 
 ---
 

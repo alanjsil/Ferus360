@@ -1,6 +1,6 @@
 import type { Lancamento, Orcamento, Chamado, AdminDashboard, Usuario } from "../../src/types";
 import * as logger from "../logger";
-import { supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionResult, _marcarPendente } from "./utils";
+import { supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionResult } from "./utils";
 
 async function getAdminDashboard(): Promise<AdminDashboard> {
   const anoCorrente = new Date().getFullYear();

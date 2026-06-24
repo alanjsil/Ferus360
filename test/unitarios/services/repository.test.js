@@ -400,22 +400,23 @@ describe("getSessoes", () => {
     expect(result[0].criado_em).toBe("2026-06-01T00:00:00Z");
   });
 
-  it("fallback para supabaseAdmin.rpc se edge function falha", async () => {
+  it("fallback para supabaseAdmin.from('auth_sessions') se edge function falha", async () => {
     mockSupabase.auth.getSession.mockResolvedValue({
       data: { session: { access_token: "test-token" } },
       error: null,
     });
     globalThis.fetch.mockRejectedValue(new Error("network error"));
-    mockSupabaseAdmin.rpc.mockResolvedValue({
-      data: [{ id: "s-1", user_agent: "Chrome", ip: "127.0.0.1", created_at: "2026-06-01T00:00:00Z" }],
-      error: null,
-    });
+    const mockData = [{ id: "s-1", user_agent: "Chrome", ip: "127.0.0.1", created_at: "2026-06-01T00:00:00Z" }];
+    const fromObj = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: mockData, error: null }),
+    };
+    mockSupabaseAdmin.from = vi.fn().mockReturnValue(fromObj);
 
     const result = await repo.getSessoes("550e8400-e29b-41d4-a716-446655440000");
 
-    expect(mockSupabaseAdmin.rpc).toHaveBeenCalledWith("get_user_sessions", {
-      p_user_id: "550e8400-e29b-41d4-a716-446655440000",
-    });
+    expect(mockSupabaseAdmin.from).toHaveBeenCalledWith("auth_sessions");
     expect(result).toHaveLength(1);
   });
 
@@ -431,14 +432,24 @@ describe("getSessoes", () => {
     expect(result).toEqual([]);
   });
 
-  it("retorna array vazio se RPC retorna null", async () => {
-    mockSupabaseAdmin.rpc.mockResolvedValue({ data: null, error: null });
+  it("retorna array vazio se query retorna null", async () => {
+    const fromObj = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    mockSupabaseAdmin.from = vi.fn().mockReturnValue(fromObj);
     const result = await repo.getSessoes("550e8400-e29b-41d4-a716-446655440000");
     expect(result).toEqual([]);
   });
 
-  it("lança erro se RPC falha", async () => {
-    mockSupabaseAdmin.rpc.mockResolvedValue({ data: null, error: new Error("DB error") });
+  it("lança erro se query falha", async () => {
+    const fromObj = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: null, error: new Error("DB error") }),
+    };
+    mockSupabaseAdmin.from = vi.fn().mockReturnValue(fromObj);
     await expect(repo.getSessoes("550e8400-e29b-41d4-a716-446655440000")).rejects.toThrow("DB error");
   });
 });
@@ -446,10 +457,16 @@ describe("getSessoes", () => {
 /* ─────────── deleteSessao ─────────── */
 
 describe("deleteSessao", () => {
-  const mockSupabaseAdmin = { rpc: vi.fn() };
+  const makeMockFrom = () => ({
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+  });
+
+  let mockSupabaseAdmin;
   let originalFetch;
 
   beforeEach(() => {
+    mockSupabaseAdmin = { from: vi.fn().mockReturnValue(makeMockFrom()) };
     repo.__setSupabaseAdmin(mockSupabaseAdmin);
     originalFetch = globalThis.fetch;
     globalThis.fetch = vi.fn();
@@ -474,15 +491,13 @@ describe("deleteSessao", () => {
     expect(result).toEqual({ success: true });
   });
 
-  it("fallback para supabaseAdmin.rpc se edge function falha", async () => {
+  it("fallback para supabaseAdmin.from('auth_refresh_tokens') e auth_sessions se edge function falha", async () => {
     globalThis.fetch.mockRejectedValue(new Error("network error"));
-    mockSupabaseAdmin.rpc.mockResolvedValue({ data: null, error: null });
 
     const result = await repo.deletarSessao("sessao-1");
 
-    expect(mockSupabaseAdmin.rpc).toHaveBeenCalledWith("delete_user_session", {
-      p_session_id: "sessao-1",
-    });
+    expect(mockSupabaseAdmin.from).toHaveBeenCalledWith("auth_refresh_tokens");
+    expect(mockSupabaseAdmin.from).toHaveBeenCalledWith("auth_sessions");
     expect(result).toEqual({ success: true });
   });
 
@@ -491,11 +506,12 @@ describe("deleteSessao", () => {
     await expect(repo.deletarSessao("")).rejects.toThrow("SESSAO_ID_AUSENTE");
   });
 
-  it("lança erro se edge function e RPC falham", async () => {
+  it("fallback não lança erro mesmo se query falha (fire-and-forget)", async () => {
     globalThis.fetch.mockRejectedValue(new Error("network error"));
-    mockSupabaseAdmin.rpc.mockResolvedValue({ data: null, error: new Error("RPC error") });
 
-    await expect(repo.deletarSessao("sessao-1")).rejects.toThrow("RPC error");
+    const result = await repo.deletarSessao("sessao-1");
+
+    expect(result).toEqual({ success: true });
   });
 });
 

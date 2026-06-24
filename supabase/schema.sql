@@ -28,11 +28,7 @@ CREATE TABLE financas_categorias (
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
   tipo_pessoa TEXT CHECK (tipo_pessoa IN ('PF', 'PJ')), -- NULL = compartilhada
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  version INTEGER DEFAULT 1,
-  deleted_at TIMESTAMPTZ,
-  device_id TEXT,
-  updated_by UUID REFERENCES financas_usuarios (id)
+  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 3. SUBCATEGORIAS
@@ -43,11 +39,7 @@ CREATE TABLE financas_subcategorias (
   usuario_id UUID NOT NULL REFERENCES financas_usuarios (id),
   tipo_pessoa TEXT CHECK (tipo_pessoa IN ('PF', 'PJ')), -- NULL = compartilhada
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  version INTEGER DEFAULT 1,
-  deleted_at TIMESTAMPTZ,
-  device_id TEXT,
-  updated_by UUID REFERENCES financas_usuarios (id)
+  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 4. CONTAS
@@ -57,11 +49,7 @@ CREATE TABLE financas_contas (
   usuario_id UUID REFERENCES financas_usuarios (id) ON DELETE CASCADE,
   tipo_pessoa TEXT NOT NULL DEFAULT 'PF' CHECK (tipo_pessoa IN ('PF', 'PJ')),
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  version INTEGER DEFAULT 1,
-  deleted_at TIMESTAMPTZ,
-  device_id TEXT,
-  updated_by UUID REFERENCES financas_usuarios (id)
+  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 5. PESSOAS
@@ -71,11 +59,7 @@ CREATE TABLE financas_pessoas (
   usuario_id UUID REFERENCES financas_usuarios (id) ON DELETE CASCADE,
   tipo_pessoa TEXT NOT NULL DEFAULT 'PF' CHECK (tipo_pessoa IN ('PF', 'PJ')),
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  version INTEGER DEFAULT 1,
-  deleted_at TIMESTAMPTZ,
-  device_id TEXT,
-  updated_by UUID REFERENCES financas_usuarios (id)
+  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 6. CHAMADOS (suporte)
@@ -87,11 +71,7 @@ CREATE TABLE financas_chamados (
   respostas JSONB NOT NULL DEFAULT '[]'::jsonb,
   status TEXT NOT NULL DEFAULT 'aberto' CHECK (status IN ('aberto', 'em_andamento', 'resolvido')),
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  version INTEGER DEFAULT 1,
-  deleted_at TIMESTAMPTZ,
-  device_id TEXT,
-  updated_by UUID REFERENCES financas_usuarios (id)
+  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 8. LANÇAMENTOS
@@ -127,11 +107,7 @@ CREATE TABLE financas_lancamentos (
     )
   ) STORED,
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  version INTEGER DEFAULT 1,
-  deleted_at TIMESTAMPTZ,
-  device_id TEXT,
-  updated_by UUID REFERENCES financas_usuarios (id)
+  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 9. ORÇAMENTO
@@ -173,11 +149,7 @@ CREATE TABLE financas_orcamento (
     )
   ) STORED,
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  version INTEGER DEFAULT 1,
-  deleted_at TIMESTAMPTZ,
-  device_id TEXT,
-  updated_by UUID REFERENCES financas_usuarios (id)
+  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================
@@ -475,149 +447,26 @@ BEFORE UPDATE ON financas_orcamento FOR EACH ROW
 EXECUTE FUNCTION trigger_set_atualizado_em ();
 
 -- ============================================================
--- TRIGGER: atualizado_em via sync (BEFORE UPDATE)
+-- RPCs: gerenciamento de sessões (auth schema)
 -- ============================================================
-CREATE OR REPLACE FUNCTION trigger_set_updated_at () RETURNS TRIGGER AS $$
-BEGIN
-  NEW.atualizado_em = now();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER set_updated_at_categorias
-BEFORE UPDATE ON financas_categorias FOR EACH ROW
-EXECUTE FUNCTION trigger_set_updated_at ();
-
-CREATE TRIGGER set_updated_at_subcategorias
-BEFORE UPDATE ON financas_subcategorias FOR EACH ROW
-EXECUTE FUNCTION trigger_set_updated_at ();
-
-CREATE TRIGGER set_updated_at_contas
-BEFORE UPDATE ON financas_contas FOR EACH ROW
-EXECUTE FUNCTION trigger_set_updated_at ();
-
-CREATE TRIGGER set_updated_at_pessoas
-BEFORE UPDATE ON financas_pessoas FOR EACH ROW
-EXECUTE FUNCTION trigger_set_updated_at ();
-
-CREATE TRIGGER set_updated_at_chamados
-BEFORE UPDATE ON financas_chamados FOR EACH ROW
-EXECUTE FUNCTION trigger_set_updated_at ();
-
-CREATE TRIGGER set_updated_at_lancamentos
-BEFORE UPDATE ON financas_lancamentos FOR EACH ROW
-EXECUTE FUNCTION trigger_set_updated_at ();
-
-CREATE TRIGGER set_updated_at_orcamento
-BEFORE UPDATE ON financas_orcamento FOR EACH ROW
-EXECUTE FUNCTION trigger_set_updated_at ();
-
--- ============================================================
--- RPCs de sincronia (offline-first)
--- ============================================================
-CREATE OR REPLACE FUNCTION sync_insert (tabela TEXT, payload JSONB) RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = public AS $$
-DECLARE
-  v_resultado JSONB;
-  v_sql TEXT;
-  v_cols TEXT;
-  v_vals TEXT;
-BEGIN
-  IF tabela NOT IN ('financas_lancamentos', 'financas_categorias', 'financas_subcategorias', 'financas_contas', 'financas_pessoas', 'financas_orcamento', 'financas_chamados') THEN
-    RAISE EXCEPTION 'Tabela não permitida: %', tabela;
-  END IF;
-
-  SELECT string_agg(format('%I', key), ', '),
-         string_agg(format('$1->>%L', key), ', ')
-  INTO v_cols, v_vals
-  FROM jsonb_object_keys(payload) AS key;
-
-  v_sql := format('INSERT INTO %I (%s) VALUES (%s) RETURNING row_to_json(%I.*)',
-    tabela, v_cols, v_vals, tabela);
-
-  EXECUTE v_sql INTO v_resultado USING payload;
-  RETURN v_resultado;
-END;
+CREATE OR REPLACE FUNCTION get_user_sessions (p_user_id UUID)
+RETURNS TABLE (id UUID, user_agent TEXT, ip INET, created_at TIMESTAMPTZ)
+LANGUAGE SQL STABLE SECURITY DEFINER
+SET search_path = auth
+AS $$
+  SELECT id, user_agent, ip, created_at
+  FROM sessions
+  WHERE user_id = p_user_id
+  ORDER BY created_at DESC;
 $$;
 
-CREATE OR REPLACE FUNCTION sync_upsert (registro_id UUID, expected_version INT, tabela TEXT, payload JSONB) RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = public AS $$
-DECLARE
-  v_linhas INT;
-  v_resultado JSONB;
-  v_sets TEXT;
-  v_sql TEXT;
-BEGIN
-  IF tabela NOT IN ('financas_lancamentos', 'financas_categorias', 'financas_subcategorias', 'financas_contas', 'financas_pessoas', 'financas_orcamento', 'financas_chamados') THEN
-    RAISE EXCEPTION 'Tabela não permitida: %', tabela;
-  END IF;
-
-  SELECT string_agg(format('%I = $3->>%L', key, key), ', ')
-  INTO v_sets
-  FROM jsonb_object_keys(payload) AS key
-  WHERE key NOT IN ('id', 'version');
-
-  IF v_sets IS NULL OR v_sets = '' THEN
-    RAISE EXCEPTION 'Payload vazio ou contém apenas id/version';
-  END IF;
-
-  v_sql := format(
-    'UPDATE %I SET %s, version = version + 1 WHERE id = $1 AND version = $2',
-    tabela, v_sets
-  );
-
-  EXECUTE v_sql USING registro_id, expected_version, payload;
-  GET DIAGNOSTICS v_linhas = ROW_COUNT;
-
-  IF v_linhas = 0 THEN
-    RAISE EXCEPTION 'CONFLICT' USING ERRCODE = 'P0001';
-  END IF;
-
-  EXECUTE format('SELECT row_to_json(t) FROM %I t WHERE id = $1', tabela)
-    INTO v_resultado USING registro_id;
-  RETURN v_resultado;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION sync_delete (registro_id UUID, tabela TEXT) RETURNS void LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = public AS $$
-BEGIN
-  IF tabela NOT IN ('financas_lancamentos', 'financas_categorias', 'financas_subcategorias', 'financas_contas', 'financas_pessoas', 'financas_orcamento', 'financas_chamados') THEN
-    RAISE EXCEPTION 'Tabela não permitida: %', tabela;
-  END IF;
-
-  EXECUTE format(
-    'UPDATE %I SET deleted_at = now(), version = version + 1 WHERE id = $1',
-    tabela
-  ) USING registro_id;
-END;
-$$;
-
--- ============================================================
--- RPCs de gerenciamento de sessões (auth schema)
--- ============================================================
-CREATE OR REPLACE FUNCTION get_user_sessions (p_user_id UUID) RETURNS TABLE (id UUID, user_agent TEXT, ip INET, created_at TIMESTAMPTZ) LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = auth AS $$
-BEGIN
-  RETURN QUERY
-  SELECT s.id, s.user_agent, s.ip, s.created_at
-  FROM auth.sessions s
-  WHERE s.user_id = p_user_id
-  ORDER BY s.created_at DESC;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION delete_user_session (p_session_id UUID) RETURNS void LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = auth AS $$
-BEGIN
-  DELETE FROM auth.refresh_tokens WHERE session_id = p_session_id;
-  DELETE FROM auth.sessions WHERE id = p_session_id;
-END;
+CREATE OR REPLACE FUNCTION delete_user_session (p_session_id UUID)
+RETURNS VOID
+LANGUAGE SQL SECURITY DEFINER
+SET search_path = auth
+AS $$
+  DELETE FROM refresh_tokens WHERE session_id = p_session_id;
+  DELETE FROM sessions WHERE id = p_session_id;
 $$;
 
 -- ============================================================
@@ -721,7 +570,6 @@ CREATE TYPE acao_auditoria AS ENUM(
   'ADMIN_TOGGLE_USUARIO',
   'ADMIN_RESET_SENHA',
   'ADMIN_CRIOU_USUARIO',
-  'CONFLITO_RESOLVIDO'
 );
 
 CREATE TABLE financas_auditoria (

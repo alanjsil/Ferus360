@@ -150,19 +150,7 @@ export interface Auditoria {
   user_agent?: string | null;
   contexto?: string;
   criado_em?: string;
-  device_id?: string | null;
   usuario?: { nome: string; email: string } | null;
-}
-
-export interface SyncStatus {
-  online: boolean;
-  syncing: boolean;
-  pendentes: number;
-  conflitos: number;
-  ultimoPush: string | null;
-  ultimoPull: string | null;
-  dbIntegrity: string;
-  forcar?: boolean;
 }
 
 export interface Sessao {
@@ -212,17 +200,6 @@ export interface FiltrosAuditoria {
   de?: string;
   ate?: string;
   limite?: number;
-}
-
-export interface ConflitoSync {
-  id: string;
-  entidade: string;
-  registro_id: string;
-  local_data: string;
-  remote_data: string;
-  created_at: string;
-  resolvido_em: string | null;
-  resolvido_como: string | null;
 }
 
 export interface CriarCategoriaPayload {

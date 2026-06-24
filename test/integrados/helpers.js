@@ -83,7 +83,7 @@ export function createMockSupabase() {
       }),
     },
 
-    rpc: vi.fn().mockImplementation(async (fnName, args) => {
+    rpc: vi.fn().mockImplementation(async (fnName, _args) => {
       if (fnName === "excluir_conta") {
         if (!currentUserId) return { data: null, error: new Error("No session") };
         db.financas_auditoria.push({
@@ -105,50 +105,6 @@ export function createMockSupabase() {
             db[table] = db[table].filter((r) => r.usuario_id !== currentUserId);
           }
         });
-        return { data: null, error: null };
-      }
-
-      if (fnName === "sync_insert") {
-        const { tabela, payload } = args;
-        if (!db[tabela]) db[tabela] = [];
-        const record = { ...payload, version: 1 };
-        db[tabela].push(record);
-        return { data: { ...record, atualizado_em: new Date().toISOString() }, error: null };
-      }
-
-      if (fnName === "sync_upsert") {
-        const { registro_id, expected_version, tabela, payload } = args;
-        const idx = db[tabela]?.findIndex((r) => r.id === registro_id);
-
-        if (idx === -1 || idx === undefined) {
-          // Registro não encontrado — trata como insert
-          if (!db[tabela]) db[tabela] = [];
-          const record = { id: registro_id, ...payload, version: 1 };
-          db[tabela].push(record);
-          const inserted = db[tabela][db[tabela].length - 1];
-          return { data: { ...inserted, atualizado_em: new Date().toISOString() }, error: null };
-        }
-
-        const record = db[tabela][idx];
-        if (record.version !== expected_version) {
-          return { data: null, error: new Error("CONFLICT") };
-        }
-
-        // Atualiza registro e incrementa version
-        Object.assign(record, payload, {
-          version: record.version + 1,
-          atualizado_em: new Date().toISOString(),
-        });
-        return { data: { ...record }, error: null };
-      }
-
-      if (fnName === "sync_delete") {
-        const { registro_id, tabela } = args;
-        const idx = db[tabela]?.findIndex((r) => r.id === registro_id);
-        if (idx !== -1 && idx !== undefined) {
-          db[tabela][idx].deleted_at = new Date().toISOString();
-          db[tabela][idx].version = (db[tabela][idx].version || 1) + 1;
-        }
         return { data: null, error: null };
       }
 

@@ -12,7 +12,6 @@
 
 import { test, expect, _electron as electron } from "@playwright/test";
 import path from "path";
-import fs from "fs";
 import os from "os";
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
@@ -82,18 +81,6 @@ test.describe("Auth -> Lançamentos -> Dashboard [Playwright]", () => {
   });
 
   test("Fluxo completo: Login -> Criar Lançamento -> Dashboard", async () => {
-    // Limpar cache SQLite local para forçar consulta ao Supabase
-    const dbPath = path.join(os.homedir(), "AppData", "Roaming", "financas", "financas.db");
-    try {
-      fs.unlinkSync(dbPath);
-    } catch {}
-    try {
-      fs.unlinkSync(dbPath + "-wal");
-    } catch {}
-    try {
-      fs.unlinkSync(dbPath + "-shm");
-    } catch {}
-
     const electronApp = await electron.launch({ args: ["."] });
 
     const page = await electronApp.firstWindow();

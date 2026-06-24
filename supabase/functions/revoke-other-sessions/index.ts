@@ -34,16 +34,21 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "SESSAO_ID_NAO_ENCONTRADO" }), { status: 400, headers: { "Content-Type": "application/json" } });
     }
 
-    const { data: sessions, error: listError } = await supabaseAdmin.rpc("get_user_sessions", { p_user_id: user.id });
+    const { data: sessions, error: listError } = await supabaseAdmin
+      .rpc("get_user_sessions", { p_user_id: user.id });
 
     if (listError) throw listError;
 
-    const outrasSessoes = (sessions || []).filter((s: { id: string }) => s.id !== sessaoAtualId);
+    const outrasSessoes = (sessions || []).filter(
+      (s: { id: string }) => s.id !== sessaoAtualId,
+    );
 
     for (const sessao of outrasSessoes) {
-      await supabaseAdmin.rpc("delete_user_session", {
+      const { error } = await supabaseAdmin.rpc("delete_user_session", {
         p_session_id: sessao.id,
       });
+
+      if (error) throw error;
     }
 
     return new Response(JSON.stringify({ success: true, encerradas: outrasSessoes.length }), { status: 200, headers: { "Content-Type": "application/json" } });

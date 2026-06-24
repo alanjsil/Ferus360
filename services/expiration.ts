@@ -6,13 +6,46 @@
 
 import * as path from "path";
 import * as fs from "fs";
-import { get, run } from "./database";
 import * as logger from "./logger";
 
 let _expirado = false;
 let _diasRestantes = 0;
 let _diasTrial = 0;
 let _inicializado = false;
+
+function getUserDataPath(): string {
+  const envPath = process.env.LOCALAPPDATA || process.env.HOME || "";
+  return path.join(envPath, "financas");
+}
+
+function getMetaFilePath(): string {
+  return path.join(getUserDataPath(), "trial-meta.json");
+}
+
+function lerMeta(): Record<string, string> {
+  try {
+    const metaPath = getMetaFilePath();
+    if (fs.existsSync(metaPath)) {
+      return JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+    }
+  } catch (err) {
+    logger.error("expiration", "falha ao ler trial-meta.json", err);
+  }
+  return {};
+}
+
+function salvarMeta(meta: Record<string, string>): void {
+  try {
+    const metaPath = getMetaFilePath();
+    const dir = path.dirname(metaPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(metaPath, JSON.stringify(meta), "utf-8");
+  } catch (err) {
+    logger.error("expiration", "falha ao salvar trial-meta.json", err);
+  }
+}
 
 function init(appRoot: string): void {
   if (_inicializado) return;
@@ -38,14 +71,15 @@ function init(appRoot: string): void {
     return;
   }
 
-  const row = get("SELECT valor FROM sync_meta WHERE chave = 'trial_primeira_execucao'");
+  const meta = lerMeta();
 
-  if (!row) {
-    run("INSERT INTO sync_meta (chave, valor) VALUES ('trial_primeira_execucao', ?)", String(Date.now()));
+  if (!meta.trial_primeira_execucao) {
+    meta.trial_primeira_execucao = String(Date.now());
+    salvarMeta(meta);
     _diasRestantes = _diasTrial;
     _expirado = false;
   } else {
-    const primeiraExec = Number(row.valor);
+    const primeiraExec = Number(meta.trial_primeira_execucao);
     const diffDias = Math.floor((Date.now() - primeiraExec) / 86400000);
     _expirado = diffDias >= _diasTrial;
     _diasRestantes = Math.max(0, _diasTrial - diffDias);

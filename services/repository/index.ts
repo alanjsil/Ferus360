@@ -1,17 +1,14 @@
 export {
   __setSupabase,
   __setSupabaseAdmin,
-  __setDatabase,
   setAuthSession,
   limparSessaoAuth,
   validarUUID,
   validarMes,
   normalizarNome,
-  limparCacheGeral,
   adicionarFiltroUsuario,
   adicionarFiltroTipoPessoaRestrito,
   adicionarFiltroCategoriaTipoPessoa,
-  adicionarWhereTipoPessoa,
 } from "./utils";
 
 export {
