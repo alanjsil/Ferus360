@@ -6,6 +6,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const btnConfirmar = document.getElementById("btnConfirmar");
   const btnCancelar = document.getElementById("btnCancelar");
   const senhaInput = document.getElementById("senha") as HTMLInputElement | null;
+  const toggleSenha = document.getElementById("toggleSenha");
 
   if (btnConfirmar) {
     btnConfirmar.addEventListener("click", () => {
@@ -16,6 +17,14 @@ window.addEventListener("DOMContentLoaded", () => {
   if (btnCancelar) {
     btnCancelar.addEventListener("click", () => {
       ipcRenderer.send("dialog-senha:cancelar");
+    });
+  }
+
+  if (toggleSenha && senhaInput) {
+    toggleSenha.addEventListener("click", () => {
+      const isPassword = senhaInput.type === "password";
+      senhaInput.type = isPassword ? "text" : "password";
+      toggleSenha.textContent = isPassword ? "Ocultar senha" : "Mostrar senha";
     });
   }
 
