@@ -148,6 +148,20 @@ function createHandlers(
       }
     },
 
+    handleAuthVerificarSenha: async (_event: unknown, senha: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        await auth.verificarSenha(usuarioId, senha);
+        return { success: true };
+      } catch (err) {
+        if (err instanceof AuthError && err.code === "SENHA_INVALIDA") {
+          return { error: "SENHA_INVALIDA" };
+        }
+        return { error: "ERRO_INTERNO" };
+      }
+    },
+
     handleCategoriasGet: async (_event: unknown, tipo: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
@@ -554,15 +568,14 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
-        const senha = await promptSenha!("Digite sua senha para excluir sua conta");
-        await auth.verificarSenha(usuarioId, senha);
         const result = await repository.excluirConta(usuarioId);
         resetStateFn();
         setState("usuarioAtual", null);
         await repository.limparSessaoAuth();
         return result;
-      } catch {
-        return { error: "USUARIO_CANCELOU" };
+      } catch (err) {
+        const code = err instanceof AuthError ? err.code : (err as Error)?.message || "ERRO_INTERNO";
+        return { error: code };
       }
     },
 
@@ -796,6 +809,7 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("auth:tempo-restante-recuperacao", handlers.handleAuthTempoRestanteRecuperacao);
   ipcMain.handle("auth:renovar", handlers.handleAuthRenovar);
   ipcMain.handle("auth:trocar-senha", handlers.handleAuthTrocarSenha);
+  ipcMain.handle("auth:verificar-senha", handlers.handleAuthVerificarSenha);
   ipcMain.handle("subcategorias:get", handlers.handleSubcategoriasGet);
   ipcMain.handle("contas:get", handlers.handleContasGet);
   ipcMain.handle("conta:create", handlers.handleContaCreate);

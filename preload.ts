@@ -32,6 +32,7 @@ const api = {
   },
   redefinirSenha: (novaSenha: string) => ipcRenderer.invoke("auth:redefinir-senha", novaSenha),
   trocarSenha: (usuarioId: string, novaSenha: string) => ipcRenderer.invoke("auth:trocar-senha", usuarioId, novaSenha),
+  verificarSenha: (senha: string) => ipcRenderer.invoke("auth:verificar-senha", senha),
 
   // ==================== DASHBOARD ====================
   getDashboard: (mes: string) => ipcRenderer.invoke("dashboard:get", mes),

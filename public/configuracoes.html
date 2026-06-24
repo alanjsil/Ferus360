@@ -262,11 +262,13 @@
 
     <!-- Dialog excluir conta -->
     <dialog id="excluirDialog" class="dialog">
-      <form method="dialog" id="excluirForm">
+      <form id="excluirForm">
         <h2>Excluir conta</h2>
         <p>Esta ação é irreversível. Digite seu email e senha para confirmar.</p>
         <label for="excluirEmail">Email</label>
         <input id="excluirEmail" type="email" required />
+        <label for="excluirSenha">Senha</label>
+        <input id="excluirSenha" type="password" required />
         <div class="dialog-actions">
           <button value="cancel" type="button" id="cancelarExcluir">Cancelar</button>
           <button type="submit" id="confirmarExcluir" class="btn-danger">Excluir</button>

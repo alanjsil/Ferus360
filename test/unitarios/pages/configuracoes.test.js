@@ -90,6 +90,7 @@ describe("configurações (página de perfil)", () => {
         ],
       }),
       excluirConta: vi.fn().mockResolvedValue({}),
+      verificarSenha: vi.fn().mockResolvedValue({ success: true }),
       listarCategorias: vi.fn().mockResolvedValue([]),
       criarCategoria: vi.fn(),
       updateCategoria: vi.fn(),
@@ -392,8 +393,12 @@ describe("configurações (página de perfil)", () => {
       });
       await loadModule();
       document.getElementById("excluirEmail").value = "teste@t.com";
+      document.getElementById("excluirSenha").value = "senha123";
       // Act
       document.getElementById("excluirForm").dispatchEvent(new Event("submit"));
+      await vi.waitFor(() => {
+        expect(window.electronAPI.verificarSenha).toHaveBeenCalledWith("senha123");
+      });
       await vi.waitFor(() => {
         expect(window.electronAPI.excluirConta).toHaveBeenCalledWith();
       });
@@ -445,10 +450,22 @@ describe("configurações (página de perfil)", () => {
   });
 
   describe("excluir conta — erro", () => {
+    it("mostra erro se senha incorreta", async () => {
+      window.electronAPI.verificarSenha.mockResolvedValue({ error: "SENHA_INVALIDA" });
+      await loadModule();
+      document.getElementById("excluirEmail").value = "teste@t.com";
+      document.getElementById("excluirSenha").value = "senha_errada";
+      document.getElementById("excluirForm").dispatchEvent(new Event("submit"));
+      await vi.waitFor(() => {
+        expect(document.getElementById("excluirMessage").textContent).toBe("Senha incorreta.");
+      });
+    });
+
     it("mostra mensagem genérica ao falhar", async () => {
       window.electronAPI.excluirConta.mockRejectedValue(new Error("fail"));
       await loadModule();
       document.getElementById("excluirEmail").value = "teste@t.com";
+      document.getElementById("excluirSenha").value = "senha123";
       document.getElementById("excluirForm").dispatchEvent(new Event("submit"));
       await vi.waitFor(() => {
         expect(document.getElementById("excluirMessage").textContent).toBe("Erro ao excluir conta.");

@@ -371,6 +371,7 @@ function configurarExcluirConta() {
     submitBtn.innerHTML = '<span class="spinner"></span>Excluindo...';
 
     const email = document.getElementById("excluirEmail").value.trim();
+    const senha = document.getElementById("excluirSenha").value;
 
     const perfil = await window.electronAPI.getPerfil();
     if (email !== perfil.email) {
@@ -380,8 +381,23 @@ function configurarExcluirConta() {
       return;
     }
 
+    const resultSenha = await window.electronAPI.verificarSenha(senha);
+    if (resultSenha?.error) {
+      const msg = resultSenha.error === "SENHA_INVALIDA" ? "Senha incorreta." : "Erro ao verificar senha.";
+      mostrarMensagem("excluirMessage", msg, false);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Excluir";
+      return;
+    }
+
     try {
-      await window.electronAPI.excluirConta();
+      const result = await window.electronAPI.excluirConta();
+      if (result?.error) {
+        mostrarMensagem("excluirMessage", "Erro ao excluir conta.", false);
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Excluir";
+        return;
+      }
       clearAuthSession();
       window.location.href = "login.html";
     } catch {

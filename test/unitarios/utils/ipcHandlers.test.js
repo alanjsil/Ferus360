@@ -251,6 +251,24 @@ describe("ipcHandlers (handlers de IPC)", () => {
       expect(mockAuth.trocarSenha).toHaveBeenCalledWith("user-1", "senha-atual-dialog", "NovaSenha1", expect.any(Object));
       expect(result).toEqual({ success: true });
     });
+
+    it("handleAuthVerificarSenha verifica senha e retorna sucesso", async () => {
+      mockAuth.verificarSenha = vi.fn().mockResolvedValue({ success: true });
+
+      const result = await handlers.handleAuthVerificarSenha(null, "minha-senha");
+
+      expect(mockAuth.verificarSenha).toHaveBeenCalledWith("user-123", "minha-senha");
+      expect(result).toEqual({ success: true });
+    });
+
+    it("handleAuthVerificarSenha retorna SENHA_INVALIDA quando senha errada", async () => {
+      const { AuthError } = await import("../../../services/auth.js");
+      mockAuth.verificarSenha = vi.fn().mockRejectedValue(new AuthError("SENHA_INVALIDA"));
+
+      const result = await handlers.handleAuthVerificarSenha(null, "senha-errada");
+
+      expect(result).toEqual({ error: "SENHA_INVALIDA" });
+    });
   });
 
   describe("dados compartilhados (sem auth)", () => {
@@ -497,16 +515,12 @@ describe("ipcHandlers (handlers de IPC)", () => {
       expect(result).toEqual(mockExport);
     });
 
-    it("handleConfigExcluirConta obtém senha via promptSenha, exclui e limpa estado", async () => {
-      mockPromptSenha.mockResolvedValue("senha-dialog");
-      mockAuth.verificarSenha = vi.fn().mockResolvedValue({ success: true });
+    it("handleConfigExcluirConta exclui e limpa estado", async () => {
       mockRepository.excluirConta = vi.fn().mockResolvedValue({ success: true });
       const mockResetStateFn = vi.fn();
       const handlers = ipcHandlersModule.createHandlers(mockRepository, mockSetState, mockGetState, mockResetStateFn, mockAuth, mockAdminService, mockPromptSenha);
 
       const result = await handlers.handleConfigExcluirConta(null);
-      expect(mockPromptSenha).toHaveBeenCalledWith("Digite sua senha para excluir sua conta");
-      expect(mockAuth.verificarSenha).toHaveBeenCalledWith("user-123", "senha-dialog");
       expect(mockRepository.excluirConta).toHaveBeenCalledWith("user-123");
       expect(mockResetStateFn).toHaveBeenCalled();
       expect(mockSetState).toHaveBeenCalledWith("usuarioAtual", null);
