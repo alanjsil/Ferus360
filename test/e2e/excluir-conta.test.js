@@ -12,7 +12,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { seedBase, getAdminClient, criarUsuario } from "./seed.js";
 
-
 describe("Excluir Conta [REAL]", () => {
   let supabaseAdmin;
 
@@ -32,11 +31,20 @@ describe("Excluir Conta [REAL]", () => {
     });
 
     await supabaseAdmin.from("financas_lancamentos").insert({
-      data: "2026-06-15", tipo: "DESPESA", valor: 100, status: "PENDENTE", usuario_id: u.id, categoria_id: (await supabaseAdmin.from("financas_categorias").select("id").eq("eh_global", true).limit(1).single()).data.id,
+      data: "2026-06-15",
+      tipo: "DESPESA",
+      valor: 100,
+      status: "PENDENTE",
+      usuario_id: u.id,
+      categoria_id: (await supabaseAdmin.from("financas_categorias").select("id").eq("eh_global", true).limit(1).single()).data.id,
     });
 
     await supabaseAdmin.from("financas_orcamento").insert({
-      data: "2026-06-01", tipo: "DESPESA", descricao: "Aluguel", valor_planejado: 1500, usuario_id: u.id,
+      data: "2026-06-01",
+      tipo: "DESPESA",
+      descricao: "Aluguel",
+      valor_planejado: 1500,
+      usuario_id: u.id,
     });
 
     await supabaseAdmin.from("financas_contas").insert({ nome: "NuBank", usuario_id: u.id });
@@ -64,18 +72,22 @@ describe("Excluir Conta [REAL]", () => {
       role: "user",
     });
 
-    const { data: cat } = await supabaseAdmin
-      .from("financas_categorias")
-      .select("id")
-      .eq("eh_global", true)
-      .limit(1)
-      .single();
+    const { data: cat } = await supabaseAdmin.from("financas_categorias").select("id").eq("eh_global", true).limit(1).single();
 
     await supabaseAdmin.from("financas_lancamentos").insert({
-      data: "2026-06-15", tipo: "DESPESA", valor: 100, status: "PENDENTE", usuario_id: u.id, categoria_id: cat.id,
+      data: "2026-06-15",
+      tipo: "DESPESA",
+      valor: 100,
+      status: "PENDENTE",
+      usuario_id: u.id,
+      categoria_id: cat.id,
     });
     await supabaseAdmin.from("financas_orcamento").insert({
-      data: "2026-06-01", tipo: "DESPESA", descricao: "Aluguel", valor_planejado: 1500, usuario_id: u.id,
+      data: "2026-06-01",
+      tipo: "DESPESA",
+      descricao: "Aluguel",
+      valor_planejado: 1500,
+      usuario_id: u.id,
     });
     await supabaseAdmin.from("financas_contas").insert({ nome: "NuBank", usuario_id: u.id });
     await supabaseAdmin.from("financas_pessoas").insert({ nome: "Joao", usuario_id: u.id });

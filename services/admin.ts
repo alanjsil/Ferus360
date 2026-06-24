@@ -252,7 +252,7 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
       body: JSON.stringify({ nome, email, senha }),
     });
 
-    const result = await response.json() as Record<string, unknown>;
+    const result = (await response.json()) as Record<string, unknown>;
 
     if (!response.ok) {
       throw criarAdminError((result.error as string) || "ERRO_CRIAR_USUARIO");

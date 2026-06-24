@@ -32,10 +32,7 @@ describe("Admin → Categorias Globais [REAL]", () => {
 
   afterAll(async () => {
     if (!supabaseAdmin) return;
-    const { error } = await supabaseAdmin
-      .from("financas_categorias")
-      .delete()
-      .eq("nome", "Assinaturas");
+    const { error } = await supabaseAdmin.from("financas_categorias").delete().eq("nome", "Assinaturas");
     if (error) console.warn("Cleanup warning:", error.message);
   });
 
@@ -68,10 +65,7 @@ describe("Admin → Categorias Globais [REAL]", () => {
   /* TESTE 2: Usuário vê globais com RLS     */
   /* ─────────────────────────────────────── */
   it("Step 2: Usuário comum visualiza categorias globais (RLS)", async () => {
-    const { data: categorias, error } = await clientUser
-      .from("financas_categorias")
-      .select("*")
-      .eq("eh_global", true);
+    const { data: categorias, error } = await clientUser.from("financas_categorias").select("*").eq("eh_global", true);
 
     expect(error).toBeNull();
     expect(categorias.length).toBeGreaterThanOrEqual(6);
@@ -82,30 +76,19 @@ describe("Admin → Categorias Globais [REAL]", () => {
   /* TESTE 3: RLS bloqueia update de global  */
   /* ─────────────────────────────────────── */
   it("Step 3: RLS impede usuário comum de alterar categoria global (silent no-op)", async () => {
-    const { data: globais } = await supabaseAdmin
-      .from("financas_categorias")
-      .select("id, nome")
-      .eq("eh_global", true)
-      .limit(1);
+    const { data: globais } = await supabaseAdmin.from("financas_categorias").select("id, nome").eq("eh_global", true).limit(1);
 
     const globalCat = globais[0];
     const nomeOriginal = globalCat.nome;
 
     // Usuário comum tenta alterar — RLS policy USING clause faz o update
     // afetar 0 linhas silenciosamente (não lança erro 42501)
-    const { error } = await clientUser
-      .from("financas_categorias")
-      .update({ nome: "Hackeado" })
-      .eq("id", globalCat.id);
+    const { error } = await clientUser.from("financas_categorias").update({ nome: "Hackeado" }).eq("id", globalCat.id);
 
     expect(error).toBeNull();
 
     // Verificar que o nome não foi alterado
-    const { data: atual } = await supabaseAdmin
-      .from("financas_categorias")
-      .select("nome")
-      .eq("id", globalCat.id)
-      .single();
+    const { data: atual } = await supabaseAdmin.from("financas_categorias").select("nome").eq("id", globalCat.id).single();
 
     expect(atual.nome).toBe(nomeOriginal);
   });
@@ -131,11 +114,7 @@ describe("Admin → Categorias Globais [REAL]", () => {
     expect(catPessoal.usuario_id).toBe(normalUser.id);
 
     // Admin não deve ver a categoria pessoal do usuário via SQL direto
-    const { data: catsAdmin } = await supabaseAdmin
-      .from("financas_categorias")
-      .select("nome")
-      .eq("eh_global", false)
-      .eq("usuario_id", adminUser.id);
+    const { data: catsAdmin } = await supabaseAdmin.from("financas_categorias").select("nome").eq("eh_global", false).eq("usuario_id", adminUser.id);
 
     const nomesAdmin = catsAdmin.map((c) => c.nome);
     expect(nomesAdmin).not.toContain("Minha receita");
@@ -145,33 +124,19 @@ describe("Admin → Categorias Globais [REAL]", () => {
   /* TESTE 5: Admin desativa/reativa global   */
   /* ─────────────────────────────────────── */
   it("Step 5: Admin desativa e reativa categoria global", async () => {
-    const { data: categorias } = await supabaseAdmin
-      .from("financas_categorias")
-      .select("id, nome, ativo")
-      .eq("eh_global", true)
-      .limit(1);
+    const { data: categorias } = await supabaseAdmin.from("financas_categorias").select("id, nome, ativo").eq("eh_global", true).limit(1);
 
     const cat = categorias[0];
     expect(cat.ativo).toBe(true);
 
     // Desativar
-    const { data: desativada, error: err1 } = await supabaseAdmin
-      .from("financas_categorias")
-      .update({ ativo: false })
-      .eq("id", cat.id)
-      .select()
-      .single();
+    const { data: desativada, error: err1 } = await supabaseAdmin.from("financas_categorias").update({ ativo: false }).eq("id", cat.id).select().single();
 
     expect(err1).toBeNull();
     expect(desativada.ativo).toBe(false);
 
     // Reativar
-    const { data: reativada, error: err2 } = await supabaseAdmin
-      .from("financas_categorias")
-      .update({ ativo: true })
-      .eq("id", cat.id)
-      .select()
-      .single();
+    const { data: reativada, error: err2 } = await supabaseAdmin.from("financas_categorias").update({ ativo: true }).eq("id", cat.id).select().single();
 
     expect(err2).toBeNull();
     expect(reativada.ativo).toBe(true);

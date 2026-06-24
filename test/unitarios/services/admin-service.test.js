@@ -15,8 +15,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-
-
 describe("admin (serviço de administração)", () => {
   let admin;
   let mockRepository;
@@ -79,7 +77,9 @@ describe("admin (serviço de administração)", () => {
     it("retorna usuario para admin válido", async () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({
-        id: "admin-1", role: "admin", nome: "Admin",
+        id: "admin-1",
+        role: "admin",
+        nome: "Admin",
       });
 
       // Act
@@ -93,7 +93,9 @@ describe("admin (serviço de administração)", () => {
     it("lança UNAUTHORIZED quando role não é admin", async () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({
-        id: "user-1", role: "user", nome: "User",
+        id: "user-1",
+        role: "user",
+        nome: "User",
       });
 
       // Act & Assert
@@ -108,7 +110,10 @@ describe("admin (serviço de administração)", () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({ id: "admin-1", role: "admin" });
       mockRepository.getAdminDashboard.mockResolvedValue({
-        totalReceitas: 10000, totalDespesas: 5000, saldo: 5000, totalUsuariosAtivos: 10,
+        totalReceitas: 10000,
+        totalDespesas: 5000,
+        saldo: 5000,
+        totalUsuariosAtivos: 10,
       });
 
       // Act
@@ -135,9 +140,7 @@ describe("admin (serviço de administração)", () => {
     it("retorna lista de clientes", async () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({ id: "admin-1", role: "admin" });
-      mockRepository.getClientes.mockResolvedValue([
-        { id: "00000000-0000-0000-0000-000000000001", nome: "João", email: "joao@t.com", ativo: true },
-      ]);
+      mockRepository.getClientes.mockResolvedValue([{ id: "00000000-0000-0000-0000-000000000001", nome: "João", email: "joao@t.com", ativo: true }]);
 
       // Act
       const result = await admin.getClientes();
@@ -153,7 +156,8 @@ describe("admin (serviço de administração)", () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({ id: "admin-1", role: "admin" });
       mockRepository.toggleClienteStatus.mockResolvedValue({
-        id: "00000000-0000-0000-0000-000000000001", ativo: false,
+        id: "00000000-0000-0000-0000-000000000001",
+        ativo: false,
       });
 
       // Act
@@ -170,7 +174,8 @@ describe("admin (serviço de administração)", () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({ id: "admin-1", role: "admin" });
       mockRepository.getResumoCliente.mockResolvedValue({
-        lancamentos: [], orcamento: [],
+        lancamentos: [],
+        orcamento: [],
       });
 
       // Act
@@ -333,10 +338,13 @@ describe("admin (serviço de administração)", () => {
     it("envia email de recuperação pelo auth", async () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({
-        id: "admin-1", nome: "Admin", role: "admin",
+        id: "admin-1",
+        nome: "Admin",
+        role: "admin",
       });
       mockRepository.getPerfil.mockResolvedValue({
-        id: "00000000-0000-0000-0000-000000000001", email: "user@t.com",
+        id: "00000000-0000-0000-0000-000000000001",
+        email: "user@t.com",
       });
 
       // Act
@@ -351,14 +359,14 @@ describe("admin (serviço de administração)", () => {
     it("lança USUARIO_NAO_ENCONTRADO se perfil não existe", async () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({
-        id: "admin-1", nome: "Admin", role: "admin",
+        id: "admin-1",
+        nome: "Admin",
+        role: "admin",
       });
       mockRepository.getPerfil.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(admin.resetSenha("00000000-0000-0000-0000-000000000999")).rejects.toThrow(
-        "USUARIO_NAO_ENCONTRADO"
-      );
+      await expect(admin.resetSenha("00000000-0000-0000-0000-000000000999")).rejects.toThrow("USUARIO_NAO_ENCONTRADO");
       expect(mockAuth.solicitarRecuperacao).not.toHaveBeenCalled();
     });
   });
@@ -397,7 +405,17 @@ describe("admin (serviço de administração)", () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({ id: "admin-1", role: "admin" });
       mockRepository.getChamados.mockResolvedValue([
-        { id: "00000000-0000-0000-0000-000000000002", usuario_id: "00000000-0000-0000-0000-000000000001", usuario: null, titulo: "Ajuda", descricao: "", respostas: [], status: "aberto", criado_em: "", atualizado_em: "" },
+        {
+          id: "00000000-0000-0000-0000-000000000002",
+          usuario_id: "00000000-0000-0000-0000-000000000001",
+          usuario: null,
+          titulo: "Ajuda",
+          descricao: "",
+          respostas: [],
+          status: "aberto",
+          criado_em: "",
+          atualizado_em: "",
+        },
       ]);
 
       // Act
@@ -425,23 +443,30 @@ describe("admin (serviço de administração)", () => {
     it("adiciona resposta a chamado sem respostas prévias", async () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({
-        id: "admin-1", nome: "Admin", role: "admin",
+        id: "admin-1",
+        nome: "Admin",
+        role: "admin",
       });
       mockRepository.getChamadoById.mockResolvedValue({
-        id: "00000000-0000-0000-0000-000000000002", respostas: null,
+        id: "00000000-0000-0000-0000-000000000002",
+        respostas: null,
       });
       mockRepository.updateChamado.mockResolvedValue({ id: "00000000-0000-0000-0000-000000000002" });
       mockRepository.getChamadoById.mockResolvedValue({
-        id: "00000000-0000-0000-0000-000000000002", status: "em_andamento",
+        id: "00000000-0000-0000-0000-000000000002",
+        status: "em_andamento",
       });
 
       // Act
       await admin.responderChamado("00000000-0000-0000-0000-000000000002", "Resposta do admin");
 
       // Assert
-      expect(mockRepository.updateChamado).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000002", expect.objectContaining({
-        status: "em_andamento",
-      }));
+      expect(mockRepository.updateChamado).toHaveBeenCalledWith(
+        "00000000-0000-0000-0000-000000000002",
+        expect.objectContaining({
+          status: "em_andamento",
+        }),
+      );
       const updateCall = mockRepository.updateChamado.mock.calls[0][1];
       expect(updateCall.respostas).toHaveLength(1);
       expect(updateCall.respostas[0].admin_id).toBe("admin-1");
@@ -451,7 +476,9 @@ describe("admin (serviço de administração)", () => {
     it("adiciona resposta a chamado com respostas existentes", async () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({
-        id: "admin-1", nome: "Admin", role: "admin",
+        id: "admin-1",
+        nome: "Admin",
+        role: "admin",
       });
       mockRepository.getChamadoById.mockResolvedValue({
         id: "00000000-0000-0000-0000-000000000002",
@@ -472,7 +499,8 @@ describe("admin (serviço de administração)", () => {
       // Arrange
       mockAuth.verificarSessao.mockResolvedValue({ id: "admin-1", role: "admin" });
       mockRepository.updateChamado.mockResolvedValue({
-        id: "00000000-0000-0000-0000-000000000002", status: "resolvido",
+        id: "00000000-0000-0000-0000-000000000002",
+        status: "resolvido",
       });
 
       // Act
@@ -562,7 +590,8 @@ describe("admin (serviço de administração)", () => {
       mockAuth.verificarSessao.mockResolvedValue({ id: "admin-1", role: "admin" });
       const payload = { usuario_id: "00000000-0000-0000-0000-000000000001", titulo: "Problema", descricao: "Ajuda" };
       mockRepository.criarChamado.mockResolvedValue({
-        id: "00000000-0000-0000-0000-000000000002", ...payload,
+        id: "00000000-0000-0000-0000-000000000002",
+        ...payload,
       });
 
       // Act

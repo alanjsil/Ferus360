@@ -1,12 +1,27 @@
 import type {
-  Usuario, Categoria, Subcategoria, Conta, Pessoa,
-  Lancamento, Orcamento, Chamado, Auditoria,
-  DashboardData, DashboardDadosResult, AuthResult,
-  AdminDashboard, Sessao, CriarCategoriaPayload,
-  CriarSubcategoriaPayload, CriarContaPayload,
-  CriarPessoaPayload, CriarLancamentoPayload,
-  CriarTransferenciaPayload, UpdatePerfilPayload,
-  ImportarOrcamentoItem, FiltrosAuditoria,
+  Usuario,
+  Categoria,
+  Subcategoria,
+  Conta,
+  Pessoa,
+  Lancamento,
+  Orcamento,
+  Chamado,
+  Auditoria,
+  DashboardData,
+  DashboardDadosResult,
+  AuthResult,
+  AdminDashboard,
+  Sessao,
+  CriarCategoriaPayload,
+  CriarSubcategoriaPayload,
+  CriarContaPayload,
+  CriarPessoaPayload,
+  CriarLancamentoPayload,
+  CriarTransferenciaPayload,
+  UpdatePerfilPayload,
+  ImportarOrcamentoItem,
+  FiltrosAuditoria,
 } from "../../src/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase as defaultSupabase, supabaseAdmin, SUPABASE_URL } from "../conexao";
@@ -66,14 +81,14 @@ async function _callEdgeFunction(functionName: string, payload: Record<string, u
 
   let body: Record<string, unknown> | null;
   try {
-    body = await response.json() as Record<string, unknown>;
+    body = (await response.json()) as Record<string, unknown>;
   } catch {
     logger.warn("repository", "_callEdgeFunction falha ao parsear JSON da resposta");
     body = null;
   }
 
   if (!response.ok) {
-    const message = (body && (body.error || body.message as string)) || response.statusText || "FALHA_EDGE_FUNCTION";
+    const message = (body && (body.error || (body.message as string))) || response.statusText || "FALHA_EDGE_FUNCTION";
     throw new Error(message as string);
   }
 
@@ -164,15 +179,11 @@ function _limparCacheEviccao(entidade: string): void {
     }
 
     if (entidade === "financas_lancamentos") {
-      database.run(
-        `DELETE FROM financas_lancamentos WHERE sync_status NOT IN ('pending', 'failed') AND data < datetime('now', '-${MESES_RETER_LANCAMENTOS} months')`,
-      );
+      database.run(`DELETE FROM financas_lancamentos WHERE sync_status NOT IN ('pending', 'failed') AND data < datetime('now', '-${MESES_RETER_LANCAMENTOS} months')`);
     }
 
     if (entidade === "financas_auditoria") {
-      database.run(
-        `DELETE FROM financas_auditoria WHERE id NOT IN (SELECT id FROM financas_auditoria ORDER BY criado_em DESC LIMIT ${MAX_REGISTROS_AUDITORIA})`,
-      );
+      database.run(`DELETE FROM financas_auditoria WHERE id NOT IN (SELECT id FROM financas_auditoria ORDER BY criado_em DESC LIMIT ${MAX_REGISTROS_AUDITORIA})`);
     }
   } catch (err) {
     logger.error("repository", `Erro na evicção de cache para ${entidade}`, err);
@@ -180,11 +191,7 @@ function _limparCacheEviccao(entidade: string): void {
 }
 
 function limparCacheGeral(): void {
-  const entidades = [
-    "financas_categorias", "financas_subcategorias", "financas_contas",
-    "financas_pessoas", "financas_lancamentos", "financas_orcamento",
-    "financas_chamados", "financas_auditoria",
-  ];
+  const entidades = ["financas_categorias", "financas_subcategorias", "financas_contas", "financas_pessoas", "financas_lancamentos", "financas_orcamento", "financas_chamados", "financas_auditoria"];
   for (const entidade of entidades) {
     _limparCacheEviccao(entidade);
   }
@@ -216,11 +223,7 @@ async function limparSessaoAuth(): Promise<void> {
   await supabase.auth.signOut();
   if (database.getDb()) {
     try {
-      const tabelas = [
-        "financas_lancamentos", "financas_orcamento", "financas_contas",
-        "financas_pessoas", "financas_categorias", "financas_subcategorias",
-        "financas_chamados",
-      ];
+      const tabelas = ["financas_lancamentos", "financas_orcamento", "financas_contas", "financas_pessoas", "financas_categorias", "financas_subcategorias", "financas_chamados"];
       for (const tabela of tabelas) {
         database.run(`DELETE FROM ${tabela}`);
       }

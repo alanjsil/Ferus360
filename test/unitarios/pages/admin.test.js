@@ -13,10 +13,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import fs from "fs";
 import path from "path";
 
-const html = fs.readFileSync(
-  path.resolve(__dirname, "../../../public/admin.html"),
-  "utf-8"
-);
+const html = fs.readFileSync(path.resolve(__dirname, "../../../public/admin.html"), "utf-8");
 
 HTMLDialogElement.prototype.showModal = vi.fn();
 HTMLDialogElement.prototype.close = vi.fn();
@@ -28,12 +25,7 @@ vi.mock("../../../public/js/auth-guard.js", () => ({
   }),
   escapeHtml: (str) => {
     if (str == null) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   },
   clearAuthSession: vi.fn(),
   getAccessToken: vi.fn(() => "token"),
@@ -42,7 +34,10 @@ vi.mock("../../../public/js/auth-guard.js", () => ({
 function baseMocks() {
   return {
     adminGetDashboard: vi.fn().mockResolvedValue({
-      totalReceitas: 10000, totalDespesas: 5000, saldo: 5000, totalUsuariosAtivos: 10,
+      totalReceitas: 10000,
+      totalDespesas: 5000,
+      saldo: 5000,
+      totalUsuariosAtivos: 10,
     }),
     adminGetClientes: vi.fn().mockResolvedValue([]),
     adminToggleCliente: vi.fn(),
@@ -137,12 +132,8 @@ describe("admin (página administrativa)", () => {
       const tabBtn = document.querySelector('[data-tab="clientes"]');
       tabBtn.click();
       expect(tabBtn.classList.contains("active")).toBe(true);
-      expect(
-        document.getElementById("tab-dashboard").classList.contains("active")
-      ).toBe(false);
-      expect(
-        document.getElementById("tab-clientes").classList.contains("active")
-      ).toBe(true);
+      expect(document.getElementById("tab-dashboard").classList.contains("active")).toBe(false);
+      expect(document.getElementById("tab-clientes").classList.contains("active")).toBe(true);
     });
   });
 
@@ -180,11 +171,10 @@ describe("admin (página administrativa)", () => {
 
     it("abre resumo ao clicar Visualizar", async () => {
       // Arrange
-      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([
-        { id: "u1", nome: "João", email: "joao@t.com", criado_em: "2025-01-01T10:00:00Z", ativo: true },
-      ]);
+      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([{ id: "u1", nome: "João", email: "joao@t.com", criado_em: "2025-01-01T10:00:00Z", ativo: true }]);
       window.electronAPI.adminGetResumoCliente = vi.fn().mockResolvedValue({
-        lancamentos: [], orcamento: [],
+        lancamentos: [],
+        orcamento: [],
       });
       // Act
       await loadModule();
@@ -219,15 +209,17 @@ describe("admin (página administrativa)", () => {
       document.getElementById("novaCatGlobalBtn").click();
       document.getElementById("newCatGlobalNome").value = "A";
       document.getElementById("salvarCatGlobal").click();
-      expect(document.getElementById("catGlobalMessage").textContent).toBe(
-        "Nome precisa ter entre 2 e 40 caracteres."
-      );
+      expect(document.getElementById("catGlobalMessage").textContent).toBe("Nome precisa ter entre 2 e 40 caracteres.");
     });
 
-      it("cria categoria global via API", async () => {
+    it("cria categoria global via API", async () => {
       // Arrange
       window.electronAPI.criarCategoria = vi.fn().mockResolvedValue({
-        id: "cg1", nome: "Global", tipo: "RECEITA", eh_global: true, ativo: true,
+        id: "cg1",
+        nome: "Global",
+        tipo: "RECEITA",
+        eh_global: true,
+        ativo: true,
       });
       // Act
       await loadModule();
@@ -236,7 +228,9 @@ describe("admin (página administrativa)", () => {
       document.getElementById("salvarCatGlobal").click();
       await vi.waitFor(() => {
         expect(window.electronAPI.criarCategoria).toHaveBeenCalledWith({
-          nome: "Global", tipo: "RECEITA", eh_global: true,
+          nome: "Global",
+          tipo: "RECEITA",
+          eh_global: true,
         });
       });
     });
@@ -263,9 +257,7 @@ describe("admin (página administrativa)", () => {
     });
 
     it("busca usuários e exibe resultados", async () => {
-      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([
-        { id: "u1", nome: "João", email: "joao@t.com", role: "user" },
-      ]);
+      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([{ id: "u1", nome: "João", email: "joao@t.com", role: "user" }]);
       await loadModule();
       document.getElementById("buscaRedefinir").value = "João";
       document.getElementById("btnBuscarRedefinir").click();
@@ -276,11 +268,10 @@ describe("admin (página administrativa)", () => {
     });
 
     it("chama adminResetSenha ao clicar Redefinir", async () => {
-      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([
-        { id: "u1", nome: "João", email: "joao@t.com", role: "user" },
-      ]);
+      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([{ id: "u1", nome: "João", email: "joao@t.com", role: "user" }]);
       window.electronAPI.adminResetSenha = vi.fn().mockResolvedValue({
-        success: true, message: "Email de recuperação enviado",
+        success: true,
+        message: "Email de recuperação enviado",
       });
       await loadModule();
       document.getElementById("buscaRedefinir").value = "João";
@@ -297,9 +288,11 @@ describe("admin (página administrativa)", () => {
 
   describe("chamados", () => {
     it("renderiza chamados na tabela", async () => {
-      window.electronAPI.adminGetChamados = vi.fn().mockResolvedValue([
-        { id: "ch1", usuario_nome: "João", usuario_email: "joao@t.com", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Preciso de ajuda", respostas: [] },
-      ]);
+      window.electronAPI.adminGetChamados = vi
+        .fn()
+        .mockResolvedValue([
+          { id: "ch1", usuario_nome: "João", usuario_email: "joao@t.com", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Preciso de ajuda", respostas: [] },
+        ]);
       await loadModule();
       await vi.waitFor(() => {
         const rows = document.querySelectorAll("#chamadosBody tr");
@@ -331,9 +324,11 @@ describe("admin (página administrativa)", () => {
     });
 
     it("abre atendimento ao clicar Atender", async () => {
-      window.electronAPI.adminGetChamados = vi.fn().mockResolvedValue([
-        { id: "ch1", usuario_nome: "João", usuario_email: "joao@t.com", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Preciso de ajuda", respostas: [] },
-      ]);
+      window.electronAPI.adminGetChamados = vi
+        .fn()
+        .mockResolvedValue([
+          { id: "ch1", usuario_nome: "João", usuario_email: "joao@t.com", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Preciso de ajuda", respostas: [] },
+        ]);
       await loadModule();
       await vi.waitFor(() => {
         expect(document.querySelector("[data-atender]")).toBeTruthy();
@@ -344,9 +339,9 @@ describe("admin (página administrativa)", () => {
     });
 
     it("enviarRespostaChamado mostra erro sem mensagem", async () => {
-      window.electronAPI.adminGetChamados = vi.fn().mockResolvedValue([
-        { id: "ch1", usuario_nome: "João", usuario_email: "joao@t.com", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Ajuda", respostas: [] },
-      ]);
+      window.electronAPI.adminGetChamados = vi
+        .fn()
+        .mockResolvedValue([{ id: "ch1", usuario_nome: "João", usuario_email: "joao@t.com", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Ajuda", respostas: [] }]);
       await loadModule();
       await vi.waitFor(() => {
         expect(document.querySelector("[data-atender]")).toBeTruthy();
@@ -355,15 +350,13 @@ describe("admin (página administrativa)", () => {
       document.getElementById("chamadoRespostaInput").value = "";
       document.getElementById("chamadoNovoStatus").value = "em_andamento";
       document.getElementById("enviarRespostaChamado").click();
-      expect(document.getElementById("chamadoMessage").textContent).toBe(
-        "Escreva uma resposta ou marque como resolvido."
-      );
+      expect(document.getElementById("chamadoMessage").textContent).toBe("Escreva uma resposta ou marque como resolvido.");
     });
 
     it("enviarRespostaChamado envia resposta e atualiza status", async () => {
-      window.electronAPI.adminGetChamados = vi.fn().mockResolvedValue([
-        { id: "ch1", usuario_nome: "João", usuario_email: "joao@t.com", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Ajuda", respostas: [] },
-      ]);
+      window.electronAPI.adminGetChamados = vi
+        .fn()
+        .mockResolvedValue([{ id: "ch1", usuario_nome: "João", usuario_email: "joao@t.com", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Ajuda", respostas: [] }]);
       window.electronAPI.adminResponderChamado = vi.fn().mockResolvedValue({ success: true });
       window.electronAPI.adminUpdateChamado = vi.fn().mockResolvedValue({ success: true });
       await loadModule();
@@ -379,9 +372,9 @@ describe("admin (página administrativa)", () => {
     });
 
     it("enviarRespostaChamado fecha dialog ao enviar resposta", async () => {
-      window.electronAPI.adminGetChamados = vi.fn().mockResolvedValue([
-        { id: "ch1", usuario_nome: "João", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Ajuda", respostas: [] },
-      ]);
+      window.electronAPI.adminGetChamados = vi
+        .fn()
+        .mockResolvedValue([{ id: "ch1", usuario_nome: "João", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Ajuda", respostas: [] }]);
       window.electronAPI.adminResponderChamado = vi.fn().mockResolvedValue({ success: true });
       window.electronAPI.adminUpdateChamado = vi.fn().mockResolvedValue({ success: true });
       await loadModule();
@@ -398,7 +391,15 @@ describe("admin (página administrativa)", () => {
 
     it("exibe histórico de respostas ao abrir chamado", async () => {
       window.electronAPI.adminGetChamados = vi.fn().mockResolvedValue([
-        { id: "ch1", usuario_nome: "João", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Ajuda", respostas: [{ admin_nome: "Admin", mensagem: "Ok", criado_em: "2025-01-02T10:00:00Z" }] },
+        {
+          id: "ch1",
+          usuario_nome: "João",
+          titulo: "Ajuda",
+          status: "aberto",
+          criado_em: "2025-01-01T10:00:00Z",
+          descricao: "Ajuda",
+          respostas: [{ admin_nome: "Admin", mensagem: "Ok", criado_em: "2025-01-02T10:00:00Z" }],
+        },
       ]);
       await loadModule();
       await vi.waitFor(() => {
@@ -410,9 +411,9 @@ describe("admin (página administrativa)", () => {
     });
 
     it("oculta histórico quando não há respostas", async () => {
-      window.electronAPI.adminGetChamados = vi.fn().mockResolvedValue([
-        { id: "ch1", usuario_nome: "João", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Ajuda", respostas: [] },
-      ]);
+      window.electronAPI.adminGetChamados = vi
+        .fn()
+        .mockResolvedValue([{ id: "ch1", usuario_nome: "João", titulo: "Ajuda", status: "aberto", criado_em: "2025-01-01T10:00:00Z", descricao: "Ajuda", respostas: [] }]);
       await loadModule();
       await vi.waitFor(() => {
         expect(document.querySelector("[data-atender]")).toBeTruthy();
@@ -424,9 +425,7 @@ describe("admin (página administrativa)", () => {
 
   describe("toggle cliente", () => {
     it("chama adminToggleCliente ao clicar Inativar", async () => {
-      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([
-        { id: "u1", nome: "João", email: "joao@t.com", criado_em: "2025-01-01T10:00:00Z", ativo: true },
-      ]);
+      window.electronAPI.adminGetClientes = vi.fn().mockResolvedValue([{ id: "u1", nome: "João", email: "joao@t.com", criado_em: "2025-01-01T10:00:00Z", ativo: true }]);
       window.electronAPI.adminToggleCliente = vi.fn().mockResolvedValue({ success: true });
       await loadModule();
       await vi.waitFor(() => {
@@ -441,9 +440,7 @@ describe("admin (página administrativa)", () => {
 
   describe("categoria global editar", () => {
     it("entra em modo edição ao clicar Editar", async () => {
-      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([
-        { id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true },
-      ]);
+      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([{ id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true }]);
       await loadModule();
       await vi.waitFor(() => {
         expect(document.querySelector(".btn-edit-cat-global")).toBeTruthy();
@@ -456,9 +453,7 @@ describe("admin (página administrativa)", () => {
     });
 
     it("salva edição de categoria global via API", async () => {
-      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([
-        { id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true },
-      ]);
+      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([{ id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true }]);
       window.electronAPI.updateCategoria = vi.fn().mockResolvedValue({ id: "cg1", nome: "Global Editado", tipo: "DESPESA", eh_global: true, ativo: true });
       await loadModule();
       await vi.waitFor(() => {
@@ -476,9 +471,7 @@ describe("admin (página administrativa)", () => {
     });
 
     it("cancela edição de categoria global", async () => {
-      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([
-        { id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true },
-      ]);
+      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([{ id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true }]);
       await loadModule();
       await vi.waitFor(() => {
         expect(document.querySelector(".btn-edit-cat-global")).toBeTruthy();
@@ -495,9 +488,7 @@ describe("admin (página administrativa)", () => {
     });
 
     it("chama toggleCategoriaAtivo ao clicar Desativar", async () => {
-      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([
-        { id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true },
-      ]);
+      window.electronAPI.listarCategorias = vi.fn().mockResolvedValue([{ id: "cg1", nome: "Global A", tipo: "RECEITA", eh_global: true, ativo: true }]);
       window.electronAPI.toggleCategoriaAtivo = vi.fn().mockResolvedValue({ id: "cg1", ativo: false });
       await loadModule();
       await vi.waitFor(() => {

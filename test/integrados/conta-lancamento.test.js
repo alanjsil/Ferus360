@@ -210,9 +210,7 @@ describe("Fluxo Integrado: Login → Conta → Lançamentos", () => {
     expect(entrada.usuario_id).toBe(usuario.id);
 
     // Validar persistência no banco em memória
-    const persisted = db.financas_lancamentos.filter(
-      (l) => l.transferencia_grupo_id === grupoId,
-    );
+    const persisted = db.financas_lancamentos.filter((l) => l.transferencia_grupo_id === grupoId);
     expect(persisted).toHaveLength(2);
   });
 
@@ -279,12 +277,8 @@ describe("Fluxo Integrado: Login → Conta → Lançamentos", () => {
       .select()
       .single();
 
-    const lancConta1 = db.financas_lancamentos.filter(
-      (l) => l.conta_origem_id === conta1.data.id,
-    );
-    const lancConta2 = db.financas_lancamentos.filter(
-      (l) => l.conta_origem_id === conta2.data.id,
-    );
+    const lancConta1 = db.financas_lancamentos.filter((l) => l.conta_origem_id === conta1.data.id);
+    const lancConta2 = db.financas_lancamentos.filter((l) => l.conta_origem_id === conta2.data.id);
 
     expect(lancConta1).toHaveLength(2);
     expect(lancConta2).toHaveLength(1);
@@ -325,12 +319,8 @@ describe("Fluxo Integrado: Login → Conta → Lançamentos", () => {
       .select()
       .single();
 
-    const contasUser1 = db.financas_contas.filter(
-      (c) => c.usuario_id === usuario.id,
-    );
-    const contasUser2 = db.financas_contas.filter(
-      (c) => c.usuario_id === outroUser.user.id,
-    );
+    const contasUser1 = db.financas_contas.filter((c) => c.usuario_id === usuario.id);
+    const contasUser2 = db.financas_contas.filter((c) => c.usuario_id === outroUser.user.id);
 
     expect(contasUser1).toHaveLength(1);
     expect(contasUser2).toHaveLength(1);

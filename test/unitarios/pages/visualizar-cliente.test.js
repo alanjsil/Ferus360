@@ -10,10 +10,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import fs from "fs";
 import path from "path";
 
-const html = fs.readFileSync(
-  path.resolve(__dirname, "../../../public/visualizar-cliente.html"),
-  "utf-8"
-);
+const html = fs.readFileSync(path.resolve(__dirname, "../../../public/visualizar-cliente.html"), "utf-8");
 
 HTMLDialogElement.prototype.showModal = vi.fn();
 HTMLDialogElement.prototype.close = vi.fn();
@@ -25,12 +22,7 @@ vi.mock("../../../public/js/auth-guard.js", () => ({
   }),
   escapeHtml: (str) => {
     if (str == null) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   },
   clearAuthSession: vi.fn(),
   getAccessToken: vi.fn(() => "token"),
@@ -126,8 +118,10 @@ describe("visualizar-cliente (página de visualização de cliente pelo admin)",
 
     it("calcula diferença positiva para receitas", () => {
       const totais = {
-        receitas_planejadas: 5000, despesas_planejadas: 3000,
-        receitas_realizadas: 5500, despesas_realizadas: 2800,
+        receitas_planejadas: 5000,
+        despesas_planejadas: 3000,
+        receitas_realizadas: 5500,
+        despesas_realizadas: 2800,
       };
 
       mod.atualizarComparacao(totais);
@@ -139,8 +133,10 @@ describe("visualizar-cliente (página de visualização de cliente pelo admin)",
 
     it("calcula diferença negativa para despesas", () => {
       const totais = {
-        receitas_planejadas: 5000, despesas_planejadas: 3000,
-        receitas_realizadas: 4500, despesas_realizadas: 3200,
+        receitas_planejadas: 5000,
+        despesas_planejadas: 3000,
+        receitas_realizadas: 4500,
+        despesas_realizadas: 3200,
       };
 
       mod.atualizarComparacao(totais);
@@ -152,8 +148,10 @@ describe("visualizar-cliente (página de visualização de cliente pelo admin)",
 
     it("atualiza barras de progresso", () => {
       const totais = {
-        receitas_planejadas: 10000, despesas_planejadas: 2000,
-        receitas_realizadas: 5000, despesas_realizadas: 1000,
+        receitas_planejadas: 10000,
+        despesas_planejadas: 2000,
+        receitas_realizadas: 5000,
+        despesas_realizadas: 1000,
       };
 
       mod.atualizarComparacao(totais);
@@ -166,10 +164,7 @@ describe("visualizar-cliente (página de visualização de cliente pelo admin)",
   describe("atualizarResumo", () => {
     it("atualiza totais no DOM", () => {
       mod.lancamentos.length = 0;
-      mod.lancamentos.push(
-        { data: "2026-01-15", tipo: "RECEITA", status: "PAGO", valor: 5000 },
-        { data: "2026-01-15", tipo: "DESPESA", status: "PAGO", valor: 2000 },
-      );
+      mod.lancamentos.push({ data: "2026-01-15", tipo: "RECEITA", status: "PAGO", valor: 5000 }, { data: "2026-01-15", tipo: "DESPESA", status: "PAGO", valor: 2000 });
 
       const filtroAno = document.getElementById("filtroAno");
       filtroAno.innerHTML = '<option value="all">Todos</option><option value="2026">2026</option>';
@@ -184,9 +179,7 @@ describe("visualizar-cliente (página de visualização de cliente pelo admin)",
 
     it("adiciona classe saldo-positive quando saldo > 0", () => {
       mod.lancamentos.length = 0;
-      mod.lancamentos.push(
-        { data: "2026-01-15", tipo: "RECEITA", status: "PAGO", valor: 5000 },
-      );
+      mod.lancamentos.push({ data: "2026-01-15", tipo: "RECEITA", status: "PAGO", valor: 5000 });
 
       const filtroAno = document.getElementById("filtroAno");
       filtroAno.innerHTML = '<option value="all">Todos</option><option value="2026">2026</option>';
@@ -200,9 +193,7 @@ describe("visualizar-cliente (página de visualização de cliente pelo admin)",
 
     it("adiciona classe saldo-negative quando saldo < 0", () => {
       mod.lancamentos.length = 0;
-      mod.lancamentos.push(
-        { data: "2026-01-15", tipo: "DESPESA", status: "PAGO", valor: 3000 },
-      );
+      mod.lancamentos.push({ data: "2026-01-15", tipo: "DESPESA", status: "PAGO", valor: 3000 });
 
       const filtroAno = document.getElementById("filtroAno");
       filtroAno.innerHTML = '<option value="all">Todos</option>';
@@ -270,9 +261,17 @@ describe("visualizar-cliente (página de visualização de cliente pelo admin)",
 
     it("renderiza contador de lançamentos", () => {
       mod.lancamentos.length = 0;
-      mod.lancamentos.push(
-        { data: "2026-01-15", tipo: "RECEITA", status: "PAGO", valor: 100, descricao: "Salário", categoria_id: null, subcategoria_id: null, conta_origem_id: null, conta_destino_id: null },
-      );
+      mod.lancamentos.push({
+        data: "2026-01-15",
+        tipo: "RECEITA",
+        status: "PAGO",
+        valor: 100,
+        descricao: "Salário",
+        categoria_id: null,
+        subcategoria_id: null,
+        conta_origem_id: null,
+        conta_destino_id: null,
+      });
 
       mod.renderizarTabela();
 

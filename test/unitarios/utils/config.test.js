@@ -50,12 +50,12 @@ vi.mock("../../../services/repository.js", () => {
       for (const uid of Object.keys(db)) {
         if (!usuarioId || uid === usuarioId) {
           const chamados = db[uid]?.financas_chamados || [];
-          result = result.concat(chamados.map((c) => ({
-            ...c,
-            usuario: db[uid].financas_usuarios?.[0]
-              ? { nome: db[uid].financas_usuarios[0].nome, email: db[uid].financas_usuarios[0].email }
-              : null,
-          })));
+          result = result.concat(
+            chamados.map((c) => ({
+              ...c,
+              usuario: db[uid].financas_usuarios?.[0] ? { nome: db[uid].financas_usuarios[0].nome, email: db[uid].financas_usuarios[0].email } : null,
+            })),
+          );
         }
       }
       return result;
@@ -85,19 +85,28 @@ describe("config (configurações via repository)", () => {
   describe("getPerfil", () => {
     it("retorna perfil do usuario", async () => {
       // Arrange
-      repo.__seed("user-1", "financas_usuarios", [{
-        id: "user-1", nome: "Alan", email: "alan@example.com",
-        avatar_url: null,
-        role: "user", senha_hash: "hash", ativo: true,
-      }]);
+      repo.__seed("user-1", "financas_usuarios", [
+        {
+          id: "user-1",
+          nome: "Alan",
+          email: "alan@example.com",
+          avatar_url: null,
+          role: "user",
+          senha_hash: "hash",
+          ativo: true,
+        },
+      ]);
 
       // Act
       const perfil = await repo.getPerfil("user-1");
 
       // Assert
       expect(perfil).toEqual({
-        id: "user-1", nome: "Alan", email: "alan@example.com",
-        avatar_url: null, role: "user",
+        id: "user-1",
+        nome: "Alan",
+        email: "alan@example.com",
+        avatar_url: null,
+        role: "user",
       });
     });
 
@@ -110,11 +119,17 @@ describe("config (configurações via repository)", () => {
   describe("updatePerfil", () => {
     it("atualiza nome", async () => {
       // Arrange
-      repo.__seed("user-1", "financas_usuarios", [{
-        id: "user-1", nome: "Alan", email: "alan@example.com",
-        avatar_url: null, role: "user",
-        senha_hash: "hash", ativo: true,
-      }]);
+      repo.__seed("user-1", "financas_usuarios", [
+        {
+          id: "user-1",
+          nome: "Alan",
+          email: "alan@example.com",
+          avatar_url: null,
+          role: "user",
+          senha_hash: "hash",
+          ativo: true,
+        },
+      ]);
 
       // Act
       const result = await repo.updatePerfil("user-1", { nome: "Alan Atualizado" });
@@ -126,11 +141,17 @@ describe("config (configurações via repository)", () => {
     it("atualiza avatar_url com base64", async () => {
       // Arrange
       const avatar = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAA";
-      repo.__seed("user-1", "financas_usuarios", [{
-        id: "user-1", nome: "Alan", email: "alan@example.com",
-        avatar_url: null, role: "user",
-        senha_hash: "hash", ativo: true,
-      }]);
+      repo.__seed("user-1", "financas_usuarios", [
+        {
+          id: "user-1",
+          nome: "Alan",
+          email: "alan@example.com",
+          avatar_url: null,
+          role: "user",
+          senha_hash: "hash",
+          ativo: true,
+        },
+      ]);
 
       // Act
       const result = await repo.updatePerfil("user-1", { avatar_url: avatar });
@@ -211,9 +232,7 @@ describe("config (configurações via repository)", () => {
     it("retorna chamados do usuario com dados do usuario", async () => {
       // Arrange
       repo.__seed("user-1", "financas_usuarios", [{ id: "user-1", nome: "Alan", email: "alan@example.com" }]);
-      repo.__seed("user-1", "financas_chamados", [
-        { id: "ch-1", usuario_id: "user-1", titulo: "Ajuda", descricao: "Preciso de ajuda", status: "aberto", criado_em: "2026-06-01T00:00:00Z" },
-      ]);
+      repo.__seed("user-1", "financas_chamados", [{ id: "ch-1", usuario_id: "user-1", titulo: "Ajuda", descricao: "Preciso de ajuda", status: "aberto", criado_em: "2026-06-01T00:00:00Z" }]);
 
       // Act
       const result = await repo.getChamados("user-1");

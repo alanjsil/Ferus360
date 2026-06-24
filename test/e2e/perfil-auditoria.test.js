@@ -36,11 +36,7 @@ describe("Perfil -> Auditoria [REAL]", () => {
     expect(autenticado.usuario.email).toBe(normalUser.email);
     expect(autenticado.usuario.id).toBe(normalUser.id);
 
-    const { data: perfil } = await supabaseAdmin
-      .from("financas_usuarios")
-      .select("id, nome, email, role, ativo")
-      .eq("id", normalUser.id)
-      .single();
+    const { data: perfil } = await supabaseAdmin.from("financas_usuarios").select("id, nome, email, role, ativo").eq("id", normalUser.id).single();
 
     expect(perfil.nome).toBe(normalUser.nome);
     expect(perfil.email).toBe(normalUser.email);
@@ -52,12 +48,7 @@ describe("Perfil -> Auditoria [REAL]", () => {
   /* TESTE 2: ALTERAR NOME DO PERFIL         */
   /* ─────────────────────────────────────── */
   it("Step 2: Alterar nome do perfil e validar persistencia", async () => {
-    const { data: atualizado, error } = await supabaseAdmin
-      .from("financas_usuarios")
-      .update({ nome: "Nome Atualizado" })
-      .eq("id", normalUser.id)
-      .select()
-      .single();
+    const { data: atualizado, error } = await supabaseAdmin.from("financas_usuarios").update({ nome: "Nome Atualizado" }).eq("id", normalUser.id).select().single();
 
     expect(error).toBeNull();
     expect(atualizado.nome).toBe("Nome Atualizado");
@@ -112,21 +103,14 @@ describe("Perfil -> Auditoria [REAL]", () => {
       });
     }
 
-    const { data: logs } = await supabaseAdmin
-      .from("financas_auditoria")
-      .select("acao")
-      .eq("usuario_id", normalUser.id);
+    const { data: logs } = await supabaseAdmin.from("financas_auditoria").select("acao").eq("usuario_id", normalUser.id);
 
     const acoesRegistradas = logs.map((l) => l.acao);
     expect(acoesRegistradas).toContain("LOGIN");
     expect(acoesRegistradas).toContain("UPDATE");
     expect(acoesRegistradas).toContain("LOGOUT");
 
-    const { data: logsUpdate } = await supabaseAdmin
-      .from("financas_auditoria")
-      .select("id")
-      .eq("usuario_id", normalUser.id)
-      .eq("acao", "UPDATE");
+    const { data: logsUpdate } = await supabaseAdmin.from("financas_auditoria").select("id").eq("usuario_id", normalUser.id).eq("acao", "UPDATE");
 
     expect(logsUpdate.length).toBeGreaterThanOrEqual(1);
   });
@@ -136,7 +120,10 @@ describe("Perfil -> Auditoria [REAL]", () => {
   /* ─────────────────────────────────────── */
   it("Step 5: Isolamento de logs de auditoria entre usuarios", async () => {
     await supabaseAdmin.from("financas_auditoria").insert({
-      usuario_id: normalUser.id, acao: "LOGIN", entidade: "auth", contexto: "user",
+      usuario_id: normalUser.id,
+      acao: "LOGIN",
+      entidade: "auth",
+      contexto: "user",
     });
 
     const outroSeed = await criarUsuario(supabaseAdmin, {
@@ -146,18 +133,15 @@ describe("Perfil -> Auditoria [REAL]", () => {
     });
 
     await supabaseAdmin.from("financas_auditoria").insert({
-      usuario_id: outroSeed.id, acao: "LOGIN", entidade: "auth", contexto: "user",
+      usuario_id: outroSeed.id,
+      acao: "LOGIN",
+      entidade: "auth",
+      contexto: "user",
     });
 
-    const { data: logsU1 } = await supabaseAdmin
-      .from("financas_auditoria")
-      .select("usuario_id")
-      .eq("usuario_id", normalUser.id);
+    const { data: logsU1 } = await supabaseAdmin.from("financas_auditoria").select("usuario_id").eq("usuario_id", normalUser.id);
 
-    const { data: logsU2 } = await supabaseAdmin
-      .from("financas_auditoria")
-      .select("usuario_id")
-      .eq("usuario_id", outroSeed.id);
+    const { data: logsU2 } = await supabaseAdmin.from("financas_auditoria").select("usuario_id").eq("usuario_id", outroSeed.id);
 
     expect(logsU1.length).toBeGreaterThanOrEqual(1);
     expect(logsU2.length).toBeGreaterThanOrEqual(1);

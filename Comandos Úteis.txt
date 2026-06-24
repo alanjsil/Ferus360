@@ -5,6 +5,8 @@ npm audit
 
 npx asar list .\app.asar
 
+git config core.autocrlf false
+
 const fs = require("fs");
 const path = require("path");
 

@@ -236,7 +236,6 @@ function criarTabelas(): void {
       local_updated_at TEXT DEFAULT (datetime('now')),
       device_id TEXT
     )`,
-
   ];
 
   const transaction = db!.transaction(() => {
@@ -333,16 +332,4 @@ function getDbOrTest(): Database.Database | null {
   return _testDb || db;
 }
 
-export {
-  iniciar,
-  query,
-  get,
-  run,
-  transaction,
-  getDb,
-  getDeviceId,
-  fechar,
-  getIntegrityStatus,
-  __setDb,
-  getDbOrTest,
-};
+export { iniciar, query, get, run, transaction, getDb, getDeviceId, fechar, getIntegrityStatus, __setDb, getDbOrTest };

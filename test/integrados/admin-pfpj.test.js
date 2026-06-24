@@ -54,28 +54,138 @@ describe("Fluxo Integrado: Admin → Filtro PF/PJ", () => {
 
     // ── Lançamentos PF ──
     db.financas_lancamentos.push(
-      { id: "l-pf-1", usuario_id: cliente.id, tipo: "DESPESA", valor: 100, status: "PAGO", data: "2026-06-15", data_busca: "2026-06", tipo_pessoa: "PF", categoria_id: CAT_PF_DESPESA, criado_em: hoje },
-      { id: "l-pf-2", usuario_id: cliente.id, tipo: "RECEITA", valor: 5000, status: "PAGO", data: "2026-06-01", data_busca: "2026-06", tipo_pessoa: "PF", categoria_id: CAT_PJ_RECEITA, criado_em: hoje },
-      { id: "l-pf-3", usuario_id: cliente.id, tipo: "DESPESA", valor: 50, status: "PENDENTE", data: "2026-07-01", data_busca: "2026-07", tipo_pessoa: "PF", categoria_id: CAT_PF_DESPESA, criado_em: hoje },
+      {
+        id: "l-pf-1",
+        usuario_id: cliente.id,
+        tipo: "DESPESA",
+        valor: 100,
+        status: "PAGO",
+        data: "2026-06-15",
+        data_busca: "2026-06",
+        tipo_pessoa: "PF",
+        categoria_id: CAT_PF_DESPESA,
+        criado_em: hoje,
+      },
+      {
+        id: "l-pf-2",
+        usuario_id: cliente.id,
+        tipo: "RECEITA",
+        valor: 5000,
+        status: "PAGO",
+        data: "2026-06-01",
+        data_busca: "2026-06",
+        tipo_pessoa: "PF",
+        categoria_id: CAT_PJ_RECEITA,
+        criado_em: hoje,
+      },
+      {
+        id: "l-pf-3",
+        usuario_id: cliente.id,
+        tipo: "DESPESA",
+        valor: 50,
+        status: "PENDENTE",
+        data: "2026-07-01",
+        data_busca: "2026-07",
+        tipo_pessoa: "PF",
+        categoria_id: CAT_PF_DESPESA,
+        criado_em: hoje,
+      },
     );
 
     // ── Lançamentos PJ ──
     db.financas_lancamentos.push(
-      { id: "l-pj-1", usuario_id: cliente.id, tipo: "RECEITA", valor: 15000, status: "PAGO", data: "2026-06-10", data_busca: "2026-06", tipo_pessoa: "PJ", categoria_id: CAT_PJ_RECEITA, criado_em: hoje },
-      { id: "l-pj-2", usuario_id: cliente.id, tipo: "DESPESA", valor: 3000, status: "PAGO", data: "2026-06-20", data_busca: "2026-06", tipo_pessoa: "PJ", categoria_id: CAT_PF_DESPESA, criado_em: hoje },
-      { id: "l-pj-3", usuario_id: cliente.id, tipo: "DESPESA", valor: 500, status: "PENDENTE", data: "2026-07-05", data_busca: "2026-07", tipo_pessoa: "PJ", categoria_id: CAT_PF_DESPESA, criado_em: hoje },
+      {
+        id: "l-pj-1",
+        usuario_id: cliente.id,
+        tipo: "RECEITA",
+        valor: 15000,
+        status: "PAGO",
+        data: "2026-06-10",
+        data_busca: "2026-06",
+        tipo_pessoa: "PJ",
+        categoria_id: CAT_PJ_RECEITA,
+        criado_em: hoje,
+      },
+      {
+        id: "l-pj-2",
+        usuario_id: cliente.id,
+        tipo: "DESPESA",
+        valor: 3000,
+        status: "PAGO",
+        data: "2026-06-20",
+        data_busca: "2026-06",
+        tipo_pessoa: "PJ",
+        categoria_id: CAT_PF_DESPESA,
+        criado_em: hoje,
+      },
+      {
+        id: "l-pj-3",
+        usuario_id: cliente.id,
+        tipo: "DESPESA",
+        valor: 500,
+        status: "PENDENTE",
+        data: "2026-07-05",
+        data_busca: "2026-07",
+        tipo_pessoa: "PJ",
+        categoria_id: CAT_PF_DESPESA,
+        criado_em: hoje,
+      },
     );
 
     // ── Orçamento PF ──
     db.financas_orcamento.push(
-      { id: "o-pf-1", usuario_id: cliente.id, tipo: "RECEITA", valor_planejado: 5000, valor_realizado: 5000, data: "2026-06-01", data_busca: "2026-06", tipo_pessoa: "PF", categoria_id: CAT_PJ_RECEITA, criado_em: hoje },
-      { id: "o-pf-2", usuario_id: cliente.id, tipo: "DESPESA", valor_planejado: 1500, valor_realizado: 150, data: "2026-06-01", data_busca: "2026-06", tipo_pessoa: "PF", categoria_id: CAT_PF_DESPESA, criado_em: hoje },
+      {
+        id: "o-pf-1",
+        usuario_id: cliente.id,
+        tipo: "RECEITA",
+        valor_planejado: 5000,
+        valor_realizado: 5000,
+        data: "2026-06-01",
+        data_busca: "2026-06",
+        tipo_pessoa: "PF",
+        categoria_id: CAT_PJ_RECEITA,
+        criado_em: hoje,
+      },
+      {
+        id: "o-pf-2",
+        usuario_id: cliente.id,
+        tipo: "DESPESA",
+        valor_planejado: 1500,
+        valor_realizado: 150,
+        data: "2026-06-01",
+        data_busca: "2026-06",
+        tipo_pessoa: "PF",
+        categoria_id: CAT_PF_DESPESA,
+        criado_em: hoje,
+      },
     );
 
     // ── Orçamento PJ ──
     db.financas_orcamento.push(
-      { id: "o-pj-1", usuario_id: cliente.id, tipo: "RECEITA", valor_planejado: 30000, valor_realizado: 15000, data: "2026-06-01", data_busca: "2026-06", tipo_pessoa: "PJ", categoria_id: CAT_PJ_RECEITA, criado_em: hoje },
-      { id: "o-pj-2", usuario_id: cliente.id, tipo: "DESPESA", valor_planejado: 10000, valor_realizado: 3000, data: "2026-06-01", data_busca: "2026-06", tipo_pessoa: "PJ", categoria_id: CAT_PF_DESPESA, criado_em: hoje },
+      {
+        id: "o-pj-1",
+        usuario_id: cliente.id,
+        tipo: "RECEITA",
+        valor_planejado: 30000,
+        valor_realizado: 15000,
+        data: "2026-06-01",
+        data_busca: "2026-06",
+        tipo_pessoa: "PJ",
+        categoria_id: CAT_PJ_RECEITA,
+        criado_em: hoje,
+      },
+      {
+        id: "o-pj-2",
+        usuario_id: cliente.id,
+        tipo: "DESPESA",
+        valor_planejado: 10000,
+        valor_realizado: 3000,
+        data: "2026-06-01",
+        data_busca: "2026-06",
+        tipo_pessoa: "PJ",
+        categoria_id: CAT_PF_DESPESA,
+        criado_em: hoje,
+      },
     );
   });
 

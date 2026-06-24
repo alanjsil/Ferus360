@@ -16,7 +16,10 @@ describe("conexao (serviço de conectividade Supabase)", () => {
 
   beforeEach(async () => {
     vi.resetModules();
-    vi.stubGlobal("setInterval", vi.fn(() => 999));
+    vi.stubGlobal(
+      "setInterval",
+      vi.fn(() => 999),
+    );
     vi.stubGlobal("clearInterval", vi.fn());
     global.fetch = MOCK_FETCH_OK;
     conexao = await import("../../../services/conexao.js");

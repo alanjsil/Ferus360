@@ -168,9 +168,7 @@ describe("Fluxo Integrado: Admin → Categorias Globais", () => {
   it("Step 5: Admin desativa e reativa categoria global", async () => {
     const db = mockSupabase.__db();
 
-    const catGlobal = db.financas_categorias.find(
-      (c) => c.eh_global && c.nome === "Alimentação",
-    );
+    const catGlobal = db.financas_categorias.find((c) => c.eh_global && c.nome === "Alimentação");
 
     // Desativar
     const desativada = await repo.toggleCategoriaAtivo(catGlobal.id, admin.id);

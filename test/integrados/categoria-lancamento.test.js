@@ -137,9 +137,7 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
 
   it("Step 4: Criar lançamento vinculado a categoria existente", async () => {
     const db = mockSupabase.__db();
-    const catGlobal = db.financas_categorias.find(
-      (c) => c.eh_global && c.nome === "Alimentação",
-    );
+    const catGlobal = db.financas_categorias.find((c) => c.eh_global && c.nome === "Alimentação");
 
     const lancamento = await repo.criarLancamento(
       {
@@ -160,9 +158,7 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
     expect(lancamento.valor).toBe(45.9);
     expect(lancamento.descricao).toBe("Almoço");
 
-    const lancamentos = db.financas_lancamentos.filter(
-      (l) => l.usuario_id === usuario.id,
-    );
+    const lancamentos = db.financas_lancamentos.filter((l) => l.usuario_id === usuario.id);
     expect(lancamentos).toHaveLength(1);
     expect(lancamentos[0].categoria_id).toBe(catGlobal.id);
   });
@@ -177,31 +173,16 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
     const transporte = db.financas_categorias.find((c) => c.nome === "Transporte");
 
     // Criar 2 lançamentos em Alimentação
-    await repo.criarLancamento(
-      { tipo: "DESPESA", valor: 30, categoria_id: alimentacao.id, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06" },
-      usuario.id,
-    );
+    await repo.criarLancamento({ tipo: "DESPESA", valor: 30, categoria_id: alimentacao.id, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06" }, usuario.id);
 
-    await repo.criarLancamento(
-      { tipo: "DESPESA", valor: 50, categoria_id: alimentacao.id, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06" },
-      usuario.id,
-    );
+    await repo.criarLancamento({ tipo: "DESPESA", valor: 50, categoria_id: alimentacao.id, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06" }, usuario.id);
 
     // Criar 1 lançamento em Transporte
-    await repo.criarLancamento(
-      { tipo: "DESPESA", valor: 20, categoria_id: transporte.id, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06" },
-      usuario.id,
-    );
+    await repo.criarLancamento({ tipo: "DESPESA", valor: 20, categoria_id: transporte.id, data: "2026-06-15", status: "PENDENTE", data_busca: "2026-06" }, usuario.id);
 
-    const lancamentos = db.financas_lancamentos.filter(
-      (l) => l.usuario_id === usuario.id,
-    );
-    const totalAlimentacao = lancamentos
-      .filter((l) => l.categoria_id === alimentacao.id)
-      .reduce((s, l) => s + l.valor, 0);
-    const totalTransporte = lancamentos
-      .filter((l) => l.categoria_id === transporte.id)
-      .reduce((s, l) => s + l.valor, 0);
+    const lancamentos = db.financas_lancamentos.filter((l) => l.usuario_id === usuario.id);
+    const totalAlimentacao = lancamentos.filter((l) => l.categoria_id === alimentacao.id).reduce((s, l) => s + l.valor, 0);
+    const totalTransporte = lancamentos.filter((l) => l.categoria_id === transporte.id).reduce((s, l) => s + l.valor, 0);
 
     expect(lancamentos).toHaveLength(3);
     expect(totalAlimentacao).toBe(80);
@@ -244,9 +225,7 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
 
     // Criar lançamento de despesa com categoria global
     const db = mockSupabase.__db();
-    const catAlimentacao = db.financas_categorias.find(
-      (c) => c.eh_global && c.nome === "Alimentação",
-    );
+    const catAlimentacao = db.financas_categorias.find((c) => c.eh_global && c.nome === "Alimentação");
 
     await repo.criarLancamento(
       {
@@ -279,9 +258,7 @@ describe("Fluxo Integrado: Login → Categoria → Lançamento → Dashboard", (
     const globais = await repo.getCategorias(null);
 
     expect(globais).toHaveLength(3);
-    expect(globais.map((c) => c.nome)).toEqual(
-      expect.arrayContaining(["Alimentação", "Salário", "Transporte"]),
-    );
+    expect(globais.map((c) => c.nome)).toEqual(expect.arrayContaining(["Alimentação", "Salário", "Transporte"]));
 
     expect(globais.find((c) => c.nome === "Alimentação").tipo).toBe("DESPESA");
     expect(globais.find((c) => c.nome === "Salário").tipo).toBe("RECEITA");

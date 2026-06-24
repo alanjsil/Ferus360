@@ -4,10 +4,19 @@ import crypto from "crypto";
 import * as database from "../database";
 import * as logger from "../logger";
 import {
-  supabase, _doSQLite, _popularCache, _atualizarLocal, _syncAposEscrita,
-  _marcarPendente, _inserirLocal, _limparCacheEviccao,
-  adicionarFiltroUsuario, adicionarFiltroCategoriaTipoPessoa, adicionarWhereTipoPessoa,
-  validarUUID, normalizarNome,
+  supabase,
+  _doSQLite,
+  _popularCache,
+  _atualizarLocal,
+  _syncAposEscrita,
+  _marcarPendente,
+  _inserirLocal,
+  _limparCacheEviccao,
+  adicionarFiltroUsuario,
+  adicionarFiltroCategoriaTipoPessoa,
+  adicionarWhereTipoPessoa,
+  validarUUID,
+  normalizarNome,
 } from "./utils";
 import { logAuditoria } from "./auditoria";
 
@@ -151,7 +160,9 @@ async function criarCategoria(payload: CriarCategoriaPayload): Promise<Categoria
 
   _inserirLocal("financas_categorias", data as unknown as Record<string, unknown>, "synced");
   if (usuarioId) {
-    logAuditoria(usuarioId, "CATEGORIA_CRIADA", { entidade: "categoria", entidade_id: data.id, dados_novos: { nome: nomeNormalizado, tipo } }).catch((err: unknown) => logger.error("repository", "auditoria CATEGORIA_CRIADA falhou", err));
+    logAuditoria(usuarioId, "CATEGORIA_CRIADA", { entidade: "categoria", entidade_id: data.id, dados_novos: { nome: nomeNormalizado, tipo } }).catch((err: unknown) =>
+      logger.error("repository", "auditoria CATEGORIA_CRIADA falhou", err),
+    );
   }
   return data;
 }
@@ -237,7 +248,7 @@ async function toggleCategoriaUniversal(id: string, usuarioId?: string, tipoPess
     }
   }
 
-  const novoTipoPessoa = cat.tipo_pessoa === null ? tipoPessoaAtivo ?? null : null;
+  const novoTipoPessoa = cat.tipo_pessoa === null ? (tipoPessoaAtivo ?? null) : null;
   _atualizarLocal("financas_categorias", id, { tipo_pessoa: novoTipoPessoa, sync_status: "pending" });
 
   const { data, error } = await supabase.from("financas_categorias").update({ tipo_pessoa: novoTipoPessoa }).eq("id", id).select().single();
@@ -247,10 +258,7 @@ async function toggleCategoriaUniversal(id: string, usuarioId?: string, tipoPess
     throw error;
   }
 
-  const { error: errSub } = await supabase
-    .from("financas_subcategorias")
-    .update({ tipo_pessoa: novoTipoPessoa })
-    .eq("categoria_id", id);
+  const { error: errSub } = await supabase.from("financas_subcategorias").update({ tipo_pessoa: novoTipoPessoa }).eq("categoria_id", id);
   if (errSub) throw errSub;
 
   _atualizarLocal("financas_categorias", id, { ...data, sync_status: "synced" });
@@ -375,14 +383,4 @@ async function deletarSubcategoria(id: string): Promise<{ success: boolean }> {
   return { success: true };
 }
 
-export {
-  getCategorias,
-  criarCategoria,
-  updateCategoria,
-  toggleCategoriaAtivo,
-  toggleCategoriaUniversal,
-  getSubcategorias,
-  criarSubcategoria,
-  updateSubcategoria,
-  deletarSubcategoria,
-};
+export { getCategorias, criarCategoria, updateCategoria, toggleCategoriaAtivo, toggleCategoriaUniversal, getSubcategorias, criarSubcategoria, updateSubcategoria, deletarSubcategoria };

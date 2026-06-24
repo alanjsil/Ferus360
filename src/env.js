@@ -16,7 +16,7 @@ if (isDev) {
   try {
     require("dotenv").config({ quiet: true });
   } catch {
-    // dotenv não está disponível
+    console.log("dotenv não está disponível");
   }
 }
 

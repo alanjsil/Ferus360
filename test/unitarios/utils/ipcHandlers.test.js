@@ -139,18 +139,16 @@ describe("ipcHandlers (handlers de IPC)", () => {
     mockAdminService.getAnosDisponiveisCliente.mockResolvedValue([2026, 2025]);
     mockAdminService.getContasCliente.mockResolvedValue([{ id: "c-1", nome: "Conta Cliente" }]);
 
-
     ipcHandlersModule = await import("../../../services/ipcHandlers.js");
-    handlers = ipcHandlersModule.createHandlers(
-      mockRepository, mockSetState, mockGetState, () => {}, mockAuth, mockAdminService, mockPromptSenha
-    );
+    handlers = ipcHandlersModule.createHandlers(mockRepository, mockSetState, mockGetState, () => {}, mockAuth, mockAdminService, mockPromptSenha);
   });
 
   describe("handlers de autenticação", () => {
     it("handleAuthLogin retorna dados e chama setState", async () => {
       // Arrange
       mockAuth.login.mockResolvedValue({
-        token: "at-1", refreshToken: "rt-1",
+        token: "at-1",
+        refreshToken: "rt-1",
         usuario: { id: "user-1", nome: "User", role: "user" },
       });
       // Act
@@ -158,7 +156,9 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
       expect(mockAuth.login).toHaveBeenCalledWith("email@t.com", "senha", expect.any(Object));
       expect(mockSetState).toHaveBeenCalledWith("usuarioAtual", {
-        id: "user-1", nome: "User", role: "user",
+        id: "user-1",
+        nome: "User",
+        role: "user",
       });
       expect(result.token).toBe("at-1");
     });
@@ -166,9 +166,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("handleAuthLogout chama logout, reiniciarState e setState(null)", async () => {
       // Arrange
       const mockResetStateFn = vi.fn();
-      handlers = ipcHandlersModule.createHandlers(
-        mockRepository, mockSetState, mockGetState, mockResetStateFn, mockAuth, mockAdminService
-      );
+      handlers = ipcHandlersModule.createHandlers(mockRepository, mockSetState, mockGetState, mockResetStateFn, mockAuth, mockAdminService);
 
       mockAuth.logout.mockResolvedValue({ success: true });
       // Act
@@ -209,7 +207,8 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("handleAuthRedefinirSenha obtém tokens internamente e delega para auth.redefinirSenha", async () => {
       mockAuth.getRecoveryTokens.mockReturnValue({
-        accessToken: "at-1", refreshToken: "rt-1",
+        accessToken: "at-1",
+        refreshToken: "rt-1",
       });
       mockAuth.redefinirSenha.mockResolvedValue({ success: true });
 
@@ -231,7 +230,8 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("handleAuthRenovar delega para auth.renovarSessao", async () => {
       mockAuth.renovarSessao.mockResolvedValue({
-        token: "new-at", refreshToken: "new-rt",
+        token: "new-at",
+        refreshToken: "new-rt",
         usuario: { id: "user-1" },
       });
 
@@ -260,8 +260,6 @@ describe("ipcHandlers (handlers de IPC)", () => {
       expect(mockRepository.getCategorias).toHaveBeenCalledWith("user-123", "DESPESA", false, "PF");
       expect(result).toEqual([mockData]);
     });
-
-
   });
 
   describe("dados privados (com auth)", () => {
@@ -382,7 +380,13 @@ describe("ipcHandlers (handlers de IPC)", () => {
   describe("não autorizado (UNAUTHORIZED)", () => {
     beforeEach(() => {
       handlers = ipcHandlersModule.createHandlers(
-        mockRepository, mockSetState, vi.fn(() => []), () => {}, mockAuth, mockAdminService, mockPromptSenha
+        mockRepository,
+        mockSetState,
+        vi.fn(() => []),
+        () => {},
+        mockAuth,
+        mockAdminService,
+        mockPromptSenha,
       );
     });
 
@@ -472,7 +476,13 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("handleConfigEncerrarSessao retorna UNAUTHORIZED sem usuario logado", async () => {
       const noAuth = ipcHandlersModule.createHandlers(
-        mockRepository, mockSetState, vi.fn(() => []), () => {}, mockAuth, mockAdminService, mockPromptSenha
+        mockRepository,
+        mockSetState,
+        vi.fn(() => []),
+        () => {},
+        mockAuth,
+        mockAdminService,
+        mockPromptSenha,
       );
       const result = await noAuth.handleConfigEncerrarSessao(null, "sessao-1");
       expect(result).toEqual({ error: "UNAUTHORIZED" });
@@ -492,9 +502,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
       mockAuth.verificarSenha = vi.fn().mockResolvedValue({ success: true });
       mockRepository.excluirConta = vi.fn().mockResolvedValue({ success: true });
       const mockResetStateFn = vi.fn();
-      const handlers = ipcHandlersModule.createHandlers(
-        mockRepository, mockSetState, mockGetState, mockResetStateFn, mockAuth, mockAdminService, mockPromptSenha
-      );
+      const handlers = ipcHandlersModule.createHandlers(mockRepository, mockSetState, mockGetState, mockResetStateFn, mockAuth, mockAdminService, mockPromptSenha);
 
       const result = await handlers.handleConfigExcluirConta(null);
       expect(mockPromptSenha).toHaveBeenCalledWith("Digite sua senha para excluir sua conta");
@@ -508,7 +516,13 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("config handlers return UNAUTHORIZED without usuario logado", async () => {
       const noAuth = ipcHandlersModule.createHandlers(
-        mockRepository, mockSetState, vi.fn(() => []), () => {}, mockAuth, mockAdminService, mockPromptSenha
+        mockRepository,
+        mockSetState,
+        vi.fn(() => []),
+        () => {},
+        mockAuth,
+        mockAdminService,
+        mockPromptSenha,
       );
       const result = await noAuth.handleConfigGetPerfil(null);
       expect(result).toEqual({ error: "UNAUTHORIZED" });
@@ -532,7 +546,13 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("cat:create returns UNAUTHORIZED without usuario logado", async () => {
       const noAuth = ipcHandlersModule.createHandlers(
-        mockRepository, mockSetState, vi.fn(() => []), () => {}, mockAuth, mockAdminService, mockPromptSenha
+        mockRepository,
+        mockSetState,
+        vi.fn(() => []),
+        () => {},
+        mockAuth,
+        mockAdminService,
+        mockPromptSenha,
       );
       const result = await noAuth.handleCatCreate(null, { nome: "X", tipo: "RECEITA" });
       expect(result).toEqual({ error: "UNAUTHORIZED" });
@@ -553,7 +573,13 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("cat handlers return UNAUTHORIZED without usuario logado", async () => {
       const noAuth = ipcHandlersModule.createHandlers(
-        mockRepository, mockSetState, vi.fn(() => []), () => {}, mockAuth, mockAdminService, mockPromptSenha
+        mockRepository,
+        mockSetState,
+        vi.fn(() => []),
+        () => {},
+        mockAuth,
+        mockAdminService,
+        mockPromptSenha,
       );
       const r1 = await noAuth.handleCatUpdate(null, "cat-1", { nome: "X" });
       expect(r1).toEqual({ error: "UNAUTHORIZED" });
@@ -590,7 +616,13 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
     it("subcat handlers return UNAUTHORIZED without usuario logado", async () => {
       const noAuth = ipcHandlersModule.createHandlers(
-        mockRepository, mockSetState, vi.fn(() => []), () => {}, mockAuth, mockAdminService, mockPromptSenha
+        mockRepository,
+        mockSetState,
+        vi.fn(() => []),
+        () => {},
+        mockAuth,
+        mockAdminService,
+        mockPromptSenha,
       );
       const r1 = await noAuth.handleSubcatCreate(null, { nome: "X", categoria_id: "c-1" });
       expect(r1).toEqual({ error: "UNAUTHORIZED" });
@@ -662,7 +694,6 @@ describe("ipcHandlers (handlers de IPC)", () => {
       const result = await handlers.handleAdminGetTransacoesCliente(null, "u-1", 1, 2026);
       expect(result).toEqual({ error: "UNAUTHORIZED" });
     });
-
 
     it("handleAdminResetSenha redefine senha", async () => {
       const result = await handlers.handleAdminResetSenha(null, "u-1");

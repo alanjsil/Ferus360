@@ -16,7 +16,7 @@ async function _obterIpPublico(): Promise<string | undefined> {
   _ipPromise = (async () => {
     try {
       const res = await fetch("https://api.ipify.org?format=json", { signal: AbortSignal.timeout(5000) });
-      const data = await res.json() as { ip: string };
+      const data = (await res.json()) as { ip: string };
       _ipCache = data.ip;
       _ipCacheAt = Date.now();
       return _ipCache;
@@ -69,6 +69,8 @@ function createHandlers(
         const data = await auth.login(email, senha, metadados);
         setState("usuarioAtual", data.usuario);
         setState("usarPjAtivo", data.usuario?.usar_pj === true);
+        setState("accessToken", data.token);
+        setState("refreshToken", data.refreshToken);
         return data;
       } catch (err) {
         const code = (err as { code?: string }).code || (err as Error).message || "ERRO_INTERNO";
@@ -93,6 +95,8 @@ function createHandlers(
       if (usuario) {
         setState("usuarioAtual", usuario);
         setState("usarPjAtivo", usuario.usar_pj === true);
+        setState("accessToken", token);
+        setState("refreshToken", refreshToken);
       }
       return usuario;
     },
@@ -122,6 +126,8 @@ function createHandlers(
         await repository.setAuthSession(result.token, result.refreshToken);
         setState("usuarioAtual", result.usuario);
         setState("usarPjAtivo", result.usuario?.usar_pj === true);
+        setState("accessToken", result.token);
+        setState("refreshToken", result.refreshToken);
         return result;
       } catch (err) {
         return { error: err instanceof AuthError ? err.code : "ERRO_INTERNO" };
@@ -276,10 +282,24 @@ function createHandlers(
     },
 
     handleDashboardDados: async (_event: unknown, ano: unknown, mes: unknown, categoria: string) => {
-      const usuarioId = obterUsuarioId();
-      if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const tipoPessoa = obterTipoPessoaAtivo();
-      return await repository.getDashboardDados(ano, mes, categoria, usuarioId, tipoPessoa);
+      try {
+        const usuarioId = obterUsuarioId();
+        if (!usuarioId) return { error: "UNAUTHORIZED" };
+        const token = getState("accessToken") as string | null;
+        const refreshToken = getState("refreshToken") as string | null;
+        if (token && refreshToken) {
+          try {
+            await repository.setAuthSession(token, refreshToken);
+          } catch (err) {
+            logger.error("ipcHandlers", "setAuthSession falhou no dashboard:dados", err);
+          }
+        }
+        const tipoPessoa = obterTipoPessoaAtivo();
+        return await repository.getDashboardDados(ano, mes, categoria, usuarioId, tipoPessoa);
+      } catch (err) {
+        logger.error("ipc", "Erro no dashboard:dados", err);
+        return { error: "ERRO_INTERNO", detalhe: err instanceof Error ? err.message : String(err) };
+      }
     },
 
     handleDashboardAnos: async () => {
@@ -363,7 +383,7 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
-        const data = await repository.criarTransferencia(payload, usuarioId);
+      const data = await repository.criarTransferencia(payload, usuarioId);
       const current = (getState("lancamentos") as unknown[]) || [];
       setState("lancamentos", [...current, ...(data as unknown[])]);
       return data;

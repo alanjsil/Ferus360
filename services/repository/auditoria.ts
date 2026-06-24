@@ -2,10 +2,7 @@ import type { Auditoria, FiltrosAuditoria } from "../../src/types";
 import crypto from "crypto";
 import * as database from "../database";
 import * as logger from "../logger";
-import {
-  supabase, supabaseAdminInstance, _doSQLite, _syncAposEscrita, _marcarPendente,
-  _inserirLocal,
-} from "./utils";
+import { supabase, supabaseAdminInstance, _doSQLite, _syncAposEscrita, _marcarPendente, _inserirLocal } from "./utils";
 
 async function getAuditoria(filtros: FiltrosAuditoria = {}): Promise<Auditoria[]> {
   if (database.getDb() && !filtros.usuarioId && !filtros.acao) {
@@ -75,20 +72,12 @@ async function logAuditoria(
     contexto: metadados.contexto || "user",
   };
 
-  let result = await supabase
-    .from("financas_auditoria")
-    .insert(insertPayload)
-    .select()
-    .single();
+  let result = await supabase.from("financas_auditoria").insert(insertPayload).select().single();
 
   if (result.error && supabaseAdminInstance) {
     logger.warn("repository", "logAuditoria: fallback para supabaseAdmin", result.error);
     try {
-      result = await supabaseAdminInstance
-        .from("financas_auditoria")
-        .insert(insertPayload)
-        .select()
-        .single();
+      result = await supabaseAdminInstance.from("financas_auditoria").insert(insertPayload).select().single();
     } catch (fallbackErr) {
       logger.error("repository", "logAuditoria: fallback supabaseAdmin também falhou", fallbackErr);
     }
