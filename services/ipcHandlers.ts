@@ -143,7 +143,8 @@ function createHandlers(
         if ((err as Error)?.message === "USUARIO_CANCELOU") {
           return { error: "USUARIO_CANCELOU" };
         }
-        throw err;
+        const code = err instanceof AuthError ? err.code : (err as Error)?.message || "ERRO_INTERNO";
+        return { error: code };
       }
     },
 

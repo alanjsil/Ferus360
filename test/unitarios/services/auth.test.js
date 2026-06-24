@@ -293,7 +293,7 @@ describe("auth (wrapper do Supabase Auth)", () => {
       });
 
       // Act & Assert
-      await expect(auth.trocarSenha("user-1", "senha-errada", "NovaSenha1")).rejects.toThrow("SENHA_INVALIDA");
+      await expect(auth.trocarSenha("user-1", "senha-errada", "NovaSenha1")).rejects.toThrow("SENHA_ATUAL_INCORRETA");
     });
   });
 

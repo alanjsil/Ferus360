@@ -143,9 +143,26 @@ function construirAuthService(dependencies: AuthDependencies = {}): AuthService 
   }
 
   async function trocarSenha(_usuarioId: string, senhaAtual: string, novaSenha: string, metadados?: MetadadosRequisicao): Promise<{ success: boolean }> {
-    await verificarSenha(_usuarioId, senhaAtual);
-    const { error } = await supabase.auth.updateUser({ password: novaSenha });
-    if (error) throw new AuthError(mapearErroSupabase(error) || "ERRO_INTERNO");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const email = sessionData?.session?.user?.email;
+    if (!email) throw new AuthError("USUARIO_INVALIDO");
+
+    const client = _createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { error: loginError } = await client.auth.signInWithPassword({
+      email,
+      password: senhaAtual,
+    });
+
+    if (loginError) {
+      await client.auth.signOut().catch(() => {});
+      throw new AuthError("SENHA_ATUAL_INCORRETA");
+    }
+
+    const { error: updateError } = await client.auth.updateUser({ password: novaSenha });
+    await client.auth.signOut().catch(() => {});
+
+    if (updateError) throw new AuthError(mapearErroSupabase(updateError) || "ERRO_INTERNO");
+
     await _logAuditoria(_usuarioId, "SENHA_TROCADA", {
       ip: metadados?.ip,
       user_agent: metadados?.user_agent,

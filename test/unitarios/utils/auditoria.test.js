@@ -145,6 +145,7 @@ describe("auditoria (spec-11)", () => {
       const mockCreateClient = vi.fn(() => ({
         auth: {
           signInWithPassword: vi.fn().mockResolvedValue({ data: {}, error: null }),
+          updateUser: vi.fn().mockResolvedValue({ error: null }),
           signOut: vi.fn().mockResolvedValue({ error: null }),
         },
       }));
