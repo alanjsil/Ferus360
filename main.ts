@@ -73,8 +73,6 @@ autoUpdater.on("update-downloaded", (info: any) => {
   autoUpdater.quitAndInstall();
 });
 
-let mainWindow: any;
-
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
