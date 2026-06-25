@@ -166,7 +166,7 @@
 - [x] 5.1 Carregar perfil (nome, email, email recuperação)
 - [x] 5.2 Alterar nome
 - [x] 5.3 Alterar email recuperação (obsoleto)
-- [ ] 5.4 Alterar email (admin — ver item 6.14)
+- [x] 5.4 Alterar email (admin — ver item 6.14) (não existe está opção)
 - [x] 5.5 Upload avatar (>2MB erro, PNG/JPG preview)
 - [x] 5.6 Trocar senha — confirmação errada
 - [x] 5.7 Trocar senha — senha atual errada
@@ -183,12 +183,12 @@
 
 #### 6.1 Dashboard Admin
 
-- [ ] 6.1 Dashboard admin (cards totais: receitas, despesas, saldo, usuários ativos)
+- [x] 6.1 Dashboard admin (cards totais: receitas, despesas, saldo, usuários ativos)
   - **Breakpoint:** `admin.js:76` `carregarDashboard()`
 
 #### 6.2 Clientes
 
-- [ ] 6.2.1 Criar clientes (modal "Novo usuário" → edge function)
+- [x] 6.2.1 Criar clientes (modal "Novo usuário" → edge function)
   - **Breakpoint:** `admin.js:665` `configurarNovoUsuario()`
 - [ ] 6.2.2 Listar clientes (tabela com nome, email, criado em, último login, status)
   - **Breakpoint:** `admin.js:118` `carregarClientes()`
