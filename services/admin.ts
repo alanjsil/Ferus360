@@ -1,9 +1,9 @@
-import type { Usuario, AdminDashboard, FiltrosAuditoria, Auditoria, Chamado, Lancamento, Conta, Orcamento, DashboardDadosResult, ResultadoPaginado } from "../src/types";
 import crypto from "crypto";
-import * as conexaoModule from "./conexao";
-import * as repositoryModule from "./repository";
+import type { AdminDashboard, Auditoria, Chamado, Conta, DashboardDadosResult, FiltrosAuditoria, Lancamento, Orcamento, ResultadoPaginado, Usuario } from "../src/types";
 import * as authModule from "./auth";
+import * as conexaoModule from "./conexao";
 import * as logger from "./logger";
+import * as repositoryModule from "./repository";
 import { validarUUID } from "./repository";
 
 class AdminError extends Error {
@@ -58,6 +58,7 @@ interface AdminService {
   getContasCliente: (id: string, tipoPessoa?: string) => Promise<Conta[]>;
   resetSenha: (id: string) => Promise<{ success: boolean; message: string; redefinidoPor: string }>;
   getChamados: () => Promise<(Chamado & { usuario_nome: string; usuario_email: string })[]>;
+  getClientePerfil: (id: string) => Promise<Usuario | null>;
   responderChamado: (id: string, msg: string) => Promise<Chamado>;
   updateChamado: (id: string, status: string) => Promise<Chamado>;
   criarChamado: (payload: Record<string, unknown>) => Promise<Chamado>;
@@ -176,6 +177,12 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
     return { success: true, message: "Email de recuperação enviado", redefinidoPor: admin.id };
   }
 
+  async function getClientePerfil(id: string): Promise<Usuario | null> {
+    await verificarAdmin();
+    validarUUID(id);
+    return await deps.repository.getPerfil(id);
+  }
+
   async function getChamados(): Promise<(Chamado & { usuario_nome: string; usuario_email: string })[]> {
     await verificarAdmin();
     const chamados = await deps.repository.getChamados(undefined);
@@ -233,10 +240,10 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
     return await deps.repository.getAuditoria(filtros);
   }
 
-  async function criarUsuario(nome: string, email: string, senha: string): Promise<unknown> {
+  async function criarUsuario(nome: string, email: string): Promise<unknown> {
     await verificarAdmin();
 
-    if (!nome || !email || !senha) {
+    if (!nome || !email) {
       throw criarAdminError("DADOS_INCOMPLETOS");
     }
 
@@ -249,7 +256,10 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ nome, email, senha }),
+      body: JSON.stringify({
+        nome,
+        email,
+      }),
     });
 
     const result = (await response.json()) as Record<string, unknown>;
@@ -267,6 +277,7 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
     getClientes,
     toggleCliente,
     getResumoCliente,
+    getClientePerfil,
     getTransacoesCliente,
     getOrcamentoCliente,
     getDashboardDadosCliente,
@@ -284,7 +295,7 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
 
 const defaultService = construirAdminService();
 
-export { defaultService as createAdminService, construirAdminService, AdminError };
+export { AdminError, construirAdminService, defaultService as createAdminService };
 
 export const {
   verificarAdmin,
@@ -299,6 +310,7 @@ export const {
   getContasCliente,
   resetSenha,
   getChamados,
+  getClientePerfil,
   responderChamado,
   updateChamado,
   criarChamado,

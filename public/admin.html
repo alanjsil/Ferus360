@@ -10,6 +10,13 @@
     <link rel="stylesheet" href="fontawesome/css/all.min.css" />
   </head>
   <body>
+    <div id="splashToggle" style="position: fixed; inset: 0; z-index: 99999; background: #0f172a; display: none; align-items: center; justify-content: center; transition: opacity 0.5s ease">
+      <div class="splash-content">
+        <div class="splash-coin">👁️</div>
+        <p class="splash-text">Carregando dados...</p>
+      </div>
+    </div>
+
     <div class="admin-header">
       <h1>Administração</h1>
       <div class="header-actions">
@@ -151,8 +158,6 @@
               <div class="inline-fields" style="flex-direction: column; gap: 12px">
                 <input id="novoUsuarioNome" type="text" placeholder="Nome completo" maxlength="100" />
                 <input id="novoUsuarioEmail" type="email" placeholder="Email" />
-                <input id="novoUsuarioSenha" type="password" placeholder="Senha (mín. 8 caracteres)" minlength="8" />
-                <input id="novoUsuarioConfirmar" type="password" placeholder="Confirmar senha" minlength="8" />
               </div>
               <p class="message" id="novoUsuarioMessage" role="alert"></p>
               <div style="display: flex; gap: 8px; margin-top: 8px">

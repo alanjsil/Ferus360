@@ -780,10 +780,10 @@ describe("ipcHandlers (handlers de IPC)", () => {
       mockAdminService.criarUsuario.mockResolvedValue({ id: "u-new", nome: "João", email: "joao@t.com" });
 
       // Act
-      const result = await handlers.handleAdminCriarUsuario(null, "João", "joao@t.com", "senha123");
+      const result = await handlers.handleAdminCriarUsuario(null, "João", "joao@t.com");
 
       // Assert
-      expect(mockAdminService.criarUsuario).toHaveBeenCalledWith("João", "joao@t.com", "senha123");
+      expect(mockAdminService.criarUsuario).toHaveBeenCalledWith("João", "joao@t.com");
       expect(result.id).toBe("u-new");
       expect(result.nome).toBe("João");
     });

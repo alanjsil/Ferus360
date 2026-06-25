@@ -563,13 +563,11 @@ describe("admin (página administrativa)", () => {
       document.getElementById("novoUsuarioBtn").click();
       document.getElementById("novoUsuarioNome").value = "João";
       document.getElementById("novoUsuarioEmail").value = "joao@t.com";
-      document.getElementById("novoUsuarioSenha").value = "senha123";
-      document.getElementById("novoUsuarioConfirmar").value = "senha123";
       document.getElementById("salvarNovoUsuario").click();
 
       // Assert
       await vi.waitFor(() => {
-        expect(window.electronAPI.adminCriarUsuario).toHaveBeenCalledWith("João", "joao@t.com", "senha123");
+        expect(window.electronAPI.adminCriarUsuario).toHaveBeenCalledWith("João", "joao@t.com");
         expect(dialog.close).toHaveBeenCalled();
         expect(window.electronAPI.adminGetClientes).toHaveBeenCalled();
       });

@@ -549,7 +549,7 @@ describe("admin (serviço de administração)", () => {
         expect.objectContaining({
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer admin-token" },
-          body: JSON.stringify({ nome: "João", email: "joao@t.com", senha: "senha123" }),
+          body: JSON.stringify({ nome: "João", email: "joao@t.com" }),
         }),
       );
       expect(mockRepository.logAuditoria).not.toHaveBeenCalled();
@@ -569,9 +569,8 @@ describe("admin (serviço de administração)", () => {
       mockAuth.verificarSessao.mockResolvedValue({ id: "admin-1", role: "admin" });
 
       // Act & Assert
-      await expect(admin.criarUsuario("", "joao@t.com", "senha123")).rejects.toThrow("DADOS_INCOMPLETOS");
-      await expect(admin.criarUsuario("João", "", "senha123")).rejects.toThrow("DADOS_INCOMPLETOS");
-      await expect(admin.criarUsuario("João", "joao@t.com", "")).rejects.toThrow("DADOS_INCOMPLETOS");
+      await expect(admin.criarUsuario("", "joao@t.com")).rejects.toThrow("DADOS_INCOMPLETOS");
+      await expect(admin.criarUsuario("João", "")).rejects.toThrow("DADOS_INCOMPLETOS");
       expect(global.fetch).not.toHaveBeenCalled();
     });
 

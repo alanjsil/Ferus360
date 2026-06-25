@@ -665,6 +665,14 @@ function createHandlers(
       }
     },
 
+    handleAdminGetClientePerfil: async (_event: unknown, usuarioId: string) => {
+      try {
+        return await adminService.getClientePerfil(usuarioId);
+      } catch {
+        return { error: "UNAUTHORIZED" };
+      }
+    },
+
     handleAdminGetChamados: async () => {
       try {
         return await adminService.getChamados();
@@ -697,9 +705,9 @@ function createHandlers(
       }
     },
 
-    handleAdminCriarUsuario: async (_event: unknown, nome: string, email: string, senha: string) => {
+    handleAdminCriarUsuario: async (_event: unknown, nome: string, email: string) => {
       try {
-        return await adminService.criarUsuario(nome, email, senha);
+        return await adminService.criarUsuario(nome, email);
       } catch (err) {
         return { error: (err as { code?: string }).code || "ERRO_CRIAR_USUARIO" };
       }
@@ -840,6 +848,7 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("admin:getContasCliente", handlers.handleAdminGetContasCliente);
   ipcMain.handle("admin:resetSenha", handlers.handleAdminResetSenha);
   ipcMain.handle("admin:getChamados", handlers.handleAdminGetChamados);
+  ipcMain.handle("admin:getClientePerfil", handlers.handleAdminGetClientePerfil);
   ipcMain.handle("admin:responderChamado", handlers.handleAdminResponderChamado);
   ipcMain.handle("admin:updateChamado", handlers.handleAdminUpdateChamado);
   ipcMain.handle("admin:getAuditoria", handlers.handleAdminGetAuditoria);
