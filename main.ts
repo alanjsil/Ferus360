@@ -32,6 +32,11 @@ autoUpdater.on("checking-for-update", () => {
   logger.warn("auto-updater", "Checando se há atualizações...");
 });
 
+autoUpdater.on("error", (err: any) => {
+  console.error("[auto-updater] ERRO COMPLETO:", err);
+  logger.error("auto-updater", "Erro no auto-updater: " + err?.message, err);
+});
+
 autoUpdater.on("update-available", (info: any) => {
   console.log("[auto-updater] Atualização disponível:", info.version);
   logger.warn("auto-updater", "Atualização disponível: " + info.version);

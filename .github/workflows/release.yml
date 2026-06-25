@@ -21,17 +21,19 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-      - name: Check token
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "TOKEN VAZIO"
-            exit 1
-          fi
 
-          echo "TOKEN PRESENTE"
+      # - name: Check token
+      #   shell: bash
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      #   run: |
+      #     if [ -z "$GH_TOKEN" ]; then
+      #       echo "TOKEN VAZIO"
+      #       exit 1
+      #     fi
+
+      #     echo "TOKEN PRESENTE"
+
       - name: Install dependencies
         run: npm ci
 
@@ -48,10 +50,10 @@ jobs:
         run: |
           dir dist\
 
-      - name: Build and publish (Mac)
-        if: matrix.os == 'macos-latest'
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          npm run build:ts
-          npx electron-builder --mac --publish always
+      # - name: Build and publish (Mac)
+      #   if: matrix.os == 'macos-latest'
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      #   run: |
+      #     npm run build:ts
+      #     npx electron-builder --mac --publish always

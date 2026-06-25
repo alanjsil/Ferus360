@@ -33,7 +33,8 @@
   },
   "build": {
     "appId": "com.deltaAutomacoes.financas",
-    "productName": "Finanças Pessoais",
+    "productName": "FinancasPessoais",
+    "artifactName": "financas-${version}.${ext}",
     "directories": {
       "output": "dist"
     },
