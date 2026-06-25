@@ -22,6 +22,7 @@ let filtroAtualStatus = "all";
 let filtroAtualAno = "all";
 let filtroAtualMes = "all";
 let tipoPessoa = "PF";
+let clienteUsarPj = false;
 
 function formatCurrency(value) {
   return formatarMoeda(value);
@@ -92,6 +93,8 @@ function configurarTipoPessoaToggle() {
   const container = document.getElementById("tipoPessoaToggle");
   if (!container) return;
 
+  container.hidden = !clienteUsarPj;
+
   const salvo = localStorage.getItem(STORAGE_KEY_TIPO_PESSOA);
   if (salvo) {
     tipoPessoa = salvo;
@@ -108,7 +111,10 @@ function configurarTipoPessoaToggle() {
     if (span) span.textContent = novoTp === "PF" ? "Pessoa Física" : "Pessoa Jurídica";
     localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, novoTp);
     await window.electronAPI.setTipoPessoa(novoTp);
+
+    mostrarSplashToggle();
     await recarregarDados();
+    esconderSplashToggle();
   });
 
   if (typeof window.electronAPI?.onTipoPessoaChanged === "function") {
@@ -134,27 +140,6 @@ function configurarTipoPessoaToggle() {
       localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, value);
     });
   }
-
-  if (typeof window.electronAPI?.onUsarPjChanged === "function") {
-    _cleanups.push(
-      window.electronAPI.onUsarPjChanged((value) => {
-        container.hidden = !value;
-        if (!value) {
-          tipoPessoa = "PF";
-          container.dataset.tp = "PF";
-          const span = container.querySelector("span");
-          if (span) span.textContent = "Pessoa Física";
-          localStorage.setItem(STORAGE_KEY_TIPO_PESSOA, "PF");
-        }
-      }),
-    );
-  }
-
-  if (typeof window.electronAPI?.getUsarPj === "function") {
-    window.electronAPI.getUsarPj().then((value) => {
-      container.hidden = !value;
-    });
-  }
 }
 
 async function recarregarDados() {
@@ -163,6 +148,22 @@ async function recarregarDados() {
   await carregarCategorias();
   await carregarLancamentos();
   await carregarOrcamento();
+}
+
+function mostrarSplashToggle() {
+  const splash = document.getElementById("splashToggle");
+  if (splash) {
+    splash.style.display = "flex";
+    splash.classList.remove("fade-out");
+  }
+}
+
+function esconderSplashToggle() {
+  const splash = document.getElementById("splashToggle");
+  if (splash) {
+    splash.classList.add("fade-out");
+    setTimeout(() => { splash.style.display = "none"; }, 500);
+  }
 }
 
 /**
@@ -482,6 +483,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   await new Promise(requestAnimationFrame);
+
+  try {
+    const clientePerfil = await window.electronAPI.adminGetClientePerfil(usuarioIdCliente);
+    clienteUsarPj = clientePerfil?.usar_pj === true;
+  } catch {
+    clienteUsarPj = false;
+  }
 
   await carregarSubcategoriasCache();
   await carregarContas();

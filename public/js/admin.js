@@ -13,6 +13,7 @@ let clienteVisualizadoId = null;
 let tipoPessoaResumo = "PF";
 let tipoPessoaDetalhes = "PF";
 let paginaAtualClientes = 1;
+let clienteUsarPj = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
   const auth = await ensureAuthenticated({ requireAdmin: true });
@@ -53,6 +54,15 @@ function preencherSelectsFiltro() {
   }
 }
 
+async function carregarClientePerfil(id) {
+  try {
+    const perfil = await window.electronAPI.adminGetClientePerfil(id);
+    clienteUsarPj = perfil?.usar_pj === true;
+  } catch {
+    clienteUsarPj = false;
+  }
+}
+
 function configurarTipoPessoaToggle() {
   document.querySelectorAll("#tipoPessoaResumo .pill-button, #tipoPessoaDetalhes .pill-button").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -62,10 +72,18 @@ function configurarTipoPessoaToggle() {
       const tipo = btn.dataset.tipo;
       if (parent.id === "tipoPessoaResumo") {
         tipoPessoaResumo = tipo;
-        if (clienteVisualizadoId) visualizarCliente(clienteVisualizadoId, "");
+        if (clienteVisualizadoId) {
+          mostrarSplashToggle();
+          visualizarCliente(clienteVisualizadoId, "");
+          esconderSplashToggle();
+        }
       } else {
         tipoPessoaDetalhes = tipo;
-        if (clienteVisualizadoId) abrirDetalhesCliente(clienteVisualizadoId);
+        if (clienteVisualizadoId) {
+          mostrarSplashToggle();
+          abrirDetalhesCliente(clienteVisualizadoId);
+          esconderSplashToggle();
+        }
       }
     });
   });
@@ -249,8 +267,39 @@ function renderizarPaginacaoClientes(data) {
   });
 }
 
+function mostrarSplashToggle() {
+  const splash = document.getElementById("splashToggle");
+  if (splash) {
+    splash.style.display = "flex";
+    splash.classList.remove("fade-out");
+  }
+}
+
+function esconderSplashToggle() {
+  const splash = document.getElementById("splashToggle");
+  if (splash) {
+    splash.classList.add("fade-out");
+    setTimeout(() => { splash.style.display = "none"; }, 500);
+  }
+}
+
 async function visualizarCliente(id, nome) {
   clienteVisualizadoId = id;
+
+  await carregarClientePerfil(id);
+
+  const resumoGroup = document.getElementById("tipoPessoaResumo");
+  if (resumoGroup) {
+    resumoGroup.querySelectorAll(".pill-button").forEach((btn) => {
+      btn.hidden = btn.dataset.tipo === "PJ" && !clienteUsarPj;
+    });
+    if (!clienteUsarPj) {
+      tipoPessoaResumo = "PF";
+      resumoGroup.querySelector(".pill-button[data-tipo='PF']").classList.add("active");
+      resumoGroup.querySelector(".pill-button[data-tipo='PJ']").classList.remove("active");
+    }
+  }
+
   const dialog = document.getElementById("resumoDialog");
   const body = document.getElementById("resumoBody");
   const footer = document.getElementById("resumoFooter");
@@ -304,6 +353,20 @@ async function visualizarCliente(id, nome) {
 }
 
 async function abrirDetalhesCliente(id) {
+  await carregarClientePerfil(id);
+
+  const detalhesGroup = document.getElementById("tipoPessoaDetalhes");
+  if (detalhesGroup) {
+    detalhesGroup.querySelectorAll(".pill-button").forEach((btn) => {
+      btn.hidden = btn.dataset.tipo === "PJ" && !clienteUsarPj;
+    });
+    if (!clienteUsarPj) {
+      tipoPessoaDetalhes = "PF";
+      detalhesGroup.querySelector(".pill-button[data-tipo='PF']").classList.add("active");
+      detalhesGroup.querySelector(".pill-button[data-tipo='PJ']").classList.remove("active");
+    }
+  }
+
   const dialog = document.getElementById("detalhesDialog");
   const body = document.getElementById("detalhesBody");
   const empty = document.getElementById("detalhesEmpty");

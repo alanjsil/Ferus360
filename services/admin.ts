@@ -58,6 +58,7 @@ interface AdminService {
   getContasCliente: (id: string, tipoPessoa?: string) => Promise<Conta[]>;
   resetSenha: (id: string) => Promise<{ success: boolean; message: string; redefinidoPor: string }>;
   getChamados: () => Promise<(Chamado & { usuario_nome: string; usuario_email: string })[]>;
+  getClientePerfil: (id: string) => Promise<Usuario | null>;
   responderChamado: (id: string, msg: string) => Promise<Chamado>;
   updateChamado: (id: string, status: string) => Promise<Chamado>;
   criarChamado: (payload: Record<string, unknown>) => Promise<Chamado>;
@@ -176,6 +177,12 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
     return { success: true, message: "Email de recuperação enviado", redefinidoPor: admin.id };
   }
 
+  async function getClientePerfil(id: string): Promise<Usuario | null> {
+    await verificarAdmin();
+    validarUUID(id);
+    return await deps.repository.getPerfil(id);
+  }
+
   async function getChamados(): Promise<(Chamado & { usuario_nome: string; usuario_email: string })[]> {
     await verificarAdmin();
     const chamados = await deps.repository.getChamados(undefined);
@@ -270,6 +277,7 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
     getClientes,
     toggleCliente,
     getResumoCliente,
+    getClientePerfil,
     getTransacoesCliente,
     getOrcamentoCliente,
     getDashboardDadosCliente,
@@ -302,6 +310,7 @@ export const {
   getContasCliente,
   resetSenha,
   getChamados,
+  getClientePerfil,
   responderChamado,
   updateChamado,
   criarChamado,

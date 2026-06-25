@@ -127,6 +127,7 @@ const api = {
   adminGetResumoCliente: (id: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getResumoCliente", id, tipoPessoa),
   adminGetTransacoesCliente: (id: string, mes: string, ano: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getTransacoesCliente", id, mes, ano, tipoPessoa),
   adminGetOrcamentoCliente: (id: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getOrcamentoCliente", id, tipoPessoa),
+  adminGetClientePerfil: (id: string) => ipcRenderer.invoke("admin:getClientePerfil", id),
   adminGetContasCliente: (id: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getContasCliente", id, tipoPessoa),
   adminGetAnosDisponiveisCliente: (usuarioId: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getAnosDisponiveisCliente", usuarioId, tipoPessoa),
   adminGetDashboardDadosCliente: (usuarioId: string, ano: string, mes: string, categoria: string, tipoPessoa?: string) =>
