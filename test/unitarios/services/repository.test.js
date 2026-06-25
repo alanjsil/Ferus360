@@ -49,6 +49,13 @@ const { mockSupabase, resetData, pushResult } = vi.hoisted(() => {
   return {
     mockSupabase: {
       from: vi.fn(() => bq()),
+      storage: {
+        from: vi.fn(() => ({
+          remove: vi.fn().mockResolvedValue({ data: [], error: null }),
+          upload: vi.fn().mockResolvedValue({ data: { path: "user-1/avatar.png" }, error: null }),
+          getPublicUrl: vi.fn(() => ({ data: { publicUrl: "https://cdn.test/storage/v1/object/public/financas-avatares/user-1/avatar.png" } })),
+        })),
+      },
       rpc: vi.fn(() => {
         const c = current();
         return Promise.resolve({ data: c.data, error: c.error, count: c.count });
@@ -363,6 +370,41 @@ describe("updatePerfil", () => {
   it("rejeita nome muito longo", async () => {
     // Act / Assert
     await expect(repo.updatePerfil("user-1", { nome: "A".repeat(41) })).rejects.toThrow("Nome deve ter entre 2 e 40 caracteres");
+  });
+});
+
+/* ─────────── uploadAvatarPerfil ─────────── */
+
+describe("uploadAvatarPerfil", () => {
+  it("envia avatar para o Storage e retorna URL pública", async () => {
+    // Arrange
+    const bytes = new Uint8Array([1, 2, 3]).buffer;
+
+    // Act
+    const result = await repo.uploadAvatarPerfil("user-1", {
+      nome: "avatar.png",
+      tipo: "image/png",
+      bytes,
+    });
+
+    // Assert
+    expect(mockSupabase.storage.from).toHaveBeenCalledWith("financas-avatares");
+    expect(result.avatar_url).toContain("https://cdn.test/storage/v1/object/public/financas-avatares/user-1/avatar.png");
+    expect(result.avatar_url).not.toContain("base64");
+  });
+
+  it("rejeita formato inválido", async () => {
+    // Arrange
+    const bytes = new Uint8Array([1, 2, 3]).buffer;
+
+    // Act / Assert
+    await expect(
+      repo.uploadAvatarPerfil("user-1", {
+        nome: "avatar.gif",
+        tipo: "image/gif",
+        bytes,
+      }),
+    ).rejects.toThrow("Formato inválido. Use PNG ou JPG.");
   });
 });
 
@@ -972,6 +1014,7 @@ describe("createTransferencia", () => {
   it("inclui usuario_id em ambos lancamentos", async () => {
     resetData({ id: 1, tipo: "DESPESA" });
     pushResult({ id: 2, tipo: "RECEITA" });
+    pushResult({ id: "aud-1" });
 
     await repo.criarTransferencia({ data: "2026-06-01", status: "PENDENTE", valor: 100, conta_origem_id: 1, conta_destino_id: 2 }, "user-123");
 

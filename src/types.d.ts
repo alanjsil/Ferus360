@@ -270,6 +270,12 @@ export interface UpdatePerfilPayload {
   usar_pj?: boolean;
 }
 
+export interface UploadAvatarPerfilPayload {
+  nome: string;
+  tipo: string;
+  bytes: ArrayBuffer;
+}
+
 export interface ImportarOrcamentoItem {
   data: string;
   data_busca?: string;

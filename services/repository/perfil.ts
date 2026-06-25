@@ -1,7 +1,14 @@
-import type { Usuario, Lancamento, Sessao, UpdatePerfilPayload } from "../../src/types";
+import type { Usuario, Lancamento, Sessao, UpdatePerfilPayload, UploadAvatarPerfilPayload } from "../../src/types";
 import * as logger from "../logger";
 import { supabase, supabaseAdminInstance, _callEdgeFunction, _parseEdgeFunctionResult } from "./utils";
 import { logAuditoria } from "./auditoria";
+
+const AVATAR_BUCKET = "financas-avatares";
+const TAMANHO_MAXIMO_AVATAR_BYTES = 2 * 1024 * 1024;
+const TIPOS_AVATAR_PERMITIDOS = new Map([
+  ["image/png", "png"],
+  ["image/jpeg", "jpg"],
+]);
 
 async function getPerfil(usuarioId: string): Promise<Usuario | null> {
   const { data, error } = await supabase.from("financas_usuarios").select("id, nome, email, avatar_url, role, usar_pj").eq("id", usuarioId).single();
@@ -27,6 +34,46 @@ async function updatePerfil(usuarioId: string, payload: UpdatePerfilPayload): Pr
 
   if (error) throw error;
   return data as Usuario | null;
+}
+
+function obterExtensaoAvatar(tipo: string): string {
+  const extensao = TIPOS_AVATAR_PERMITIDOS.get(tipo);
+  if (!extensao) {
+    throw new Error("Formato inválido. Use PNG ou JPG.");
+  }
+  return extensao;
+}
+
+function normalizarBytesAvatar(bytes: ArrayBuffer | Uint8Array): Buffer {
+  if (bytes instanceof Uint8Array) {
+    return Buffer.from(bytes);
+  }
+  return Buffer.from(bytes);
+}
+
+async function uploadAvatarPerfil(usuarioId: string, payload: UploadAvatarPerfilPayload): Promise<{ avatar_url: string }> {
+  const extensao = obterExtensaoAvatar(payload.tipo);
+  const bytes = normalizarBytesAvatar(payload.bytes);
+
+  if (bytes.length > TAMANHO_MAXIMO_AVATAR_BYTES) {
+    throw new Error("Arquivo excede 2 MB.");
+  }
+
+  const caminho = `${usuarioId}/avatar.${extensao}`;
+  const caminhosAntigos = ["png", "jpg", "jpeg"].filter((ext) => ext !== extensao).map((ext) => `${usuarioId}/avatar.${ext}`);
+  if (caminhosAntigos.length > 0) {
+    await supabase.storage.from(AVATAR_BUCKET).remove(caminhosAntigos);
+  }
+
+  const { error: uploadError } = await supabase.storage.from(AVATAR_BUCKET).upload(caminho, bytes, {
+    contentType: payload.tipo,
+    upsert: true,
+  });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(caminho);
+  return { avatar_url: `${data.publicUrl}?v=${Date.now()}` };
 }
 
 async function getSessoes(usuarioId: string): Promise<Sessao[]> {
@@ -108,4 +155,4 @@ async function revokeOtherSessions(): Promise<unknown> {
   }
 }
 
-export { getPerfil, updatePerfil, getSessoes, deletarSessao, exportarDados, excluirConta, revokeOtherSessions };
+export { getPerfil, updatePerfil, uploadAvatarPerfil, getSessoes, deletarSessao, exportarDados, excluirConta, revokeOtherSessions };

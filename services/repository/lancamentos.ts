@@ -187,7 +187,7 @@ function validarPayloadLancamento(payload: { data?: string; tipo?: string; valor
   }
 }
 
-async function criarLancamento(payload: CriarLancamentoPayload, usuarioId?: string): Promise<Lancamento> {
+async function criarLancamento(payload: CriarLancamentoPayload, usuarioId?: string, ip?: string, userAgent?: string): Promise<Lancamento> {
   validarPayloadLancamento(payload);
   const payloadNormalizado = {
     ...payload,
@@ -209,20 +209,31 @@ async function criarLancamento(payload: CriarLancamentoPayload, usuarioId?: stri
       entidade: "lancamento",
       entidade_id: insertPayload.id as string,
       dados_novos: { tipo: payloadNormalizado.tipo, valor: payloadNormalizado.valor },
+      ip: ip || null,
+      user_agent: userAgent || null,
     }).catch((err: unknown) => logger.error("repository", "auditoria LANCAMENTO_CRIADO falhou", err));
   }
   return data;
 }
 
-async function deletarLancamento(id: string, usuarioId?: string): Promise<{ success: boolean }> {
+async function deletarLancamento(id: string, usuarioId?: string, ip?: string, userAgent?: string): Promise<{ success: boolean }> {
   let query = supabase.from("financas_lancamentos").delete().eq("id", id) as any;
   query = adicionarFiltroUsuario(query, usuarioId);
   const { error } = await query;
   if (error) throw error;
+  if (usuarioId) {
+    logAuditoria(usuarioId, "LANCAMENTO_EXCLUIDO", {
+      entidade: "lancamento",
+      entidade_id: id,
+      dados_novos: { id },
+      ip: ip || null,
+      user_agent: userAgent || null,
+    }).catch((err: unknown) => logger.error("repository", "auditoria LANCAMENTO_EXCLUIDO falhou", err));
+  }
   return { success: true };
 }
 
-async function updateLancamento(id: string, payload: Partial<CriarLancamentoPayload>, usuarioId?: string): Promise<Lancamento> {
+async function updateLancamento(id: string, payload: Partial<CriarLancamentoPayload>, usuarioId?: string, ip?: string, userAgent?: string): Promise<Lancamento> {
   const hoje = new Date().toISOString();
   const updateData: Record<string, unknown> = payload.status === "PAGO" ? { ...payload, data_pagamento: hoje } : { ...payload };
 
@@ -232,10 +243,20 @@ async function updateLancamento(id: string, payload: Partial<CriarLancamentoPayl
 
   if (error) throw error;
 
+  if (usuarioId) {
+    logAuditoria(usuarioId, "LANCAMENTO_ATUALIZADO", {
+      entidade: "lancamento",
+      entidade_id: id,
+      dados_novos: updateData as Record<string, unknown>,
+      ip: ip || null,
+      user_agent: userAgent || null,
+    }).catch((err: unknown) => logger.error("repository", "auditoria LANCAMENTO_ATUALIZADO falhou", err));
+  }
+
   return data;
 }
 
-async function criarTransferencia(payload: CriarTransferenciaPayload, usuarioId?: string): Promise<Lancamento[]> {
+async function criarTransferencia(payload: CriarTransferenciaPayload, usuarioId?: string, ip?: string, userAgent?: string): Promise<Lancamento[]> {
   const grupoId = crypto.randomUUID();
 
   const base: Record<string, unknown> = {
@@ -277,18 +298,37 @@ async function criarTransferencia(payload: CriarTransferenciaPayload, usuarioId?
 
   if (err2) throw err2;
 
+  if (usuarioId) {
+    logAuditoria(usuarioId, "TRANSFERENCIA_CRIADA", {
+      entidade: "transferencia",
+      entidade_id: grupoId,
+      dados_novos: { valor: payload.valor, data: payload.data },
+      ip: ip || null,
+      user_agent: userAgent || null,
+    }).catch((err: unknown) => logger.error("repository", "auditoria TRANSFERENCIA_CRIADA falhou", err));
+  }
+
   return [data1, data2];
 }
 
-async function deletarTransferencia(grupoId: string, usuarioId?: string): Promise<{ success: boolean }> {
+async function deletarTransferencia(grupoId: string, usuarioId?: string, ip?: string, userAgent?: string): Promise<{ success: boolean }> {
   let query = supabase.from("financas_lancamentos").delete().eq("transferencia_grupo_id", grupoId) as any;
   query = adicionarFiltroUsuario(query, usuarioId);
   const { error } = await query;
   if (error) throw error;
+  if (usuarioId) {
+    logAuditoria(usuarioId, "TRANSFERENCIA_EXCLUIDA", {
+      entidade: "transferencia",
+      entidade_id: grupoId,
+      dados_novos: { transferencia_grupo_id: grupoId },
+      ip: ip || null,
+      user_agent: userAgent || null,
+    }).catch((err: unknown) => logger.error("repository", "auditoria TRANSFERENCIA_EXCLUIDA falhou", err));
+  }
   return { success: true };
 }
 
-async function updateTransferencia(grupoId: string, payload: Partial<CriarTransferenciaPayload>, usuarioId?: string): Promise<Lancamento[]> {
+async function updateTransferencia(grupoId: string, payload: Partial<CriarTransferenciaPayload>, usuarioId?: string, ip?: string, userAgent?: string): Promise<Lancamento[]> {
   const hoje = new Date().toISOString();
   const updateData: Record<string, unknown> = payload.status === "PAGO" ? { data_pagamento: hoje } : {};
 
@@ -328,6 +368,16 @@ async function updateTransferencia(grupoId: string, payload: Partial<CriarTransf
   }
 
   const { data: updated } = await supabase.from("financas_lancamentos").select("*").eq("transferencia_grupo_id", grupoId);
+
+  if (usuarioId) {
+    logAuditoria(usuarioId, "TRANSFERENCIA_ATUALIZADA", {
+      entidade: "transferencia",
+      entidade_id: grupoId,
+      dados_novos: baseUpdate as Record<string, unknown>,
+      ip: ip || null,
+      user_agent: userAgent || null,
+    }).catch((err: unknown) => logger.error("repository", "auditoria TRANSFERENCIA_ATUALIZADA falhou", err));
+  }
 
   return (updated || []) as unknown as Lancamento[];
 }

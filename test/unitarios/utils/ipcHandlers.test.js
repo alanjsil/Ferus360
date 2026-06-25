@@ -35,6 +35,7 @@ const mockRepository = {
   deletarSubcategoria: vi.fn(),
   setAuthSession: vi.fn(),
   getPerfil: vi.fn(),
+  uploadAvatarPerfil: vi.fn(),
   criarConta: vi.fn(),
   updateConta: vi.fn(),
   deletarConta: vi.fn(),
@@ -121,6 +122,7 @@ describe("ipcHandlers (handlers de IPC)", () => {
     mockRepository.criarPessoa.mockResolvedValue(mockData);
     mockRepository.updatePessoa.mockResolvedValue(mockData);
     mockRepository.deletarPessoa.mockResolvedValue({ success: true });
+    mockRepository.uploadAvatarPerfil.mockResolvedValue({ avatar_url: "https://cdn.test/avatar.png" });
 
     mockAdminService.getDashboard.mockResolvedValue({ totalReceitas: 10000, totalDespesas: 5000, saldo: 5000, totalUsuariosAtivos: 10 });
     mockAdminService.getClientes.mockResolvedValue([{ id: "u-1", nome: "User", email: "u@t.com", ativo: true }]);
@@ -369,21 +371,25 @@ describe("ipcHandlers (handlers de IPC)", () => {
     it("calls repository.createLancamento on lancamentos:create", async () => {
       const payload = { data: "2026-06-01", tipo: "DESPESA", valor: 100 };
       const result = await handlers.handleLancamentosCreate(null, payload);
-      expect(mockRepository.criarLancamento).toHaveBeenCalledWith({ ...payload, tipo_pessoa: "PF" }, "user-123");
+      expect(mockRepository.criarLancamento.mock.calls[0][0]).toEqual({ ...payload, tipo_pessoa: "PF" });
+      expect(mockRepository.criarLancamento.mock.calls[0][1]).toBe("user-123");
       expect(mockSetState).toHaveBeenCalledWith("lancamentos", [mockData]);
       expect(result).toEqual(mockData);
     });
 
     it("calls repository.deleteLancamento on lancamentos:delete", async () => {
       const result = await handlers.handleLancamentosDelete(null, 42);
-      expect(mockRepository.deletarLancamento).toHaveBeenCalledWith(42, "user-123");
+      expect(mockRepository.deletarLancamento.mock.calls[0][0]).toBe(42);
+      expect(mockRepository.deletarLancamento.mock.calls[0][1]).toBe("user-123");
       expect(result).toEqual({ success: true });
     });
 
     it("calls repository.updateLancamento on lancamentos:update", async () => {
       const payload = { valor: 200 };
       const result = await handlers.handleLancamentosUpdate(null, 1, payload);
-      expect(mockRepository.updateLancamento).toHaveBeenCalledWith(1, payload, "user-123");
+      expect(mockRepository.updateLancamento.mock.calls[0][0]).toBe(1);
+      expect(mockRepository.updateLancamento.mock.calls[0][1]).toEqual(payload);
+      expect(mockRepository.updateLancamento.mock.calls[0][2]).toBe("user-123");
       expect(result).toEqual(mockData);
     });
 
@@ -473,6 +479,17 @@ describe("ipcHandlers (handlers de IPC)", () => {
 
       const result = await handlers.handleConfigUpdatePerfil(null, payload);
       expect(mockRepository.updatePerfil).toHaveBeenCalledWith("user-123", payload);
+      expect(result).toEqual(mockResult);
+    });
+
+    it("handleConfigUploadAvatar envia avatar para o Storage", async () => {
+      const payload = { nome: "avatar.png", tipo: "image/png", bytes: new ArrayBuffer(1) };
+      const mockResult = { avatar_url: "https://cdn.test/avatar.png" };
+      mockRepository.uploadAvatarPerfil = vi.fn().mockResolvedValue(mockResult);
+
+      const result = await handlers.handleConfigUploadAvatar(null, payload);
+
+      expect(mockRepository.uploadAvatarPerfil).toHaveBeenCalledWith("user-123", payload);
       expect(result).toEqual(mockResult);
     });
 

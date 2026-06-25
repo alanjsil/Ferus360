@@ -332,12 +332,13 @@ function createHandlers(
       return data;
     },
 
-    handleLancamentosCreate: async (_event: unknown, payload: Record<string, unknown>) => {
+    handleLancamentosCreate: async (event: IpcMainInvokeEvent, payload: Record<string, unknown>) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
         if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
-        const data = await repository.criarLancamento(payload, usuarioId);
+        const metadados = await _extrairMetadados(event);
+        const data = await repository.criarLancamento(payload, usuarioId, metadados.ip, metadados.user_agent);
         const current = (getState("lancamentos") as unknown[]) || [];
         setState("lancamentos", [...current, data]);
         return data;
@@ -349,11 +350,12 @@ function createHandlers(
       }
     },
 
-    handleLancamentosDelete: async (_event: unknown, id: string) => {
+    handleLancamentosDelete: async (event: IpcMainInvokeEvent, id: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
-        const data = await repository.deletarLancamento(id, usuarioId);
+        const metadados = await _extrairMetadados(event);
+        const data = await repository.deletarLancamento(id, usuarioId, metadados.ip, metadados.user_agent);
         const current = (getState("lancamentos") as { id: string }[]) || [];
         setState(
           "lancamentos",
@@ -368,11 +370,12 @@ function createHandlers(
       }
     },
 
-    handleLancamentosUpdate: async (_event: unknown, id: string, payload: Record<string, unknown>) => {
+    handleLancamentosUpdate: async (event: IpcMainInvokeEvent, id: string, payload: Record<string, unknown>) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       try {
-        const data = await repository.updateLancamento(id, payload, usuarioId);
+        const metadados = await _extrairMetadados(event);
+        const data = await repository.updateLancamento(id, payload, usuarioId, metadados.ip, metadados.user_agent);
         const current = (getState("lancamentos") as { id: string }[]) || [];
         setState(
           "lancamentos",
@@ -394,20 +397,22 @@ function createHandlers(
       return data;
     },
 
-    handleTransferenciaCreate: async (_event: unknown, payload: Record<string, unknown>) => {
+    handleTransferenciaCreate: async (event: IpcMainInvokeEvent, payload: Record<string, unknown>) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       if (!payload.tipo_pessoa) payload.tipo_pessoa = obterTipoPessoaAtivo();
-      const data = await repository.criarTransferencia(payload, usuarioId);
+      const metadados = await _extrairMetadados(event);
+      const data = await repository.criarTransferencia(payload, usuarioId, metadados.ip, metadados.user_agent);
       const current = (getState("lancamentos") as unknown[]) || [];
       setState("lancamentos", [...current, ...(data as unknown[])]);
       return data;
     },
 
-    handleTransferenciaDelete: async (_event: unknown, grupoId: string) => {
+    handleTransferenciaDelete: async (event: IpcMainInvokeEvent, grupoId: string) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const data = await repository.deletarTransferencia(grupoId, usuarioId);
+      const metadados = await _extrairMetadados(event);
+      const data = await repository.deletarTransferencia(grupoId, usuarioId, metadados.ip, metadados.user_agent);
       const current = (getState("lancamentos") as { transferencia_grupo_id: string }[]) || [];
       setState(
         "lancamentos",
@@ -416,10 +421,11 @@ function createHandlers(
       return data;
     },
 
-    handleTransferenciaUpdate: async (_event: unknown, grupoId: string, payload: Record<string, unknown>) => {
+    handleTransferenciaUpdate: async (event: IpcMainInvokeEvent, grupoId: string, payload: Record<string, unknown>) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const data = await repository.updateTransferencia(grupoId, payload, usuarioId);
+      const metadados = await _extrairMetadados(event);
+      const data = await repository.updateTransferencia(grupoId, payload, usuarioId, metadados.ip, metadados.user_agent);
       const current = (getState("lancamentos") as { transferencia_grupo_id: string }[]) || [];
       const withoutGroup = current.filter((l: { transferencia_grupo_id: string }) => l.transferencia_grupo_id !== grupoId);
       setState("lancamentos", [...withoutGroup, ...(data as unknown[])]);
@@ -528,6 +534,17 @@ function createHandlers(
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       return await repository.updatePerfil(usuarioId, payload);
+    },
+
+    handleConfigUploadAvatar: async (_event: unknown, payload: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        return await repository.uploadAvatarPerfil(usuarioId, payload);
+      } catch (err) {
+        logger.error("ipcHandlers", "upload de avatar falhou", err);
+        return { error: (err as Error).message || "ERRO_UPLOAD_AVATAR" };
+      }
     },
 
     handleConfigGetSessoes: async () => {
@@ -832,6 +849,7 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("subcat:delete", handlers.handleSubcatDelete);
   ipcMain.handle("config:getPerfil", handlers.handleConfigGetPerfil);
   ipcMain.handle("config:updatePerfil", handlers.handleConfigUpdatePerfil);
+  ipcMain.handle("config:uploadAvatar", handlers.handleConfigUploadAvatar);
   ipcMain.handle("config:getSessoes", handlers.handleConfigGetSessoes);
   ipcMain.handle("config:encerrar-sessao", handlers.handleConfigEncerrarSessao);
   ipcMain.handle("config:encerrar-outras-sessoes", handlers.handleConfigEncerrarOutrasSessoes);

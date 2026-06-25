@@ -42,7 +42,7 @@ export {
   importarOrcamento,
 } from "./lancamentos";
 
-export { getPerfil, updatePerfil, getSessoes, deletarSessao, exportarDados, excluirConta, revokeOtherSessions } from "./perfil";
+export { getPerfil, updatePerfil, uploadAvatarPerfil, getSessoes, deletarSessao, exportarDados, excluirConta, revokeOtherSessions } from "./perfil";
 
 export { getAdminDashboard, getTransacoesCliente, getChamadoById, getChamados, criarChamado, updateChamado, getClientes, getResumoCliente, toggleClienteStatus } from "./admin";
 

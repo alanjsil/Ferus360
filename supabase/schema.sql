@@ -570,6 +570,15 @@ CREATE TYPE acao_auditoria AS ENUM(
   'ADMIN_TOGGLE_USUARIO',
   'ADMIN_RESET_SENHA',
   'ADMIN_CRIOU_USUARIO',
+  'LANCAMENTO_ATUALIZADO',
+  'LANCAMENTO_EXCLUIDO',
+  'TRANSFERENCIA_CRIADA',
+  'TRANSFERENCIA_ATUALIZADA',
+  'TRANSFERENCIA_EXCLUIDA',
+  'LANCAMENTO_CRIADO',
+  'CATEGORIA_CRIADA',
+  'RECUPERACAO_SOLICITADA',
+  'RECUPERACAO_CONFIRMADA',
 );
 
 CREATE TABLE financas_auditoria (
@@ -633,10 +642,7 @@ END;
 $$;
 
 -- Triggers AFTER em todas as tabelas de dados
-CREATE TRIGGER audit_lancamentos
-AFTER INSERT OR UPDATE OR DELETE ON financas_lancamentos FOR EACH ROW
-EXECUTE FUNCTION auditoria_trigger ();
-
+-- NOTA: financas_lancamentos usa logAuditoria() do TypeScript (captura ip/user_agent)
 CREATE TRIGGER audit_orcamento
 AFTER INSERT OR UPDATE OR DELETE ON financas_orcamento FOR EACH ROW
 EXECUTE FUNCTION auditoria_trigger ();
@@ -678,3 +684,72 @@ SELECT
 CREATE POLICY "auditoria_insert" ON financas_auditoria FOR INSERT TO public
 WITH
   CHECK (auth.role () = 'authenticated');
+
+-- ============================================================
+-- STORAGE: AVATARES
+-- ============================================================
+INSERT INTO storage.buckets (
+  id,
+  name,
+  public,
+  file_size_limit,
+  allowed_mime_types
+) VALUES (
+  'financas-avatares',
+  'financas-avatares',
+  TRUE,
+  2097152,
+  ARRAY['image/png', 'image/jpeg']
+) ON CONFLICT (id) DO UPDATE
+SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+DROP POLICY IF EXISTS "avatares_select_publico" ON storage.objects;
+
+CREATE POLICY "avatares_select_publico" ON storage.objects FOR
+SELECT
+  USING (bucket_id = 'financas-avatares');
+
+DROP POLICY IF EXISTS "avatares_insert_usuario" ON storage.objects;
+
+CREATE POLICY "avatares_insert_usuario" ON storage.objects FOR INSERT TO authenticated
+WITH
+  CHECK (
+    bucket_id = 'financas-avatares'
+    AND (
+      (storage.foldername (name))[1] = auth.uid ()::TEXT
+      OR public.is_admin ()
+    )
+  );
+
+DROP POLICY IF EXISTS "avatares_update_usuario" ON storage.objects;
+
+CREATE POLICY "avatares_update_usuario" ON storage.objects FOR UPDATE TO authenticated
+USING (
+  bucket_id = 'financas-avatares'
+  AND (
+    (storage.foldername (name))[1] = auth.uid ()::TEXT
+    OR public.is_admin ()
+  )
+)
+WITH
+  CHECK (
+    bucket_id = 'financas-avatares'
+    AND (
+      (storage.foldername (name))[1] = auth.uid ()::TEXT
+      OR public.is_admin ()
+    )
+  );
+
+DROP POLICY IF EXISTS "avatares_delete_usuario" ON storage.objects;
+
+CREATE POLICY "avatares_delete_usuario" ON storage.objects FOR DELETE TO authenticated
+USING (
+  bucket_id = 'financas-avatares'
+  AND (
+    (storage.foldername (name))[1] = auth.uid ()::TEXT
+    OR public.is_admin ()
+  )
+);

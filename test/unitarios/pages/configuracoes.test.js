@@ -67,6 +67,7 @@ describe("configurações (página de perfil)", () => {
         usar_pj: true,
       }),
       updatePerfil: vi.fn().mockResolvedValue({}),
+      uploadAvatarPerfil: vi.fn().mockResolvedValue({ avatar_url: "https://cdn.test/avatar.png?v=1" }),
       verificarAuth: vi.fn().mockResolvedValue({ id: "user-1" }),
       trocarSenha: vi.fn().mockResolvedValue({}),
       getSessoes: vi.fn().mockResolvedValue([]),
@@ -240,6 +241,33 @@ describe("configurações (página de perfil)", () => {
       });
       const msg = document.getElementById("perfilMessage");
       expect(msg.textContent).toContain("sucesso");
+    });
+
+    it("faz upload do avatar e salva URL do Storage no perfil", async () => {
+      // Arrange
+      await loadModule();
+      const input = document.getElementById("avatarInput");
+      const pngFile = new File(["avatar"], "avatar.png", { type: "image/png" });
+      Object.defineProperty(input, "files", {
+        value: [pngFile],
+        configurable: true,
+      });
+
+      // Act
+      document.getElementById("perfilForm").dispatchEvent(new Event("submit"));
+
+      // Assert
+      await vi.waitFor(() => {
+        expect(window.electronAPI.uploadAvatarPerfil).toHaveBeenCalledWith(
+          expect.objectContaining({
+            nome: "avatar.png",
+            tipo: "image/png",
+            bytes: expect.any(ArrayBuffer),
+          }),
+        );
+      });
+      expect(window.electronAPI.updatePerfil).toHaveBeenCalledWith(expect.objectContaining({ avatar_url: "https://cdn.test/avatar.png?v=1" }));
+      expect(window.electronAPI.updatePerfil.mock.calls[0][0].avatar_url).not.toContain("base64");
     });
 
     it("mostra erro se updatePerfil falha", async () => {

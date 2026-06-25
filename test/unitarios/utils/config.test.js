@@ -138,9 +138,9 @@ describe("config (configurações via repository)", () => {
       expect(result.nome).toBe("Alan Atualizado");
     });
 
-    it("atualiza avatar_url com base64", async () => {
+    it("atualiza avatar_url com URL do Storage", async () => {
       // Arrange
-      const avatar = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAA";
+      const avatar = "https://cdn.test/avatar.png?v=1";
       repo.__seed("user-1", "financas_usuarios", [
         {
           id: "user-1",

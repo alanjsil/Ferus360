@@ -152,11 +152,17 @@ function configurarFormPerfil() {
 
       const avatarInput = document.getElementById("avatarInput");
       if (avatarInput.files?.[0]) {
-        const reader = new FileReader();
-        payload.avatar_url = await new Promise((resolve) => {
-          reader.onload = (ev) => resolve(ev.target.result);
-          reader.readAsDataURL(avatarInput.files[0]);
+        const arquivo = avatarInput.files[0];
+        const upload = await window.electronAPI.uploadAvatarPerfil({
+          nome: arquivo.name,
+          tipo: arquivo.type,
+          bytes: await arquivo.arrayBuffer(),
         });
+        if (upload?.error) {
+          mostrarMensagem("perfilMessage", upload.error, false);
+          return;
+        }
+        payload.avatar_url = upload.avatar_url;
       }
 
       const result = await window.electronAPI.updatePerfil(payload);

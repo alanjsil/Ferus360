@@ -83,6 +83,7 @@ const api = {
   // ==================== CONFIGURAÇÕES / PERFIL ====================
   getPerfil: () => ipcRenderer.invoke("config:getPerfil"),
   updatePerfil: (payload: any) => ipcRenderer.invoke("config:updatePerfil", payload),
+  uploadAvatarPerfil: (payload: any) => ipcRenderer.invoke("config:uploadAvatar", payload),
   getSessoes: () => ipcRenderer.invoke("config:getSessoes"),
   encerrarSessao: (sessaoId: string) => ipcRenderer.invoke("config:encerrar-sessao", sessaoId),
   revogarOutrasSessoes: () => ipcRenderer.invoke("config:encerrar-outras-sessoes"),

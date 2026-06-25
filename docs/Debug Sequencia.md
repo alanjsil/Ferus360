@@ -190,32 +190,32 @@
 
 - [x] 6.2.1 Criar clientes (modal "Novo usuário" → edge function)
   - **Breakpoint:** `admin.js:665` `configurarNovoUsuario()`
-- [ ] 6.2.2 Listar clientes (tabela com nome, email, criado em, último login, status)
+- [x] 6.2.2 Listar clientes (tabela com nome, email, criado em, último login, status)
   - **Breakpoint:** `admin.js:118` `carregarClientes()`
 
 #### 6.3 Filtros
 
-- [ ] 6.3 Filtrar clientes (status + busca por nome/email)
+- [x] 6.3 Filtrar clientes (status + busca por nome/email)
 
 #### 6.4 Ativar/Inativar
 
-- [ ] 6.4 Ativar/Inativar cliente (toggle com registro de auditoria)
+- [x] 6.4 Ativar/Inativar cliente (toggle com registro de auditoria)
   - **Breakpoint:** `admin.js:171` evento `data-toggle`
 
 #### 6.5 Visualizar Resumo
 
-- [ ] 6.5 Visualizar resumo cliente (dialog com receitas/despesas/lançamentos/orçamento)
+- [x] 6.5 Visualizar resumo cliente (dialog com receitas/despesas/lançamentos/orçamento)
   - **Breakpoint:** `admin.js:189` `visualizarCliente()`
-- [ ] 6.5.1 Toggle PF/PJ no resumo cliente (filtra dados por tipo de pessoa)
+- [x] 6.5.1 Toggle PF/PJ no resumo cliente (filtra dados por tipo de pessoa)
   - **Breakpoint:** `admin.js:204` `configurarTipoPessoaToggle()`
   - **Estado:** `tipoPessoaResumo` (default `"PF"`) recarrega resumo ao trocar
   - **IPC:** `adminGetResumoCliente(id, tipoPessoaResumo)`
 
 #### 6.6 Detalhes Transações
 
-- [ ] 6.6 Ver detalhes transações (dialog com transações + metas)
+- [x] 6.6 Ver detalhes transações (dialog com transações + metas)
   - **Breakpoint:** `admin.js:243` `abrirDetalhesCliente()`
-- [ ] 6.6.1 Toggle PF/PJ nos detalhes transações (filtra transações e metas)
+- [x] 6.6.1 Toggle PF/PJ nos detalhes transações (filtra transações e metas)
   - **Breakpoint:** `admin.js:220` `configurarTipoPessoaToggleDetalhes()`
   - **Estado:** `tipoPessoaDetalhes` (default `"PF"`) recarrega detalhes ao trocar
   - **IPC:** `adminGetTransacoesCliente(id, mes, ano, tipoPessoaDetalhes)`
@@ -227,31 +227,39 @@
 
 #### 6.8 Redefinir Senha
 
-- [ ] 6.8 Redefinir senha de cliente (envia email de recuperação)
+- [x] 6.8 Redefinir senha de cliente (envia email de recuperação)
   - **Breakpoint:** `admin.js:463` `buscarParaRedefinir()`
   - **Breakpoint:** `admin.js:505` evento `data-reset` → `adminResetSenha`
 
 #### 6.9 Chamados — Listar
 
+```
 - [ ] 6.9 Chamados — listar (tabela com usuário, título, status, badge de abertos) ✅ PRONTO
   - **Breakpoint:** `admin.js:540` `carregarChamados()`
   - **Breakpoint:** `admin.js:552` `atualizarBadgeChamados()`
   - **Status UI:** Aba "Chamados" ativa em `admin.html` linha 29
+```
 
 #### 6.10 Chamados — Atender
 
+```
 - [ ] 6.10 Chamados — atender (dialog abre com dados do chamado + histórico) ✅ PRONTO
   - **Breakpoint:** `admin.js:590` `abrirAtendimento()`
+```
 
 #### 6.11 Chamados — Responder
 
+```
 - [ ] 6.11 Chamados — responder (mensagem salva, status avança) ✅ PRONTO
   - **Breakpoint:** `admin.js:632` `enviarRespostaChamado()`
+```
 
 #### 6.12 Chamados — Marcar Resolvido
 
+```
 - [ ] 6.12 Chamados — marcar resolvido (via select + submit) ✅ PRONTO
   - **Breakpoint:** `admin.js:651` `adminUpdateChamado(id, novoStatus)`
+```
 
 #### 6.13 Auditoria
 
@@ -261,28 +269,32 @@
 
 #### 6.14 Alterar Email (Admin)
 
+```
+
 - [ ] 6.14 Alterar email (admin — campo editável) **não implementado**
+
+```
 
 #### 6.15 Novo Usuário
 
-- [ ] 6.15 Criar usuário (modal no admin, valida nome/email/senha, edge function)
+- [x] 6.15 Criar usuário (modal no admin, valida nome/email, edge function)
   - **Breakpoint:** `admin.js:665` `configurarNovoUsuario()`
 
 #### 6.16 Visualizar Cliente (Página Dedicada)
 
-- [ ] 6.16 Visualizar cliente (`visualizar-cliente.html`) — admin vê transações, orçamento, comparativo do cliente
+- [x] 6.16 Visualizar cliente (`visualizar-cliente.html`) — admin vê transações, orçamento, comparativo do cliente
   - **Breakpoint:** `visualizar-cliente.js:126` `carregarLancamentos()`
   - **Breakpoint:** `visualizar-cliente.js:137` `carregarOrcamento()`
-- [ ] 6.16.1 Toggle PF/PJ na página do cliente (header, recarrega transações, orçamento, contas)
+- [x] 6.16.1 Toggle PF/PJ na página do cliente (header, recarrega transações, orçamento, contas)
   - **Breakpoint:** `visualizar-cliente.js:98` `configurarTipoPessoaToggle()`
   - **Estado:** `tipoPessoa` (default `"PF"`) → `recarregarDados()` ao trocar
   - **IPCs:** `adminGetContasCliente(id, tipoPessoa)`, `adminGetTransacoesCliente(id, mes, ano, tipoPessoa)`, `adminGetOrcamentoCliente(id, tipoPessoa)`
 
 #### 6.17 Dashboard do Cliente (Página Dedicada)
 
-- [ ] 6.17 Dashboard do cliente (`visualizar-dashboard-cliente.html`) — gráficos do cliente via admin
+- [x] 6.17 Dashboard do cliente (`visualizar-dashboard-cliente.html`) — gráficos do cliente via admin
   - **Breakpoint:** `visualizar-dashboard-cliente.js` iniciais (carregamento de Chart.js)
-- [ ] 6.17.1 Toggle PF/PJ no dashboard do cliente (filtros, recarrega categorias, anos e dashboard)
+- [x] 6.17.1 Toggle PF/PJ no dashboard do cliente (filtros, recarrega categorias, anos e dashboard)
   - **Breakpoint:** `visualizar-dashboard-cliente.js:99` `configurarTipoPessoaToggle()`
   - **Estado:** `tipoPessoa` (default `"PF"`) → recarrega dashboard ao trocar
   - **IPCs:** `adminGetAnosDisponiveisCliente(id, tipoPessoa)`, `adminGetDashboardDadosCliente(id, ano, mes, categoria, tipoPessoa)`
@@ -316,25 +328,18 @@ Todos os eventos são registrados em `services/repository/auditoria.ts:35` via `
 - [ ] 7.1 Sessão expira → renovar token (coberto em 0.11)
 - [ ] 7.2 Logout → limpeza completa (coberto em 0.12)
 - [ ] 7.3 State mirror (dados refletem entre processos via `services/state.ts`)
-- [ ] 7.4 Proteção de rotas (coberto em 0.21-0.22)
-- [ ] 7.5 Dialog nativo de senha (`dialog-senha-preload.ts` para troca/exclusão)
+- [x] 7.4 Proteção de rotas (coberto em 0.21-0.22)
+- [x] 7.5 Dialog nativo de senha (`dialog-senha-preload.ts` para troca/exclusão)
 - [ ] 7.6 Auditoria de autenticação (coberto em 0.24)
-- [ ] 7.7 Categorias compartilhadas PF↔PJ (config `compartilharCategorias` no state)
+- [x] 7.7 Categorias compartilhadas PF↔PJ (config `compartilharCategorias` no state)
   - **Breakpoint:** `services/repository/admin.ts:46` `getResumoCliente()` lê `compartilharCategorias` do state para decidir se filtra por `tipo_pessoa` nas categorias
   - **UI:** Toggle em `configuracoes.html` — altera `state.compartilharCategorias`
   - **Impacto:** Categorias/subcategorias ignoram `tipo_pessoa` quando true; contas/pessoas sempre filtradas
-- [ ] 7.8 Resolução de Conflitos (SQLite ↔ Supabase) — **NOVO**
-  - **Breakpoint:** `public/js/conflitos.js` — UI para resolver conflitos de sincronização
-  - **Breakpoint:** `services/ipcHandlers.ts` — handler para aplicar resolução
-  - **Auditoria:** Evento `CONFLITO_RESOLVIDO` registrado em `services/repository/auditoria.ts:35`
-  - **Backend:** Sincronização em `services/sync.ts` (detecta e marca conflitos)
-  - **UI:** Página `public/conflitos.html` com lista e ações
 
 ---
 
 ### 🎯 Pendências
 
-- [ ] ~~6.13 Frontend: Criar aba de auditoria no `admin.html` (backend + IPC + preload já prontos)~~ — 🟡 Backend pronto, UI falta verificação de RLS/permissões
 - [ ] **6.14:** Alterar email do cliente pelo admin (campo editável, não implementado)
 - [ ] **6.X:** UI para usuários abrirem chamados de suporte (backend `createChamado()` pronto em `services/repository/admin.ts:70`, falta página renderer)
 
@@ -397,5 +402,3 @@ Todos os eventos são registrados em `services/repository/auditoria.ts:35` via `
 | [ ]     | public/js/visualizar-cliente.js:126`—`carregarLancamentos()                 | Carregar dados do cliente               |
 | [ ]     | public/js/visualizar-dashboard-cliente.js`                                  | Dashboard do cliente via admin          |
 | [ ]     | public/js/auth-guard.js:99` — renovação de token                            | `renewFromRefreshToken()` quando expira |
-
----
