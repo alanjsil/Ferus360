@@ -42,7 +42,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          npm run build:tscls
+          npm run build:ts
 
           npx electron-builder --win --x64 --publish always
 
