@@ -31,7 +31,6 @@ jobs:
       #       echo "TOKEN VAZIO"
       #       exit 1
       #     fi
-
       #     echo "TOKEN PRESENTE"
 
       - name: Install dependencies
@@ -45,7 +44,15 @@ jobs:
           npm run build:ts
           npx electron-builder --win --x64 --publish always
 
-      - name: Listar arquivos gerados (debug)
-        if: matrix.os == 'windows-latest'
+      # - name: Listar arquivos gerados (debug)
+      #   if: matrix.os == 'windows-latest'
+      #   run: |
+      #     dir dist\
+
+      - name: Build and publish (Mac)
+        if: matrix.os == 'macos-latest'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          dir dist\
+          npm run build:ts
+          npx electron-builder --mac --publish always
