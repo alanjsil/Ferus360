@@ -1,9 +1,9 @@
-import type { Usuario, AdminDashboard, FiltrosAuditoria, Auditoria, Chamado, Lancamento, Conta, Orcamento, DashboardDadosResult, ResultadoPaginado } from "../src/types";
 import crypto from "crypto";
-import * as conexaoModule from "./conexao";
-import * as repositoryModule from "./repository";
+import type { AdminDashboard, Auditoria, Chamado, Conta, DashboardDadosResult, FiltrosAuditoria, Lancamento, Orcamento, ResultadoPaginado, Usuario } from "../src/types";
 import * as authModule from "./auth";
+import * as conexaoModule from "./conexao";
 import * as logger from "./logger";
+import * as repositoryModule from "./repository";
 import { validarUUID } from "./repository";
 
 class AdminError extends Error {
@@ -233,10 +233,10 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
     return await deps.repository.getAuditoria(filtros);
   }
 
-  async function criarUsuario(nome: string, email: string, senha: string): Promise<unknown> {
+  async function criarUsuario(nome: string, email: string): Promise<unknown> {
     await verificarAdmin();
 
-    if (!nome || !email || !senha) {
+    if (!nome || !email) {
       throw criarAdminError("DADOS_INCOMPLETOS");
     }
 
@@ -249,7 +249,10 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ nome, email, senha }),
+      body: JSON.stringify({
+        nome,
+        email,
+      }),
     });
 
     const result = (await response.json()) as Record<string, unknown>;
@@ -284,7 +287,7 @@ function construirAdminService(dependencies: AdminDependencies = {}): AdminServi
 
 const defaultService = construirAdminService();
 
-export { defaultService as createAdminService, construirAdminService, AdminError };
+export { AdminError, construirAdminService, defaultService as createAdminService };
 
 export const {
   verificarAdmin,

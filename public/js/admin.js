@@ -122,8 +122,14 @@ async function carregarDashboard() {
 /* ---------- ABA 2 — CLIENTES ---------- */
 
 function configurarClientes() {
-  document.getElementById("filtroStatusCliente").addEventListener("change", () => { paginaAtualClientes = 1; carregarClientes(); });
-  document.getElementById("buscaCliente").addEventListener("input", () => { paginaAtualClientes = 1; carregarClientes(); });
+  document.getElementById("filtroStatusCliente").addEventListener("change", () => {
+    paginaAtualClientes = 1;
+    carregarClientes();
+  });
+  document.getElementById("buscaCliente").addEventListener("input", () => {
+    paginaAtualClientes = 1;
+    carregarClientes();
+  });
   document.getElementById("fecharResumo").addEventListener("click", () => {
     document.getElementById("resumoDialog").close();
   });
@@ -730,8 +736,6 @@ function configurarNovoUsuario() {
   btnAbrir.addEventListener("click", () => {
     document.getElementById("novoUsuarioNome").value = "";
     document.getElementById("novoUsuarioEmail").value = "";
-    document.getElementById("novoUsuarioSenha").value = "";
-    document.getElementById("novoUsuarioConfirmar").value = "";
     msg.textContent = "";
     dialog.showModal();
   });
@@ -742,21 +746,9 @@ function configurarNovoUsuario() {
   btnSalvar.addEventListener("click", async () => {
     const nome = document.getElementById("novoUsuarioNome").value.trim();
     const email = document.getElementById("novoUsuarioEmail").value.trim();
-    const senha = document.getElementById("novoUsuarioSenha").value;
-    const confirmar = document.getElementById("novoUsuarioConfirmar").value;
 
-    if (!nome || !email || !senha) {
+    if (!nome || !email) {
       msg.textContent = "Preencha todos os campos.";
-      return;
-    }
-
-    if (senha.length < 8) {
-      msg.textContent = "Senha deve ter no mínimo 8 caracteres.";
-      return;
-    }
-
-    if (senha !== confirmar) {
-      msg.textContent = "Senhas não conferem.";
       return;
     }
 
@@ -764,7 +756,7 @@ function configurarNovoUsuario() {
     btnSalvar.innerHTML = '<span class="spinner"></span>Criando...';
 
     try {
-      const result = await window.electronAPI.adminCriarUsuario(nome, email, senha);
+      const result = await window.electronAPI.adminCriarUsuario(nome, email);
       if (result?.error) {
         msg.textContent = result.error;
         return;

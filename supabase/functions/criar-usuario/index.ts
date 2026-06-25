@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 serve(async (req: Request) => {
   try {
@@ -38,10 +38,13 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "FORBIDDEN" }), { status: 403, headers: { "Content-Type": "application/json" } });
     }
 
-    const { nome, email, senha } = await req.json();
+    const { nome, email } = await req.json();
 
-    if (!nome || !email || !senha) {
-      return new Response(JSON.stringify({ error: "DADOS_INCOMPLETOS" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    if (!nome || !email) {
+      return new Response(JSON.stringify({ error: "DADOS_INCOMPLETOS" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,21 +53,15 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "EMAIL_INVALIDO" }), { status: 400, headers: { "Content-Type": "application/json" } });
     }
 
-    if (senha.length < 8) {
-      return new Response(JSON.stringify({ error: "SENHA_FRACA" }), { status: 400, headers: { "Content-Type": "application/json" } });
-    }
-
-    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: senha,
-      email_confirm: true,
-      user_metadata: {
+    const { data: invited, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      data: {
         nome,
       },
+      redirectTo: "financasapp://recuperar-senha",
     });
 
-    if (createError) {
-      const msg = createError.message?.toLowerCase() ?? "";
+    if (inviteError) {
+      const msg = inviteError.message?.toLowerCase() ?? "";
 
       if (msg.includes("already") || msg.includes("exists") || msg.includes("registered")) {
         return new Response(JSON.stringify({ error: "EMAIL_JA_CADASTRADO" }), {
@@ -75,36 +72,31 @@ serve(async (req: Request) => {
 
       return new Response(
         JSON.stringify({
-          error: createError.message || "ERRO_CRIAR_USUARIO",
+          error: inviteError.message || "ERRO_ENVIAR_CONVITE",
         }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
       );
     }
 
-    const novoUsuario = created.user;
+    const usuarioConvidado = invited.user;
 
-    if (!novoUsuario) {
-      return new Response(JSON.stringify({ error: "USUARIO_NAO_CRIADO" }), { status: 500, headers: { "Content-Type": "application/json" } });
+    if (!usuarioConvidado) {
+      return new Response(JSON.stringify({ error: "USUARIO_NAO_CRIADO" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-
-    await supabaseAdmin.from("financas_auditoria").insert({
-      usuario_id: user.id,
-      acao: "ADMIN_CRIOU_USUARIO",
-      entidade: "usuarios",
-      entidade_id: novoUsuario.id,
-      dados_novos: {
-        nome,
-        email,
-      },
-      contexto: "admin",
-    });
 
     return new Response(
       JSON.stringify({
         success: true,
-        id: novoUsuario.id,
+        id: usuarioConvidado.id,
         nome,
         email,
+        conviteEnviado: true,
       }),
       {
         status: 201,
