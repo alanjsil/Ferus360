@@ -3,6 +3,8 @@
  * @module public/js/csv
  */
 
+export const CABECALHOS_TEMPLATE_ORCAMENTO = ["data", "descricao", "tipo", "valor", "categoria", "subcategoria", "recorrente"];
+
 /**
  * @param {unknown} valor
  * @returns {string}
@@ -82,7 +84,7 @@ export function gerarTemplateCSV(cabecalhos, linhasExemplo = 3) {
     },
     {
       data: "10/04/2026",
-      tipo: "TRANSFERENCIA",
+      tipo: "DESPESA",
       descricao: "Poupança",
       valor: "1000,00",
       status: "PAGO",
@@ -104,4 +106,13 @@ export function gerarTemplateCSV(cabecalhos, linhasExemplo = 3) {
   ];
 
   return "\uFEFF" + linhas.join("\n");
+}
+
+/**
+ * Gera o template padrão de importação de orçamento.
+ * @param {number} linhasExemplo
+ * @returns {string}
+ */
+export function gerarTemplateOrcamentoCSV(linhasExemplo = 3) {
+  return gerarTemplateCSV(CABECALHOS_TEMPLATE_ORCAMENTO, linhasExemplo);
 }

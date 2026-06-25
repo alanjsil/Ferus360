@@ -471,8 +471,11 @@ describe("configurações (página de perfil)", () => {
         expect(createObjectURL).toHaveBeenCalled();
       });
       const blob = createObjectURL.mock.calls[0][0];
+      const texto = await blob.text();
       expect(blob).toBeInstanceOf(Blob);
       expect(blob.type).toBe("text/csv;charset=utf-8");
+      expect(texto.replace("\uFEFF", "").split("\n")[0]).toBe("data\tdescricao\ttipo\tvalor\tcategoria\tsubcategoria\trecorrente");
+      expect(texto).toContain("Poupança");
       expect(document.getElementById("contaMessage").textContent).toContain("sucesso");
     });
   });

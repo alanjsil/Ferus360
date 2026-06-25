@@ -3,11 +3,6 @@
 - **Última atualização:** 20/06/2026
 - **Stack:** Electron + Supabase + Chart.js
 
-## NECESSIDADES
-
-- [ ] ~~User ter uma tela para cadastro de chamados~~ → Backend `createChamado()` pronto em `services/repository/admin.ts:70`, falta UI renderer
-- [ ] E baixo de lançamentos, o saldo por conta
-
 ---
 
 ## INSPEÇÃO
@@ -78,9 +73,10 @@
   - **Breakpoint:** `auth-guard.js:148`
 - [ ] 0.23 Fallback de token: busca em sessionStorage → localStorage → tenta renovar
   - **Breakpoint:** `auth-guard.js:57` `getAccessToken()`
-- [ ] 0.24 Auditoria de autenticação: LOGIN, LOGIN_FAILED, LOGOUT, SENHA_TROCADA, RECUPERACAO_SOLICITADA, RECUPERACAO_CONFIRMADA
-  - **Breakpoint:** `auth.ts` em cada `_logAuditoria()` — linhas 80, 94, 112, 133, 172, 192
 ```
+
+- [x] 0.24 Auditoria de autenticação: LOGIN, LOGIN_FAILED, LOGOUT, SENHA_TROCADA, RECUPERACAO_SOLICITADA, RECUPERACAO_CONFIRMADA
+  - **Breakpoint:** `auth.ts` em cada `_logAuditoria()` — linhas 80, 94, 112, 133, 172, 192
 
 ---
 
@@ -141,7 +137,7 @@
 ### 3. Orçamento (`index.html` — importação)
 
 ```
-- [ ] 3.1 Importar CSV (modal, cola dados, processa, confirma)
+- [ ] 3.1 Importar CSV (modal, processa, confirma)
   - **Breakpoint:** `index.js:800` `parseCSV()` — parser tabulado
   - **Breakpoint:** `index.js:863` `processarImportacao()` — fluxo completo
 - [ ] 3.2 Importar dados inválidos (linhas mal formatadas → filtradas)

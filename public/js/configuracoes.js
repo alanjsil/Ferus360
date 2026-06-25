@@ -3,7 +3,7 @@
  */
 
 import { clearAuthSession, ensureAuthenticated, escapeHtml, getAccessToken } from "./auth-guard.js";
-import { converterParaCSV, gerarTemplateCSV } from "./csv.js";
+import { converterParaCSV, gerarTemplateOrcamentoCSV } from "./csv.js";
 import { avaliarRequisitos, iniciarToggleSenha } from "./password-utils.js";
 import { confirmDialog, exibirToast, promptDialog } from "./toast.js";
 
@@ -352,8 +352,7 @@ function configurarExportar() {
   });
 
   document.getElementById("templateBtn")?.addEventListener("click", () => {
-    const cabecalhos = ["data", "descricao", "tipo", "valor", "categoria", "subcategoria", "recorrente"];
-    const csv = gerarTemplateCSV(cabecalhos);
+    const csv = gerarTemplateOrcamentoCSV();
     baixarArquivo(csv, `financas-template-importacao-${new Date().toISOString().split("T")[0]}.csv`, "text/csv;charset=utf-8");
     mostrarMensagem("contaMessage", "Template baixado com sucesso.", true);
   });

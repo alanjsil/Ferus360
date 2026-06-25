@@ -1,13 +1,8 @@
-import type { Lancamento, Orcamento, DashboardData, DashboardDadosResult, CriarLancamentoPayload, CriarTransferenciaPayload, ImportarOrcamentoItem } from "../../src/types";
 import crypto from "crypto";
+import type { CriarLancamentoPayload, CriarTransferenciaPayload, DashboardDadosResult, DashboardData, ImportarOrcamentoItem, Lancamento, Orcamento } from "../../src/types";
 import * as logger from "../logger";
-import {
-  supabase,
-  adicionarFiltroUsuario,
-  adicionarFiltroTipoPessoaRestrito,
-  validarMes,
-} from "./utils";
 import { logAuditoria } from "./auditoria";
+import { adicionarFiltroTipoPessoaRestrito, adicionarFiltroUsuario, supabase, validarMes } from "./utils";
 
 async function getLancamentos(mes?: string, usuarioId?: string, tipoPessoa?: string): Promise<Lancamento[]> {
   let query = supabase.from("financas_lancamentos").select("*").order("data", { ascending: false }).limit(5000) as any;
@@ -349,8 +344,6 @@ async function updateTransferencia(grupoId: string, payload: Partial<CriarTransf
     throw new Error("Transferência não encontrada.");
   }
 
-
-
   for (const entry of existing) {
     const patch: Record<string, unknown> = { ...baseUpdate };
     if (entry.tipo === "DESPESA") {
@@ -389,7 +382,6 @@ async function importarOrcamento(itens: ImportarOrcamentoItem[], usuarioId?: str
 
   const itensProcessados = itens.map((item) => ({
     data: item.data,
-    data_busca: item.data_busca || (item.data ? item.data.substring(0, 7) : null),
     tipo: item.tipo,
     descricao: item.descricao || null,
     valor_planejado: parseFloat(String(item.valor_planejado)) || 0,
@@ -413,16 +405,16 @@ async function importarOrcamento(itens: ImportarOrcamentoItem[], usuarioId?: str
 }
 
 export {
+  criarLancamento,
+  criarTransferencia,
+  deletarLancamento,
+  deletarTransferencia,
+  getAnosDisponiveis,
+  getDashboard,
+  getDashboardDados,
   getLancamentos,
   getOrcamento,
-  getAnosDisponiveis,
-  getDashboardDados,
-  getDashboard,
-  criarLancamento,
-  deletarLancamento,
-  updateLancamento,
-  criarTransferencia,
-  deletarTransferencia,
-  updateTransferencia,
   importarOrcamento,
+  updateLancamento,
+  updateTransferencia,
 };

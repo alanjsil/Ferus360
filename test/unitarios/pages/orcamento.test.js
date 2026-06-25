@@ -160,24 +160,34 @@ describe("orcamento (página de lançamentos)", () => {
   });
 
   describe("processarImportacao (pipeline de importação)", () => {
-    it("analisarCSV analisa CSV separado por tabulação", () => {
+    it("analisarCSV aceita arquivos separados por tabulação, ponto e vírgula e vírgula", () => {
+      const tsv = [
+        "data\tdescricao\ttipo\tvalor\tcategoria\tsubcategoria\trecorrente",
+        "01/06/2026\tAluguel\tDESPESA\t1.500,50\tMoradia\tAluguel\ttrue",
+      ].join("\n");
+      const semicolon = [
+        "data;descricao;tipo;valor;categoria;subcategoria;recorrente",
+        "01/06/2026;Aluguel;DESPESA;1500,50;Moradia;Aluguel;true",
+      ].join("\n");
       const csv = [
-        "Data\tDescrição\tTipo\tValor\tCategoria\tSubcategoria\tRecorrente",
-        "2026-06-01\tAluguel\tDESPESA\t1500\tMoradia\tAluguel\ttrue",
-        "2026-06-10\tSalário\tRECEITA\t5000\tSalário\tSalário fixo\ttrue",
+        "data,descricao,tipo,valor,categoria,subcategoria,recorrente",
+        '"01/06/2026","Aluguel","DESPESA","1500.50","Moradia","Aluguel","true"',
       ].join("\n");
 
-      const result = orcamento.analisarCSV(csv);
-      expect(result).toHaveLength(2);
-      expect(result[0].descricao).toBe("Aluguel");
-      expect(result[0].tipo).toBe("DESPESA");
-      expect(result[1].valor).toBe("5000");
+      const resultTsv = orcamento.analisarCSV(tsv);
+      const resultSemicolon = orcamento.analisarCSV(semicolon);
+      const resultCsv = orcamento.analisarCSV(csv);
+
+      expect(resultTsv.itensBrutos).toHaveLength(1);
+      expect(resultSemicolon.itensBrutos).toHaveLength(1);
+      expect(resultCsv.itensBrutos).toHaveLength(1);
+      expect(resultCsv.separador).toBe(",");
     });
 
-    it("analisarCSV ignora cabeçalho e linhas vazias", () => {
-      const csv = "Data\tDesc\tTipo\tValor\n\n2026-01-01\tTest\tRECEITA\t100\n";
-      const result = orcamento.analisarCSV(csv);
-      expect(result).toHaveLength(1);
+    it("analisarCSV rejeita arquivo vazio, cabeçalho inválido e separador desconhecido", () => {
+      expect(() => orcamento.analisarCSV("")).toThrow("O arquivo está vazio.");
+      expect(() => orcamento.analisarCSV("foo\tbar\n1\t2")).toThrow("Cabeçalho inválido");
+      expect(() => orcamento.analisarCSV("data|descricao|tipo|valor")).toThrow("Não foi possível identificar o separador");
     });
 
     it("transformarItens mapeia itens com busca de categoria", async () => {
@@ -190,7 +200,7 @@ describe("orcamento (página de lançamentos)", () => {
 
       const itensBrutos = [
         {
-          data: "2026-06-01",
+          data: "01/06/2026",
           descricao: "Mercado",
           tipo: "DESPESA",
           valor: "R$ 500,00",
@@ -200,11 +210,12 @@ describe("orcamento (página de lançamentos)", () => {
         },
       ];
       // Act
-      const result = orcamento.transformarItens(itensBrutos, "2026-06");
+      const result = orcamento.transformarItens(itensBrutos);
       expect(result).toHaveLength(1);
       expect(result[0].descricao).toBe("Mercado");
       expect(result[0].tipo).toBe("DESPESA");
       expect(result[0].valor_planejado).toBe(500);
+      expect(result[0].data).toBe("2026-06-01");
       expect(result[0].categoria_id).toBe(1);
       expect(result[0].subcategoria_id).toBe(1);
     });
@@ -212,7 +223,7 @@ describe("orcamento (página de lançamentos)", () => {
     it("transformarItens filtra itens inválidos", () => {
       const itensBrutos = [{ data: "", descricao: "", tipo: "", valor: "", categoria: "", subcategoria: "", recorrente: "" }];
 
-      const result = orcamento.transformarItens(itensBrutos, "2026-06");
+      const result = orcamento.transformarItens(itensBrutos);
       expect(result).toHaveLength(0);
     });
 
@@ -768,32 +779,70 @@ describe("orcamento (página de lançamentos)", () => {
       mockElectronAPI.importarOrcamento.mockResolvedValue({ success: true, importados: 2 });
     });
 
-    it("alerta se campos obrigatórios faltando", async () => {
-      document.getElementById("dadosImportacao").value = "";
-      document.getElementById("mesImportacao").value = "";
+    function selecionarArquivo(texto, nome = "orcamento.csv") {
+      const arquivo = new File([texto], nome, { type: "text/csv" });
+      orcamento.selecionarArquivoImportacao({
+        target: { files: [arquivo] },
+      });
+      return arquivo;
+    }
 
+    it("alerta se nenhum arquivo foi selecionado", async () => {
       await orcamento.processarImportacao();
 
       const toast = document.querySelector(".toast-item");
       expect(toast).toBeTruthy();
-      expect(toast.textContent).toContain("Preencha todos os campos!");
+      expect(toast.textContent).toContain("Selecione um arquivo");
     });
 
-    it("pipeline completo: parse, transform, API e resultado", async () => {
+    it("pipeline completo: seleciona arquivo, parseia e importa", async () => {
       // Arrange
       mockElectronAPI.getCategorias.mockResolvedValue([{ id: 1, nome: "Alimentação", tipo: "DESPESA" }]);
       mockElectronAPI.getSubcategorias.mockResolvedValue([]);
       await orcamento.carregarCategorias();
       await orcamento.carregarSubcategoriasCache();
 
-      document.getElementById("dadosImportacao").value = "Data\tDescrição\tTipo\tValor\tCategoria\tSubcategoria\tRecorrente\n" + "01\tMercado\tDESPESA\t500\tAlimentação\t\ttrue";
-      document.getElementById("mesImportacao").value = "2026-06";
+      selecionarArquivo(
+        [
+          "data;descricao;tipo;valor;categoria;subcategoria;recorrente",
+          '01/06/2026;"Mercado";DESPESA;"500,00";Alimentação;;true',
+        ].join("\n"),
+      );
+
       // Act
       await orcamento.processarImportacao();
+
+      expect(mockElectronAPI.importarOrcamento).toHaveBeenCalledWith([
+        expect.objectContaining({
+          data: "2026-06-01",
+          descricao: "Mercado",
+          tipo: "DESPESA",
+          valor_planejado: 500,
+          categoria_id: 1,
+        }),
+      ]);
 
       const divResultado = document.getElementById("resultadoImportacao");
       expect(divResultado.style.display).toBe("block");
       expect(divResultado.textContent).toContain("2 itens importados");
+    });
+
+    it("mostra erro quando o arquivo é vazio", async () => {
+      selecionarArquivo("");
+
+      await orcamento.processarImportacao();
+
+      const toast = document.querySelector(".toast-item");
+      expect(toast.textContent).toContain("está vazio");
+    });
+
+    it("atualiza a interface ao selecionar arquivo", async () => {
+      await orcamento.selecionarArquivoImportacao({
+        target: { files: [new File(["conteudo"], "orcamento.csv", { type: "text/csv" })] },
+      });
+
+      expect(document.getElementById("arquivoImportacaoNome").textContent).toBe("orcamento.csv");
+      expect(document.getElementById("btnImportarDados").disabled).toBe(false);
     });
   });
 
@@ -801,6 +850,7 @@ describe("orcamento (página de lançamentos)", () => {
     it("abre e fecha modal", () => {
       orcamento.abrirModalImportacao();
       expect(document.getElementById("modalImportacao").style.display).toBe("block");
+      expect(document.getElementById("btnImportarDados").disabled).toBe(true);
 
       orcamento.fecharModalImportacao();
       expect(document.getElementById("modalImportacao").style.display).toBe("none");
@@ -808,8 +858,13 @@ describe("orcamento (página de lançamentos)", () => {
   });
 
   describe("mostrarResultadoImportacao", () => {
-    it("exibe resultado e limpa textarea", () => {
-      document.getElementById("dadosImportacao").value = "teste";
+    it("exibe resultado e limpa seleção de arquivo", () => {
+      const input = document.getElementById("arquivoImportacao");
+      Object.defineProperty(input, "value", {
+        value: "C:\\fakepath\\orcamento.csv",
+        writable: true,
+      });
+      document.getElementById("arquivoImportacaoNome").textContent = "orcamento.csv";
       const resultado = { importados: 5 };
 
       orcamento.mostrarResultadoImportacao(resultado);
@@ -817,7 +872,8 @@ describe("orcamento (página de lançamentos)", () => {
       const divResultado = document.getElementById("resultadoImportacao");
       expect(divResultado.style.display).toBe("block");
       expect(divResultado.textContent).toContain("5 itens importados");
-      expect(document.getElementById("dadosImportacao").value).toBe("");
+      expect(document.getElementById("arquivoImportacaoNome").textContent).toBe("Nenhum arquivo selecionado");
+      expect(document.getElementById("btnImportarDados").disabled).toBe(true);
     });
   });
 

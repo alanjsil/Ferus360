@@ -315,7 +315,7 @@
               <span class="marker"></span>
               <span>Importar Orçamento</span>
             </div>
-            <div class="card-subtitle">Cole os dados da sua planilha no formato CSV</div>
+            <div class="card-subtitle">Selecione o arquivo exportado do Excel para importar o orçamento inteiro</div>
           </div>
           <button class="btn outline" id="btnFecharModal" type="button" style="border: none; font-size: 18px">✕</button>
         </div>
@@ -323,38 +323,32 @@
         <div style="margin-bottom: 15px">
           <div class="chip" style="margin-bottom: 10px">Formato Esperado</div>
           <div style="font-size: 12px; color: var(--text-muted); background: rgba(15, 23, 42, 0.5); padding: 10px; border-radius: 8px; margin-bottom: 10px">
-            <strong>Formato CSV:</strong>
-            Data,Descrição,Tipo,Valor,Categoria,Subcategoria,Recorrente<br />
+            <strong>Formato TSV (tabulação):</strong>
+            colunas: data | descricao | tipo | valor | categoria | subcategoria | recorrente<br />
+            <strong>Use o template baixado em Configurações</strong> para manter este padrão.<br />
+            <strong>Datas:</strong> use `dd/mm/aaaa` no arquivo salvo pelo Excel.<br />
+            <strong>Separadores aceitos:</strong> `,` `;` ou tabulação.<br />
             <strong>Exemplo:</strong><br />
             <code style="color: #bbf7d0">
-              2024-01-05,Aluguel,DESPESA,1500,Moradia,Aluguel,true<br />
-              2024-01-10,Salário,RECEITA,5000,Salário,Salário fixo,true<br />
-              2024-01-15,Mercado,DESPESA,800,Alimentação,Mercado,true
+              2024-01-05 Taxa de aluguel DESPESA 1500 Moradia Aluguel true<br />
+              2024-01-10 Salário RECEITA 5000 Salário Salário fixo true<br />
+              2024-01-15 Mercado DESPESA 800 Alimentação Mercado true
             </code>
           </div>
         </div>
 
         <div class="form-field">
-          <label for="dadosImportacao">Dados da Planilha (CSV):</label>
-          <textarea
-            id="dadosImportacao"
-            placeholder="Cole aqui os dados da sua planilha no formato:
-              Data,Descrição,Tipo,Valor,Categoria,Subcategoria,Recorrente
-              2024-01-05,Aluguel,DESPESA,1500,Moradia,Aluguel,true
-              2024-01-10,Salário,RECEITA,5000,Salário,Salário fixo,true
-              ..."
-            style="width: 100%; height: 300px; font-family: monospace; font-size: 12px"
-          ></textarea>
-        </div>
-
-        <div class="form-field">
-          <label for="mesImportacao">Mês de Referência:</label>
-          <input type="month" id="mesImportacao" class="input" />
+          <label for="arquivoImportacao">Arquivo da planilha</label>
+          <input id="arquivoImportacao" type="file" accept=".csv,.txt,text/csv,text/plain" hidden />
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+            <button type="button" class="btn outline" id="btnSelecionarArquivoImportacao">Selecionar arquivo</button>
+            <span id="arquivoImportacaoNome" style="font-size: 12px; color: var(--text-muted);">Nenhum arquivo selecionado</span>
+          </div>
         </div>
 
         <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px">
           <button type="button" class="btn outline" id="btnCancelarImportacao">Cancelar</button>
-          <button type="button" class="btn primary" id="btnImportarDados">📤 Importar Dados</button>
+          <button type="button" class="btn primary" id="btnImportarDados" disabled>📤 Importar Dados</button>
         </div>
 
         <div id="resultadoImportacao" style="margin-top: 15px; display: none"></div>

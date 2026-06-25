@@ -99,4 +99,24 @@ describe("csv (utilitário CSV)", () => {
       expect(linhas).toHaveLength(2); // 1 header + 1 exemplo
     });
   });
+
+  describe("gerarTemplateOrcamentoCSV", () => {
+    it("usa o cabeçalho padrão do orçamento na ordem esperada", () => {
+      const result = csvModule.gerarTemplateOrcamentoCSV(1);
+      const linhas = result.replace("\uFEFF", "").split("\n");
+
+      expect(linhas[0]).toBe(csvModule.CABECALHOS_TEMPLATE_ORCAMENTO.join("\t"));
+      expect(linhas).toHaveLength(2);
+    });
+
+    it("mantém apenas as colunas usadas pelo importador atual", () => {
+      const result = csvModule.gerarTemplateOrcamentoCSV(1);
+
+      expect(result).toContain("data\tdescricao\ttipo\tvalor\tcategoria\tsubcategoria\trecorrente");
+      expect(result).not.toContain("conta_origem");
+      expect(result).not.toContain("conta_destino");
+      expect(result).not.toContain("pessoa");
+      expect(result).not.toContain("observacoes");
+    });
+  });
 });
