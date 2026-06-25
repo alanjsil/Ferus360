@@ -24,7 +24,10 @@
     "build_win": "electron-builder --win --publish never",
     "build:trial": "node -e \"require('fs').writeFileSync('trial-config.json',JSON.stringify({dias:15})+'\\n')\" && electron-builder --publish never",
     "test:playwright": "npm run build:ts && playwright test",
-    "check": "npm run lint && npm run test"
+    "check": "npm run lint && npm run test",
+    "release": "electron-builder --publish always",
+    "release:win": "electron-builder --win --publish always",
+    "release:mac": "electron-builder --mac --publish always"
   },
   "engines": {
     "node": ">=22",
@@ -36,10 +39,14 @@
     "directories": {
       "output": "dist"
     },
+    "publish": {
+      "provider": "github",
+      "owner": "alanjsil",
+      "repo": "Ferus360"
+    },
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        "nsis"
       ],
       "icon": "build/icon.ico"
     },
@@ -55,15 +62,15 @@
       "icon": "build/icon.png"
     },
     "files": [
+      "src/",
       "main.js",
+      "dist-ts/",
       "preload.js",
-      "dialog-senha-preload.js",
+      "package.json",
       "public/**/*",
       "services/**/*",
-      "src/",
-      "dist-ts/",
-      "package.json",
-      "trial-config.json"
+      "trial-config.json",
+      "dialog-senha-preload.js"
     ],
     "extraFiles": [
       {
@@ -79,7 +86,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
-    "chart.js": "^4.4.8"
+    "chart.js": "^4.4.8",
+    "electron-updater": "^6.8.9"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.4",

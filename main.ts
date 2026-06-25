@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
+const { autoUpdater } = require("electron-updater");
 const logger = require("./services/logger");
 logger.init(app.getPath("userData"));
 const { isDev } = require("./src/env");
@@ -25,6 +26,29 @@ const { registerHandlers } = require("./services/ipcHandlers");
 const expiracao = require("./services/expiration");
 const { iniciarMonitoramento, pararMonitoramento } = require("./services/conexao");
 const { promptSenha } = require("./services/prompt-senha");
+
+autoUpdater.on("checking-for-update", () => {
+  logger.warn("auto-updater", "Checando se há atualizações...");
+});
+
+autoUpdater.on("update-available", (info) => {
+  logger.warn("auto-updater", "Atualização disponível: " + info.version);
+  // Aqui você pode disparar um evento via IPC para o seu Front-end avisar o usuário
+});
+
+autoUpdater.on("update-not-available", () => {
+  logger.warn("auto-updater", "Nenhuma atualização disponível no momento.");
+});
+
+autoUpdater.on("error", (err) => {
+  logger.error("auto-updater", "Erro no auto-updater", err);
+});
+
+autoUpdater.on("update-downloaded", (info) => {
+  logger.warn("auto-updater", "Atualização baixada. Reiniciando e instalando...");
+  // Avisa o usuário e força a instalação
+  autoUpdater.quitAndInstall();
+});
 
 let mainWindow: any;
 
@@ -128,6 +152,10 @@ if (!gotLock) {
 
     registerHandlers(promptSenha);
     createWindow();
+
+    if (app.isPackaged) {
+      autoUpdater.checkForUpdatesAndNotify();
+    }
 
     const url = process.argv.find((a) => a.startsWith(`${PROTOCOL}://`));
     if (url) handleDeepLink(url);
