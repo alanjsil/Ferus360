@@ -2,12 +2,15 @@ rm -r node_modules
 del package-lock.json
 npm install
 npm audit
-
+============================================
 npx asar list .\app.asar
-
+============================================
 git config core.autocrlf false
 git config core.autocrlf && git add --renormalize . && git status --short | head -20
-
+============================================
+npm version patch  # ou minor / major
+git push --follow-tags
+============================================
 const fs = require("fs");
 const path = require("path");
 
@@ -29,7 +32,7 @@ console.log({
   isPackaged: app.isPackaged,
   execPath: process.execPath,
 });
-
+============================================
 Inside that directory, you can run several commands:
 
   npx playwright test
@@ -57,3 +60,4 @@ We suggest that you begin by typing:
 And check out the following files:
   - .\test\e2e\example.spec.ts - Example end-to-end test
   - .\playwright.config.ts - Playwright Test configuration
+============================================
