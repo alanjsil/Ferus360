@@ -5,10 +5,10 @@
   "main": "dist-ts/main.js",
   "author": "Alan Silveira",
   "private": true,
-  "homepage": "https://github.com/alanjsil/financas",
+  "homepage": "https://github.com/alanjsil/Ferus360",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alanjsil/financas.git"
+    "url": "https://github.com/alanjsil/Ferus360.git"
   },
   "scripts": {
     "start": "npm run build:ts && electron .",
@@ -79,7 +79,6 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
-
     "chart.js": "^4.4.8"
   },
   "devDependencies": {
@@ -89,7 +88,6 @@
     "@eslint/js": "^10.0.1",
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@playwright/test": "^1.61.0",
-
     "@types/node": "^26.0.0",
     "@vitest/coverage-v8": "^4.1.6",
     "canvas": "^3.2.3",

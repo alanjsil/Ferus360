@@ -136,14 +136,12 @@
 
 ### 3. Orçamento (`index.html` — importação)
 
-```
-- [ ] 3.1 Importar CSV (modal, processa, confirma)
+- [x] 3.1 Importar CSV (modal, processa, confirma)
   - **Breakpoint:** `index.js:800` `parseCSV()` — parser tabulado
   - **Breakpoint:** `index.js:863` `processarImportacao()` — fluxo completo
-- [ ] 3.2 Importar dados inválidos (linhas mal formatadas → filtradas)
-- [ ] 3.3 Comparativo planejado vs realizado (cards na página)
+- [x] 3.2 Importar dados inválidos (linhas mal formatadas → filtradas)
+- [x] 3.3 Comparativo planejado vs realizado (cards na página)
   - **Breakpoint:** `index.js` seção de render do comparativo
-```
 
 ---
 

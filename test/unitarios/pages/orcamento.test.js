@@ -26,7 +26,7 @@ const mockElectronAPI = {
   criarLancamento: vi.fn(),
   deletarLancamento: vi.fn(),
   updateLancamento: vi.fn(),
-  importarOrcamento: vi.fn(),
+  importarCSV: vi.fn(),
   getTipoPessoa: vi.fn().mockResolvedValue("PF"),
   setTipoPessoa: vi.fn().mockResolvedValue({ success: true }),
   onTipoPessoaChanged: vi.fn(),
@@ -159,88 +159,7 @@ describe("orcamento (página de lançamentos)", () => {
     });
   });
 
-  describe("processarImportacao (pipeline de importação)", () => {
-    it("analisarCSV aceita arquivos separados por tabulação, ponto e vírgula e vírgula", () => {
-      const tsv = [
-        "data\tdescricao\ttipo\tvalor\tcategoria\tsubcategoria\trecorrente",
-        "01/06/2026\tAluguel\tDESPESA\t1.500,50\tMoradia\tAluguel\ttrue",
-      ].join("\n");
-      const semicolon = [
-        "data;descricao;tipo;valor;categoria;subcategoria;recorrente",
-        "01/06/2026;Aluguel;DESPESA;1500,50;Moradia;Aluguel;true",
-      ].join("\n");
-      const csv = [
-        "data,descricao,tipo,valor,categoria,subcategoria,recorrente",
-        '"01/06/2026","Aluguel","DESPESA","1500.50","Moradia","Aluguel","true"',
-      ].join("\n");
-
-      const resultTsv = orcamento.analisarCSV(tsv);
-      const resultSemicolon = orcamento.analisarCSV(semicolon);
-      const resultCsv = orcamento.analisarCSV(csv);
-
-      expect(resultTsv.itensBrutos).toHaveLength(1);
-      expect(resultSemicolon.itensBrutos).toHaveLength(1);
-      expect(resultCsv.itensBrutos).toHaveLength(1);
-      expect(resultCsv.separador).toBe(",");
-    });
-
-    it("analisarCSV rejeita arquivo vazio, cabeçalho inválido e separador desconhecido", () => {
-      expect(() => orcamento.analisarCSV("")).toThrow("O arquivo está vazio.");
-      expect(() => orcamento.analisarCSV("foo\tbar\n1\t2")).toThrow("Cabeçalho inválido");
-      expect(() => orcamento.analisarCSV("data|descricao|tipo|valor")).toThrow("Não foi possível identificar o separador");
-    });
-
-    it("transformarItens mapeia itens com busca de categoria", async () => {
-      // Arrange
-      mockElectronAPI.getCategorias.mockResolvedValue([{ id: 1, nome: "Alimentação", tipo: "DESPESA" }]);
-      mockElectronAPI.getSubcategorias.mockResolvedValue([{ id: 1, categoria_id: 1, nome: "Mercado" }]);
-
-      await orcamento.carregarCategorias();
-      await orcamento.carregarSubcategoriasCache();
-
-      const itensBrutos = [
-        {
-          data: "01/06/2026",
-          descricao: "Mercado",
-          tipo: "DESPESA",
-          valor: "R$ 500,00",
-          categoria: "Alimentação",
-          subcategoria: "Mercado",
-          recorrente: "false",
-        },
-      ];
-      // Act
-      const result = orcamento.transformarItens(itensBrutos);
-      expect(result).toHaveLength(1);
-      expect(result[0].descricao).toBe("Mercado");
-      expect(result[0].tipo).toBe("DESPESA");
-      expect(result[0].valor_planejado).toBe(500);
-      expect(result[0].data).toBe("2026-06-01");
-      expect(result[0].categoria_id).toBe(1);
-      expect(result[0].subcategoria_id).toBe(1);
-    });
-
-    it("transformarItens filtra itens inválidos", () => {
-      const itensBrutos = [{ data: "", descricao: "", tipo: "", valor: "", categoria: "", subcategoria: "", recorrente: "" }];
-
-      const result = orcamento.transformarItens(itensBrutos);
-      expect(result).toHaveLength(0);
-    });
-
-    it("fazerImportacaoAPI chama electronAPI.importarOrcamento", async () => {
-      mockElectronAPI.importarOrcamento.mockResolvedValue({
-        success: true,
-        importados: 2,
-        data: [],
-      });
-
-      const itens = [{ data: "2026-06-01", tipo: "DESPESA", valor_planejado: 500 }];
-      const result = await orcamento.fazerImportacaoAPI(itens);
-
-      expect(mockElectronAPI.importarOrcamento).toHaveBeenCalledWith(itens);
-      expect(result.importados).toBe(2);
-    });
-  });
+  // Pipeline de importação movido para services/importacao-csv.ts (backend)
 
   describe("atualizarSubcategorias", () => {
     it("filtra subcategorias pela categoria selecionada", async () => {
@@ -776,16 +695,8 @@ describe("orcamento (página de lançamentos)", () => {
 
   describe("processarImportacao", () => {
     beforeEach(() => {
-      mockElectronAPI.importarOrcamento.mockResolvedValue({ success: true, importados: 2 });
+      mockElectronAPI.importarCSV.mockResolvedValue({ importados: 2, erros: [] });
     });
-
-    function selecionarArquivo(texto, nome = "orcamento.csv") {
-      const arquivo = new File([texto], nome, { type: "text/csv" });
-      orcamento.selecionarArquivoImportacao({
-        target: { files: [arquivo] },
-      });
-      return arquivo;
-    }
 
     it("alerta se nenhum arquivo foi selecionado", async () => {
       await orcamento.processarImportacao();
@@ -795,45 +706,27 @@ describe("orcamento (página de lançamentos)", () => {
       expect(toast.textContent).toContain("Selecione um arquivo");
     });
 
-    it("pipeline completo: seleciona arquivo, parseia e importa", async () => {
-      // Arrange
-      mockElectronAPI.getCategorias.mockResolvedValue([{ id: 1, nome: "Alimentação", tipo: "DESPESA" }]);
-      mockElectronAPI.getSubcategorias.mockResolvedValue([]);
-      await orcamento.carregarCategorias();
-      await orcamento.carregarSubcategoriasCache();
+    it("envia texto bruto para o backend e mostra resultado", async () => {
+      const arquivo = new File(["data;descricao;tipo;valor\n01/06/2026;Mercado;DESPESA;500"], "orcamento.csv", { type: "text/csv" });
+      orcamento.selecionarArquivoImportacao({ target: { files: [arquivo] } });
 
-      selecionarArquivo(
-        [
-          "data;descricao;tipo;valor;categoria;subcategoria;recorrente",
-          '01/06/2026;"Mercado";DESPESA;"500,00";Alimentação;;true',
-        ].join("\n"),
-      );
-
-      // Act
       await orcamento.processarImportacao();
 
-      expect(mockElectronAPI.importarOrcamento).toHaveBeenCalledWith([
-        expect.objectContaining({
-          data: "2026-06-01",
-          descricao: "Mercado",
-          tipo: "DESPESA",
-          valor_planejado: 500,
-          categoria_id: 1,
-        }),
-      ]);
-
+      expect(mockElectronAPI.importarCSV).toHaveBeenCalled();
       const divResultado = document.getElementById("resultadoImportacao");
       expect(divResultado.style.display).toBe("block");
       expect(divResultado.textContent).toContain("2 itens importados");
     });
 
-    it("mostra erro quando o arquivo é vazio", async () => {
-      selecionarArquivo("");
+    it("mostra erro vindo do backend", async () => {
+      mockElectronAPI.importarCSV.mockResolvedValue({ error: "Erro de teste no backend" });
+      const arquivo = new File(["data;descricao;tipo;valor\n01/06/2026;Mercado;DESPESA;500"], "orcamento.csv", { type: "text/csv" });
+      orcamento.selecionarArquivoImportacao({ target: { files: [arquivo] } });
 
       await orcamento.processarImportacao();
 
       const toast = document.querySelector(".toast-item");
-      expect(toast.textContent).toContain("está vazio");
+      expect(toast.textContent).toContain("Erro de teste no backend");
     });
 
     it("atualiza a interface ao selecionar arquivo", async () => {

@@ -2,6 +2,7 @@ import type { Usuario, Categoria, Conta, Pessoa, Lancamento, Orcamento, TipoPess
 import type { IpcMainInvokeEvent } from "electron";
 import { AuthError } from "./auth";
 import * as logger from "./logger";
+import * as importacaoCSV from "./importacao-csv";
 
 let _ipCache: string | undefined;
 let _ipCacheAt: number = 0;
@@ -395,6 +396,17 @@ function createHandlers(
       if (!usuarioId) return { error: "UNAUTHORIZED" };
       const data = await repository.importarOrcamento(itens, usuarioId);
       return data;
+    },
+
+    handleCSVImportar: async (_event: unknown, textoArquivo: string) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        return await importacaoCSV.processarImportacaoCSV(textoArquivo, usuarioId);
+      } catch (err) {
+        logger.error("ipcHandlers", "csv:importar falhou", err);
+        return { error: (err as Error).message || "ERRO_IMPORTAR_CSV" };
+      }
     },
 
     handleTransferenciaCreate: async (event: IpcMainInvokeEvent, payload: Record<string, unknown>) => {
@@ -839,6 +851,7 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("transferencia:delete", handlers.handleTransferenciaDelete);
   ipcMain.handle("transferencia:update", handlers.handleTransferenciaUpdate);
   ipcMain.handle("orcamento:importar", handlers.handleOrcamentoImportar);
+  ipcMain.handle("csv:importar", handlers.handleCSVImportar);
   ipcMain.handle("cat:list", handlers.handleCatList);
   ipcMain.handle("cat:create", handlers.handleCatCreate);
   ipcMain.handle("cat:update", handlers.handleCatUpdate);

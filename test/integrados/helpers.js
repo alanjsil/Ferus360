@@ -121,11 +121,17 @@ export function createMockSupabase() {
         insert: vi.fn().mockImplementation(function (payload) {
           if (!db[table]) db[table] = [];
           const items = Array.isArray(payload) ? payload : [payload];
-          const inserted = items.map((item, i) => ({
-            id: (db[table].length || 0) + i + 1,
-            ...item,
-            criado_em: new Date().toISOString(),
-          }));
+          const inserted = items.map((item, i) => {
+            const registro = {
+              id: (db[table].length || 0) + i + 1,
+              ...item,
+              criado_em: new Date().toISOString(),
+            };
+            if (item.data && !item.data_busca && (table === "financas_orcamento" || table === "financas_lancamentos")) {
+              registro.data_busca = String(item.data).substring(0, 7);
+            }
+            return registro;
+          });
           db[table].push(...inserted);
           this._data = inserted;
           return this;

@@ -79,6 +79,7 @@ const api = {
   // ==================== ORÇAMENTO ====================
   getOrcamento: (mes: string) => ipcRenderer.invoke("orcamento:get", mes),
   importarOrcamento: (itens: any[]) => ipcRenderer.invoke("orcamento:importar", itens),
+  importarCSV: (textoArquivo: string) => ipcRenderer.invoke("csv:importar", textoArquivo),
 
   // ==================== CONFIGURAÇÕES / PERFIL ====================
   getPerfil: () => ipcRenderer.invoke("config:getPerfil"),

@@ -91,8 +91,6 @@ let filtroAtualAno = "all";
 let filtroAtualMes = "all";
 let _importTimeoutId = null;
 let arquivoImportacaoAtual = null;
-const CABECALHOS_IMPORTACAO_ORCAMENTO = ["data", "descricao", "tipo", "valor", "categoria", "subcategoria", "recorrente"];
-const SEPARADORES_IMPORTACAO = ["\t", ";", ","];
 // ====== SISTEMA DE FILTROS EM LOCALSTORAGE ======
 const NS = "fnc:v1:";
 const STORAGE_KEYS = {
@@ -835,229 +833,6 @@ function mostrarFeedbackExclusao(mensagem) {
   exibirToast(mensagem, "success");
 }
 // ====== FUNÇÕES DE IMPORTAÇÃO ======
-/**
- * @param {Array<Record<string, string>>} itens
- * @returns {Promise<{ importados: number, erros: Array<{ linha: number, mensagem: string }> }>}
- */
-async function fazerImportacaoAPI(itens) {
-  return await window.electronAPI.importarOrcamento(itens);
-}
-function normalizarTextoChave(texto) {
-  return String(texto || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase()
-    .replace(/[\s_-]+/g, "");
-}
-
-function parsearLinhaDelimitada(linha, separador) {
-  const campos = [];
-  let campoAtual = "";
-  let dentroAspas = false;
-
-  for (let i = 0; i < linha.length; i += 1) {
-    const char = linha[i];
-    const proximo = linha[i + 1];
-
-    if (char === '"') {
-      if (dentroAspas && proximo === '"') {
-        campoAtual += '"';
-        i += 1;
-      } else {
-        dentroAspas = !dentroAspas;
-      }
-      continue;
-    }
-
-    if (char === separador && !dentroAspas) {
-      campos.push(campoAtual.trim());
-      campoAtual = "";
-      continue;
-    }
-
-    campoAtual += char;
-  }
-
-  campos.push(campoAtual.trim());
-  return campos;
-}
-
-function detectarSeparadorImportacao(linhas) {
-  const linhaAmostra = linhas.find((linha) => linha.trim());
-  if (!linhaAmostra) return null;
-
-  let melhorSeparador = null;
-  let maiorQuantidade = -1;
-
-  SEPARADORES_IMPORTACAO.forEach((separador, indice) => {
-    const quantidade = parsearLinhaDelimitada(linhaAmostra, separador).length;
-    if (quantidade > maiorQuantidade || (quantidade === maiorQuantidade && melhorSeparador !== null && indice < SEPARADORES_IMPORTACAO.indexOf(melhorSeparador))) {
-      maiorQuantidade = quantidade;
-      melhorSeparador = separador;
-    }
-  });
-
-  return maiorQuantidade > 1 ? melhorSeparador : null;
-}
-
-function normalizarDataImportacao(valor) {
-  const texto = String(valor || "").trim();
-  if (!texto) return null;
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
-    return texto;
-  }
-
-  const partes = texto.split("/");
-  if (partes.length === 3) {
-    const [dia, mes, ano] = partes.map((parte) => parte.trim());
-    if (/^\d{2}$/.test(dia) && /^\d{2}$/.test(mes) && /^\d{4}$/.test(ano)) {
-      return `${ano}-${mes}-${dia}`;
-    }
-  }
-
-  return null;
-}
-
-function normalizarValorMonetario(valor) {
-  const textoOriginal = String(valor || "")
-    .trim()
-    .replace(/[R$\s]/g, "")
-    .replace(/\u00A0/g, "");
-
-  if (!textoOriginal) return NaN;
-
-  let textoNormalizado = textoOriginal;
-  const temVirgula = textoNormalizado.includes(",");
-  const temPonto = textoNormalizado.includes(".");
-
-  if (temVirgula && temPonto) {
-    textoNormalizado = textoNormalizado.replace(/\./g, "").replace(",", ".");
-  } else if (temVirgula) {
-    textoNormalizado = textoNormalizado.replace(",", ".");
-  }
-
-  return Number.parseFloat(textoNormalizado);
-}
-
-function carregarArquivoComoTexto(arquivo) {
-  return new Promise((resolve, reject) => {
-    if (typeof FileReader !== "function") {
-      if (typeof arquivo?.text === "function") {
-        arquivo.text().then(resolve, reject);
-        return;
-      }
-      reject(new Error("Não foi possível ler o arquivo selecionado."));
-      return;
-    }
-
-    const leitor = new FileReader();
-    leitor.onload = () => resolve(String(leitor.result || ""));
-    leitor.onerror = async () => {
-      if (typeof arquivo?.text === "function") {
-        try {
-          resolve(await arquivo.text());
-          return;
-        } catch {
-          // segue para erro abaixo
-        }
-      }
-      reject(new Error("Não foi possível ler o arquivo selecionado."));
-    };
-
-    try {
-      leitor.readAsText(arquivo, "UTF-8");
-    } catch {
-      if (typeof arquivo?.text === "function") {
-        arquivo.text().then(resolve, reject);
-        return;
-      }
-      reject(new Error("Não foi possível ler o arquivo selecionado."));
-    }
-  });
-}
-
-/**
- * @param {string} textoArquivo
- * @returns {{ separador: string, itensBrutos: Array<Record<string, string>> }}
- */
-function analisarCSV(textoArquivo) {
-  const conteudo = String(textoArquivo || "").replace(/^\uFEFF/, "");
-  const linhas = conteudo.split(/\r?\n/).filter((linha) => linha.trim());
-
-  if (linhas.length === 0) {
-    throw new Error("O arquivo está vazio.");
-  }
-
-  const separador = detectarSeparadorImportacao(linhas);
-  if (!separador) {
-    throw new Error("Não foi possível identificar o separador do arquivo.");
-  }
-
-  const cabecalhos = parsearLinhaDelimitada(linhas[0], separador).map(normalizarTextoChave);
-  const indices = new Map(cabecalhos.map((cabecalho, indice) => [cabecalho, indice]));
-  const camposObrigatorios = ["data", "descricao", "tipo", "valor"];
-
-  if (!camposObrigatorios.every((campo) => indices.has(campo))) {
-    throw new Error("Cabeçalho inválido. Use o template de orçamento baixado em Configurações.");
-  }
-
-  const itensBrutos = [];
-
-  for (let i = 1; i < linhas.length; i += 1) {
-    const linha = linhas[i].trim();
-    if (!linha) continue;
-
-    const colunas = parsearLinhaDelimitada(linha, separador);
-    const item = {};
-
-    CABECALHOS_IMPORTACAO_ORCAMENTO.forEach((cabecalho) => {
-      const indice = indices.has(cabecalho) ? indices.get(cabecalho) : -1;
-      item[cabecalho] = indice >= 0 ? (colunas[indice] || "") : "";
-    });
-
-    itensBrutos.push(item);
-  }
-
-  return { separador, itensBrutos };
-}
-
-function transformarItens(itensBrutos) {
-  return itensBrutos
-    .map((item) => {
-      const dataNormalizada = normalizarDataImportacao(item.data);
-      const valorNumerico = normalizarValorMonetario(item.valor);
-
-      if (!dataNormalizada || !item.descricao || !item.tipo || Number.isNaN(valorNumerico)) {
-        return null;
-      }
-
-      const categoriaTexto = normalizarTextoChave(item.categoria);
-      const categoria = categoriaTexto ? categoriasCache.find((cat) => normalizarTextoChave(cat.nome).includes(categoriaTexto)) : null;
-
-      const subNome = normalizarTextoChave(item.subcategoria);
-      const subcategoriasFiltradas = subNome && categoria
-        ? subcategoriasCache.filter((sub) => sub.categoria_id === categoria?.id && normalizarTextoChave(sub.nome).includes(subNome))
-        : [];
-      const subcategoria = subcategoriasFiltradas[0];
-
-      const recorrente = ["true", "1", "sim", "s", "yes"].includes(normalizarTextoChave(item.recorrente));
-
-      return {
-        data: dataNormalizada,
-        descricao: item.descricao.trim(),
-        tipo: String(item.tipo).trim().toUpperCase(),
-        valor_planejado: valorNumerico,
-        valor_realizado: 0,
-        categoria_id: categoria?.id || null,
-        subcategoria_id: subcategoria?.id || null,
-        recorrente,
-      };
-    })
-    .filter((item) => item !== null);
-}
-
 async function selecionarArquivoImportacao(event) {
   const arquivo = event.target.files?.[0] || null;
   arquivoImportacaoAtual = arquivo;
@@ -1097,19 +872,25 @@ async function processarImportacao() {
       return;
     }
 
-    const textoArquivo = await carregarArquivoComoTexto(arquivoImportacaoAtual);
-    const { itensBrutos } = analisarCSV(textoArquivo);
-    const itensProcessados = transformarItens(itensBrutos);
+    const leitor = new FileReader();
+    const textoArquivo = await new Promise((resolve, reject) => {
+      leitor.onload = () => resolve(String(leitor.result || ""));
+      leitor.onerror = () => reject(new Error("Não foi possível ler o arquivo selecionado."));
+      leitor.readAsText(arquivoImportacaoAtual, "UTF-8");
+    });
 
-    if (itensProcessados.length === 0) {
+    const resultado = await window.electronAPI.importarCSV(textoArquivo);
+
+    if (resultado.error) {
+      exibirToast(resultado.error, "error");
+      return;
+    }
+
+    if (resultado.importados === 0) {
       exibirToast("Nenhum dado válido encontrado no arquivo.", "warning");
       return;
     }
 
-    const confirmar = await confirmDialog(`Encontrados ${itensProcessados.length} itens. Deseja importar?`);
-    if (!confirmar) return;
-
-    const resultado = await fazerImportacaoAPI(itensProcessados);
     mostrarResultadoImportacao(resultado);
   } catch (error) {
     exibirToast("Erro: " + (error?.message || "falha ao importar"), "error");
@@ -1584,7 +1365,6 @@ function setLancamentoEditando(val) {
 
 export {
   abrirModalImportacao,
-  analisarCSV,
   aplicarFiltroPill,
   aplicarFiltrosSalvos,
   atualizarAnosFiltro,
@@ -1604,7 +1384,6 @@ export {
   carregarSubcategoriasCache,
   editarLancamento,
   excluirLancamento,
-  fazerImportacaoAPI,
   fecharModalImportacao,
   formatCurrency,
   formatDate,
@@ -1625,5 +1404,4 @@ export {
   setLancamentoEditando,
   setLancamentos,
   setSubcategoriasCache,
-  transformarItens,
 };
