@@ -1,6 +1,6 @@
 {
   "name": "financas",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Sistema de Finanças Pessoais",
   "main": "dist-ts/main.js",
   "author": "Alan Silveira",
