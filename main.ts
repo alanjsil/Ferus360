@@ -31,7 +31,7 @@ autoUpdater.on("checking-for-update", () => {
   logger.warn("auto-updater", "Checando se há atualizações...");
 });
 
-autoUpdater.on("update-available", (info) => {
+autoUpdater.on("update-available", (info: any) => {
   logger.warn("auto-updater", "Atualização disponível: " + info.version);
   // Aqui você pode disparar um evento via IPC para o seu Front-end avisar o usuário
 });
@@ -40,11 +40,11 @@ autoUpdater.on("update-not-available", () => {
   logger.warn("auto-updater", "Nenhuma atualização disponível no momento.");
 });
 
-autoUpdater.on("error", (err) => {
-  logger.error("auto-updater", "Erro no auto-updater", err);
+autoUpdater.on("error", (errinfo: any) => {
+  logger.error("auto-updater", "Erro no auto-updater", errinfo);
 });
 
-autoUpdater.on("update-downloaded", (info) => {
+autoUpdater.on("update-downloaded", (infoinfo: any) => {
   logger.warn("auto-updater", "Atualização baixada. Reiniciando e instalando...");
   // Avisa o usuário e força a instalação
   autoUpdater.quitAndInstall();
