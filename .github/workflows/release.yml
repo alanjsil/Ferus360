@@ -25,11 +25,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and publish
+      - name: Build and publish (Windows)
+        if: matrix.os == 'windows-latest'
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          npm run build:ts && npx electron-builder --win --publish always
-          else
-          npm run build:ts && npx electron-builder --mac --publish always
-          fi
+        run: |
+          npm run build:ts
+          npx electron-builder --win --publish always
+
+      - name: Build and publish (Mac)
+        if: matrix.os == 'macos-latest'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          npm run build:ts
+          npx electron-builder --mac --publish always
