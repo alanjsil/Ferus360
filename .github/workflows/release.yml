@@ -21,7 +21,17 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
+      - name: Check token
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "TOKEN VAZIO"
+            exit 1
+          fi
 
+          echo "TOKEN PRESENTE"
       - name: Install dependencies
         run: npm ci
 
