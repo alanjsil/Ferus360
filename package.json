@@ -12,9 +12,7 @@
   },
   "scripts": {
     "start": "npm run build:ts && electron .",
-    "copy:vendor": "tsx scripts/copy-vendor.mts",
-    "build:ts": "rimraf dist-ts && tsc && npm run copy:vendor",
-    "postinstall": "npm run build:ts",
+    "build:ts": "rimraf dist-ts && tsc",
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.config.integrado.js",
@@ -42,7 +40,8 @@
     "publish": {
       "provider": "github",
       "owner": "alanjsil",
-      "repo": "Ferus360"
+      "repo": "Ferus360",
+      "releaseType": "release"
     },
     "win": {
       "target": [

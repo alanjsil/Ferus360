@@ -12,23 +12,23 @@
     "files.exclude": {
       //Pastas
       ".github": false, // Somente o teste de CI
-      "build": false, // Somente o icon do APP
-      "dist-ts": false, // Pasta com os maps do ts
+      "build": true, // Somente o icon do APP
+      "dist-ts": true, // Pasta com os maps do ts
       ".vscode": false,
 
       // Arquivos
-      ".env": false,
-      ".gitignore": false,
-      "opencode.json": false,
-      ".gitattributes": false,
-      "package-lock.json": false,
+      ".env": true,
+      ".gitignore": true,
+      "opencode.json": true,
+      ".gitattributes": true,
+      "package-lock.json": true,
 
       // Arquivos de configuração
-      "tsconfig.json": false,
-      "vitest.config.js": false,
-      "eslint.config.mjs": false,
-      "playwright.config.ts": false,
-      "vitest.config.integrado.js": false,
+      "tsconfig.json": true,
+      "vitest.config.js": true,
+      "eslint.config.mjs": true,
+      "playwright.config.ts": true,
+      "vitest.config.integrado.js": true,
 
       // Documentos
       "README.md": false, // ATIVAR

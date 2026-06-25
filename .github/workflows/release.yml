@@ -43,6 +43,11 @@ jobs:
           npm run build:ts
           npx electron-builder --win --publish always
 
+      - name: Listar arquivos gerados (debug)
+        if: matrix.os == 'windows-latest'
+        run: |
+          dir dist\
+
       - name: Build and publish (Mac)
         if: matrix.os == 'macos-latest'
         env:
