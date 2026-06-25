@@ -705,9 +705,9 @@ function createHandlers(
       }
     },
 
-    handleAdminCriarUsuario: async (_event: unknown, nome: string, email: string, senha: string) => {
+    handleAdminCriarUsuario: async (_event: unknown, nome: string, email: string) => {
       try {
-        return await adminService.criarUsuario(nome, email, senha);
+        return await adminService.criarUsuario(nome, email);
       } catch (err) {
         return { error: (err as { code?: string }).code || "ERRO_CRIAR_USUARIO" };
       }
