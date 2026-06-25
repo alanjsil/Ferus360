@@ -6,55 +6,45 @@ on:
       - "v*"
 
 jobs:
-  release:
-    strategy:
-      max-parallel: 1
-      matrix:
-        os: [windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+  windows:
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "npm"
+          cache: npm
 
-      # - name: Check token
-      #   shell: bash
-      #   env:
-      #     GH_TOKEN: ${{ secrets.GH_TOKEN }}
-      #   run: |
-      #     if [ -z "$GH_TOKEN" ]; then
-      #       echo "TOKEN VAZIO"
-      #       exit 1
-      #     fi
-      #     echo "TOKEN PRESENTE"
+      - run: npm ci
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm run build:ts
 
-      - name: Build and publish (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Build and Publish Windows
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          npm run build:ts
+          npx electron-builder --win --x64 --publish onTag --debug
 
-          npx electron-builder --win --x64 --publish always
+  macos:
+    needs: windows
+    runs-on: macos-latest
 
-      # - name: Listar arquivos gerados (debug)
-      #   if: matrix.os == 'windows-latest'
-      #   run: |
-      #     dir dist\
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Build and publish (Mac)
-        if: matrix.os == 'macos-latest'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build:ts
+
+      - name: Build and Publish Mac
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          npm run build:ts
           npx electron-builder --mac --publish always
