@@ -134,6 +134,13 @@ const api = {
   adminGetAnosDisponiveisCliente: (usuarioId: string, tipoPessoa?: string) => ipcRenderer.invoke("admin:getAnosDisponiveisCliente", usuarioId, tipoPessoa),
   adminGetDashboardDadosCliente: (usuarioId: string, ano: string, mes: string, categoria: string, tipoPessoa?: string) =>
     ipcRenderer.invoke("admin:getDashboardDadosCliente", usuarioId, ano, mes, categoria, tipoPessoa),
+
+  // ==================== AUTO-UPDATER ====================
+  onUpdateStatus: (callback: (status: any) => void) => {
+    const handler = (_e: any, data: any) => callback(data);
+    ipcRenderer.on("auto-updater:status", handler);
+    return () => ipcRenderer.removeListener("auto-updater:status", handler);
+  },
 };
 
 contextBridge.exposeInMainWorld("electronAPI", api);

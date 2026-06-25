@@ -93,6 +93,19 @@
       </span>
     </footer>
 
+    <dialog id="updateDialog" class="dialog update-dialog">
+      <div class="update-dialog-body">
+        <div class="update-spinner"></div>
+        <p id="updateStatusText" class="update-status-text">Verificando atualizações...</p>
+        <div id="updateProgressWrapper" class="update-progress-wrapper" hidden>
+          <div class="update-progress-bar">
+            <div id="updateProgressFill" class="update-progress-fill"></div>
+          </div>
+          <span id="updateProgressText" class="update-progress-text">0%</span>
+        </div>
+      </div>
+    </dialog>
+
     <script type="module" src="js/login.js"></script>
   </body>
 </html>

@@ -27,38 +27,49 @@ const expiracao = require("./services/expiration");
 const { iniciarMonitoramento, pararMonitoramento } = require("./services/conexao");
 const { promptSenha } = require("./services/prompt-senha");
 
+let mainWindow: any;
+
+function enviarStatusAutoUpdater(status: string, detalhes?: Record<string, unknown>) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("auto-updater:status", { status, ...detalhes });
+  }
+}
+
 autoUpdater.on("checking-for-update", () => {
   console.log("[auto-updater] Checando atualizações...");
   logger.warn("auto-updater", "Checando se há atualizações...");
-});
-
-autoUpdater.on("error", (err: any) => {
-  console.error("[auto-updater] ERRO COMPLETO:", err);
-  logger.error("auto-updater", "Erro no auto-updater: " + err?.message, err);
-});
-
-autoUpdater.on("update-available", (info: any) => {
-  console.log("[auto-updater] Atualização disponível:", info.version);
-  logger.warn("auto-updater", "Atualização disponível: " + info.version);
-});
-
-autoUpdater.on("update-not-available", (info: any) => {
-  console.log("[auto-updater] Sem atualização.", info);
-  logger.warn("auto-updater", "Nenhuma atualização disponível no momento.");
+  enviarStatusAutoUpdater("checking");
 });
 
 autoUpdater.on("error", (err: any) => {
   console.error("[auto-updater] ERRO:", err?.message || err);
   logger.error("auto-updater", "Erro no auto-updater", err);
+  enviarStatusAutoUpdater("error", { message: err?.message || String(err) });
+});
+
+autoUpdater.on("update-available", (info: any) => {
+  console.log("[auto-updater] Atualização disponível:", info.version);
+  logger.warn("auto-updater", "Atualização disponível: " + info.version);
+  enviarStatusAutoUpdater("update-available", { version: info.version });
+  autoUpdater.downloadUpdate();
+});
+
+autoUpdater.on("update-not-available", () => {
+  console.log("[auto-updater] Sem atualização.");
+  logger.warn("auto-updater", "Nenhuma atualização disponível no momento.");
+  enviarStatusAutoUpdater("no-update");
 });
 
 autoUpdater.on("download-progress", (progress: any) => {
-  console.log("[auto-updater] Progresso:", Math.round(progress.percent) + "%");
+  const percent = Math.round(progress.percent);
+  console.log("[auto-updater] Progresso:", percent + "%");
+  enviarStatusAutoUpdater("downloading", { percent });
 });
 
 autoUpdater.on("update-downloaded", (info: any) => {
   console.log("[auto-updater] Download concluído:", info.version);
   logger.warn("auto-updater", "Atualização baixada. Reiniciando...");
+  enviarStatusAutoUpdater("downloaded", { version: info.version });
   autoUpdater.quitAndInstall();
 });
 

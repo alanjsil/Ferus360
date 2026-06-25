@@ -200,7 +200,68 @@ function configurarRecuperacao() {
   });
 }
 
+function configurarAutoUpdater() {
+  const dialog = document.getElementById("updateDialog");
+  const statusText = document.getElementById("updateStatusText");
+  const progressWrapper = document.getElementById("updateProgressWrapper");
+  const progressFill = document.getElementById("updateProgressFill");
+  const progressText = document.getElementById("updateProgressText");
+  let limparListener = null;
+
+  if (!dialog || !statusText) return;
+
+  function mostrarDialog() {
+    if (typeof dialog.showModal === "function") {
+      dialog.showModal();
+    }
+  }
+
+  function fecharDialog() {
+    if (typeof dialog.close === "function") {
+      dialog.close();
+    }
+  }
+
+  limparListener = window.electronAPI.onUpdateStatus((data) => {
+    switch (data.status) {
+      case "checking":
+        statusText.textContent = "Verificando atualizações...";
+        progressWrapper.hidden = true;
+        mostrarDialog();
+        break;
+
+      case "update-available":
+        statusText.textContent = "Atualização disponível. Baixando...";
+        progressWrapper.hidden = false;
+        progressFill.style.width = "0%";
+        progressText.textContent = "0%";
+        break;
+
+      case "downloading":
+        progressFill.style.width = (data.percent || 0) + "%";
+        progressText.textContent = (data.percent || 0) + "%";
+        break;
+
+      case "downloaded":
+        statusText.textContent = "Atualização baixada! Reiniciando...";
+        progressFill.style.width = "100%";
+        progressText.textContent = "100%";
+        break;
+
+      case "no-update":
+        fecharDialog();
+        break;
+
+      case "error":
+        fecharDialog();
+        break;
+    }
+  });
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
+  configurarAutoUpdater();
+
   const restored = await tentarRestaurarSessao();
   if (restored) {
     return;
