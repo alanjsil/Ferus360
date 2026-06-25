@@ -28,25 +28,32 @@ const { iniciarMonitoramento, pararMonitoramento } = require("./services/conexao
 const { promptSenha } = require("./services/prompt-senha");
 
 autoUpdater.on("checking-for-update", () => {
+  console.log("[auto-updater] Checando atualizações...");
   logger.warn("auto-updater", "Checando se há atualizações...");
 });
 
 autoUpdater.on("update-available", (info: any) => {
+  console.log("[auto-updater] Atualização disponível:", info.version);
   logger.warn("auto-updater", "Atualização disponível: " + info.version);
-  // Aqui você pode disparar um evento via IPC para o seu Front-end avisar o usuário
 });
 
-autoUpdater.on("update-not-available", () => {
+autoUpdater.on("update-not-available", (info: any) => {
+  console.log("[auto-updater] Sem atualização.", info);
   logger.warn("auto-updater", "Nenhuma atualização disponível no momento.");
 });
 
-autoUpdater.on("error", (errinfo: any) => {
-  logger.error("auto-updater", "Erro no auto-updater", errinfo);
+autoUpdater.on("error", (err: any) => {
+  console.error("[auto-updater] ERRO:", err?.message || err);
+  logger.error("auto-updater", "Erro no auto-updater", err);
 });
 
-autoUpdater.on("update-downloaded", (infoinfo: any) => {
-  logger.warn("auto-updater", "Atualização baixada. Reiniciando e instalando...");
-  // Avisa o usuário e força a instalação
+autoUpdater.on("download-progress", (progress: any) => {
+  console.log("[auto-updater] Progresso:", Math.round(progress.percent) + "%");
+});
+
+autoUpdater.on("update-downloaded", (info: any) => {
+  console.log("[auto-updater] Download concluído:", info.version);
+  logger.warn("auto-updater", "Atualização baixada. Reiniciando...");
   autoUpdater.quitAndInstall();
 });
 
