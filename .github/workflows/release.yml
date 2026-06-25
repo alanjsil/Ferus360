@@ -8,6 +8,7 @@ on:
 jobs:
   release:
     strategy:
+      max-parallel: 1
       matrix:
         os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
@@ -41,7 +42,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          npm run build:ts
+          npm run build:tscls
+
           npx electron-builder --win --x64 --publish always
 
       # - name: Listar arquivos gerados (debug)
