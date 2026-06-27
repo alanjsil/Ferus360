@@ -41,6 +41,11 @@
       "target": "nsis",
       "icon": "build/icon.ico"
     },
+    "publish": {
+      "provider": "github",
+      "owner": "alanjsil",
+      "repo": "fina-release"
+    },
     "nsis": {
       "oneClick": false,
       "license": "LICENSE.md",
