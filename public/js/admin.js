@@ -303,15 +303,11 @@ async function visualizarCliente(id, nome) {
   const dialog = document.getElementById("resumoDialog");
   const body = document.getElementById("resumoBody");
   const footer = document.getElementById("resumoFooter");
-  document.getElementById("resumoTitulo").textContent = "Carregando...";
-  body.innerHTML = '<p class="empty-state">Carregando...</p>';
-  footer.hidden = true;
-  dialog.showModal();
-
   try {
     const resumo = await window.electronAPI.adminGetResumoCliente(id, tipoPessoaResumo);
     if (resumo?.error) {
       body.innerHTML = '<p class="empty-state">Erro ao carregar resumo.</p>';
+      dialog.showModal();
       return;
     }
 
@@ -347,8 +343,10 @@ async function visualizarCliente(id, nome) {
       window.location.href = `visualizar-cliente.html?usuarioId=${id}&nome=${encodeURIComponent(nome || "")}`;
     });
     footer.hidden = false;
+    dialog.showModal();
   } catch {
     body.innerHTML = '<p class="empty-state">Erro ao carregar resumo.</p>';
+    dialog.showModal();
   }
 }
 
@@ -661,6 +659,10 @@ function configurarChamados() {
     document.getElementById("chamadoDialog").close();
   });
   document.getElementById("enviarRespostaChamado").addEventListener("click", enviarRespostaChamado);
+  document.getElementById("chamadosBody").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-atender]");
+    if (btn) abrirAtendimento(btn.dataset.atender);
+  });
 }
 
 async function carregarChamados() {
@@ -707,10 +709,6 @@ function renderizarChamados() {
       </tr>`,
     )
     .join("");
-
-  body.querySelectorAll("[data-atender]").forEach((btn) => {
-    btn.addEventListener("click", () => abrirAtendimento(btn.dataset.atender));
-  });
 }
 
 function abrirAtendimento(id) {

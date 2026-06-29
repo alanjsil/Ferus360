@@ -402,6 +402,7 @@ function atualizarVisibilidadeCampos(tipo) {
     }
   } else {
     contaDestinoRow.style.display = "none";
+    document.getElementById("contaDestino").value = "";
     subcategoriaRow.style.display = "";
     document.getElementById("subcategoria").setAttribute("required", "");
     selectCategoria.setAttribute("required", "");

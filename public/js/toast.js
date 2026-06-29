@@ -6,7 +6,7 @@ let container = null;
 let toastIdCounter = 0;
 
 function getContainer() {
-  if (!container) {
+  if (!container || !container.isConnected) {
     container = document.createElement("div");
     container.className = "toast-container";
     document.body.appendChild(container);
