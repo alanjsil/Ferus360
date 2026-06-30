@@ -81,8 +81,12 @@ const { mockSupabase, resetData, pushResult } = vi.hoisted(() => {
 // No vi.mock — usamos __setSupabase do modulo real para injetar o mock
 import * as repo from "../../../services/repository.js";
 import crypto from "node:crypto";
+import { initCache } from "../../../services/cache.js";
+import path from "node:path";
+import os from "node:os";
 
 repo.__setSupabase(mockSupabase);
+initCache(path.join(os.tmpdir(), "test-cache-repo"));
 
 beforeEach(() => {
   vi.clearAllMocks();

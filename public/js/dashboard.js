@@ -319,8 +319,6 @@ function popularMeses() {
     mesesDisponiveis.add(item.mes);
   });
 
-  const mesesArray = Array.from(mesesDisponiveis).sort();
-
   select.innerHTML = '<option value="all">Todos</option>';
 
   const nomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];

@@ -56,13 +56,11 @@ describe("state (serviço de estado)", () => {
       expect(s).toHaveProperty("pessoas");
       expect(s).toHaveProperty("lancamentos");
       expect(s).toHaveProperty("orcamento");
-      expect(s).toHaveProperty("dashboard");
     });
 
     it("retorna chave específica quando fornecida", () => {
       // Act & Assert
       expect(state.getState("categorias")).toEqual([]);
-      expect(state.getState("dashboard")).toBeNull();
     });
   });
 
@@ -95,14 +93,12 @@ describe("state (serviço de estado)", () => {
     it("reseta todos os arrays para vazio e objetos para null", () => {
       // Arrange
       state.setState("categorias", [{ id: 1 }]);
-      state.setState("dashboard", { some: "data" });
 
       // Act
       state.reiniciarState();
 
       // Assert
       expect(state.getState("categorias")).toEqual([]);
-      expect(state.getState("dashboard")).toBeNull();
     });
   });
 });

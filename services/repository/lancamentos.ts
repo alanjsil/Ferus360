@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import type { CriarLancamentoPayload, CriarTransferenciaPayload, FiltrosLancamento, ImportarOrcamentoItem, Lancamento, Orcamento, PaginaLancamentos } from "../../src/types";
+import type { CriarLancamentoPayload, CriarTransferenciaPayload, DashboardDadosResult, DashboardData, FiltrosLancamento, ImportarOrcamentoItem, Lancamento, Orcamento, PaginaLancamentos } from "../../src/types";
 import * as logger from "../logger";
 import { logAuditoria } from "./auditoria";
 import { adicionarFiltroTipoPessoaRestrito, adicionarFiltroUsuario, supabase, validarMes } from "./utils";
@@ -108,7 +108,107 @@ async function getAnosDisponiveis(usuarioId?: string, tipoPessoa?: string): Prom
   return [...anos].sort((a, b) => b - a);
 }
 
+async function getDashboardDados(ano: string | number, mes?: string | number, categoria?: string, usuarioId?: string, tipoPessoa?: string): Promise<DashboardDadosResult> {
+  let lancamentosQuery = supabase
+    .from("financas_lancamentos")
+    .select("*, categoria:financas_categorias (nome), subcategoria:financas_subcategorias (nome)")
+    .gte("data", `${ano}-01-01`)
+    .lte("data", `${ano}-12-31`)
+    .eq("status", "PAGO") as any;
 
+  let orcamentoQuery = supabase
+    .from("financas_orcamento")
+    .select("*, categoria:financas_categorias (nome), subcategoria:financas_subcategorias (nome)")
+    .gte("data", `${ano}-01-01`)
+    .lte("data", `${ano}-12-31`) as any;
+
+  lancamentosQuery = adicionarFiltroUsuario(lancamentosQuery, usuarioId);
+  lancamentosQuery = adicionarFiltroTipoPessoaRestrito(lancamentosQuery, tipoPessoa);
+  orcamentoQuery = adicionarFiltroUsuario(orcamentoQuery, usuarioId);
+  orcamentoQuery = adicionarFiltroTipoPessoaRestrito(orcamentoQuery, tipoPessoa);
+
+  if (mes && mes !== "all") {
+    const mesFormatado = mes.toString().padStart(2, "0");
+    lancamentosQuery = lancamentosQuery.like("data_busca", `${ano}-${mesFormatado}%`);
+    orcamentoQuery = orcamentoQuery.eq("mes", typeof mes === "number" ? mes : parseInt(mes));
+  }
+
+  if (categoria && categoria !== "all") {
+    lancamentosQuery = lancamentosQuery.eq("categoria_id", categoria);
+  }
+
+  lancamentosQuery = lancamentosQuery.order("data", { ascending: true });
+  orcamentoQuery = orcamentoQuery.order("data", { ascending: true });
+
+  const [{ data: lancamentos, error: errorLancamentos }, { data: orcamentos, error: errorOrcamentos }] = await Promise.all([lancamentosQuery, orcamentoQuery]);
+
+  if (errorLancamentos) {
+    const msg = `[${errorLancamentos.code || "??"}] ${errorLancamentos.message || "sem mensagem"}${errorLancamentos.details ? " — " + errorLancamentos.details : ""}`;
+    logger.error("repository", `Supabase lancamentos: ${msg}`);
+    throw new Error(msg);
+  }
+  if (errorOrcamentos) {
+    const msg = `[${errorOrcamentos.code || "??"}] ${errorOrcamentos.message || "sem mensagem"}${errorOrcamentos.details ? " — " + errorOrcamentos.details : ""}`;
+    logger.error("repository", `Supabase orçamentos: ${msg}`);
+    throw new Error(msg);
+  }
+
+  return {
+    lancamentos: (lancamentos || []) as unknown as Lancamento[],
+    orcamentos: (orcamentos || []) as unknown as Orcamento[],
+    totalLancamentos: (lancamentos || []).length,
+    totalOrcamentos: (orcamentos || []).length,
+  };
+}
+
+async function getDashboard(mes?: string, usuarioId?: string, tipoPessoa?: string): Promise<DashboardData> {
+  let orcamentoSP = supabase.from("financas_orcamento").select("*") as any;
+  orcamentoSP = adicionarFiltroUsuario(orcamentoSP, usuarioId);
+  orcamentoSP = adicionarFiltroTipoPessoaRestrito(orcamentoSP, tipoPessoa);
+
+  if (mes) {
+    validarMes(mes);
+    orcamentoSP = orcamentoSP.like("data_busca", `${mes}%`);
+  }
+  const { data: orcamento, error } = (await orcamentoSP) as { data: Orcamento[] | null; error: unknown };
+  if (error) throw error;
+
+  let financasSP = supabase.from("financas_lancamentos").select("*").eq("status", "PAGO") as any;
+  financasSP = adicionarFiltroUsuario(financasSP, usuarioId);
+  financasSP = adicionarFiltroTipoPessoaRestrito(financasSP, tipoPessoa);
+
+  if (mes) {
+    validarMes(mes);
+    financasSP = financasSP.like("data_busca", `${mes}%`);
+  }
+  const { data: realizados, error: errorRealizados } = (await financasSP) as { data: Lancamento[] | null; error: unknown };
+  if (errorRealizados) throw errorRealizados;
+
+  const totais = {
+    receitas_planejadas: 0,
+    receitas_realizadas: 0,
+    despesas_planejadas: 0,
+    despesas_realizadas: 0,
+  };
+
+  (orcamento || []).forEach((item: Orcamento) => {
+    if (item.tipo === "RECEITA") {
+      totais.receitas_planejadas += Number(item.valor_planejado);
+    } else {
+      totais.despesas_planejadas += Number(item.valor_planejado);
+    }
+  });
+
+  (realizados || []).forEach((item: Lancamento) => {
+    if (item.tipo === "RECEITA" && !item.transferencia_grupo_id) {
+      totais.receitas_realizadas += Number(item.valor);
+    } else if (item.tipo === "DESPESA" && !item.transferencia_grupo_id) {
+      totais.despesas_realizadas += Number(item.valor);
+    }
+  });
+
+  return { totais, orcamento: orcamento || [], realizados: realizados || [] };
+}
 
 const TIPOS_LANCAMENTO_VALIDOS = ["RECEITA", "DESPESA", "TRANSFERENCIA"];
 const STATUS_LANCAMENTO_VALIDOS = ["PAGO", "PENDENTE", "CANCELADO"];
@@ -360,6 +460,8 @@ export {
   deletarLancamento,
   deletarTransferencia,
   getAnosDisponiveis,
+  getDashboard,
+  getDashboardDados,
   getLancamentos,
   getLancamentosPaginado,
   getOrcamento,

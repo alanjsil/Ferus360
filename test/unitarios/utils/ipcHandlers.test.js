@@ -13,6 +13,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { initCache } from "../../../services/cache.js";
+import path from "node:path";
+import os from "node:os";
+
+initCache(path.join(os.tmpdir(), "test-cache-ipc"));
 
 const mockRepository = {
   getCategorias: vi.fn(),
@@ -90,6 +95,18 @@ const mockAdminService = {
 };
 
 const mockData = { id: 1, nome: "Teste" };
+
+import * as repo from "../../../services/repository.js";
+
+const mockSupabaseIpc = {
+  from: vi.fn(),
+  rpc: vi.fn().mockResolvedValue({ data: { por_mes: [], por_categoria: [], saldo_acumulado: [] }, error: null }),
+  auth: {
+    setSession: vi.fn().mockResolvedValue({ data: {}, error: null }),
+    signOut: vi.fn(),
+  },
+};
+repo.__setSupabase(mockSupabaseIpc);
 
 describe("ipcHandlers (handlers de IPC)", () => {
   let handlers;
@@ -356,16 +373,27 @@ describe("ipcHandlers (handlers de IPC)", () => {
       expect(result).toEqual([mockData]);
     });
 
-    it("calls repository.getDashboardDados on dashboard:dados", async () => {
+    it("calls supabase.rpc get_dashboard_data on dashboard:dados", async () => {
       const result = await handlers.handleDashboardDados(null, "2026", "06", "cat-1");
-      expect(mockRepository.getDashboardDados).toHaveBeenCalledWith("2026", "06", "cat-1", "user-123", "PF");
-      expect(result).toEqual(mockData);
+      expect(mockSupabaseIpc.rpc).toHaveBeenCalledWith("get_dashboard_data", {
+        p_usuario_id: "user-123",
+        p_tipo_pessoa: "PF",
+        p_ano: 2026,
+        p_mes: 6,
+        p_categoria_id: "cat-1",
+      });
+      expect(result).toEqual({ por_mes: [], por_categoria: [], saldo_acumulado: [] });
     });
 
-    it("calls repository.getDashboard on dashboard:get", async () => {
+    it("calls supabase.rpc get_comparacao_orcamento on dashboard:get", async () => {
       const result = await handlers.handleDashboardGet(null, "2026-06");
-      expect(mockRepository.getDashboard).toHaveBeenCalledWith("2026-06", "user-123", "PF");
-      expect(result).toEqual(mockData);
+      expect(mockSupabaseIpc.rpc).toHaveBeenCalledWith("get_comparacao_orcamento", {
+        p_usuario_id: "user-123",
+        p_tipo_pessoa: "PF",
+        p_ano: 2026,
+        p_mes: 6,
+      });
+      expect(result).toEqual({ totais: { por_mes: [], por_categoria: [], saldo_acumulado: [] } });
     });
 
     it("calls repository.createLancamento on lancamentos:create", async () => {

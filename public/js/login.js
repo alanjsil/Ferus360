@@ -206,7 +206,7 @@ function configurarAutoUpdater() {
   const progressWrapper = document.getElementById("updateProgressWrapper");
   const progressFill = document.getElementById("updateProgressFill");
   const progressText = document.getElementById("updateProgressText");
-  let limparListener = null;
+  let _limparListener = null;
 
   if (!dialog || !statusText) return;
 
@@ -222,7 +222,7 @@ function configurarAutoUpdater() {
     }
   }
 
-  limparListener = window.electronAPI.onUpdateStatus((data) => {
+  _limparListener = window.electronAPI.onUpdateStatus((data) => {
     switch (data.status) {
       case "checking":
         statusText.textContent = "Verificando atualizações...";

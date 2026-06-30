@@ -1458,6 +1458,7 @@ export {
   carregarContas,
   carregarDashboard,
   carregarEstadoFiltros,
+  carregarLancamentos,
   carregarOrcamento,
   carregarPessoas,
   carregarPrimeiraPagina,
