@@ -3,6 +3,7 @@ import type { IpcMainInvokeEvent } from "electron";
 import { AuthError } from "./auth";
 import * as logger from "./logger";
 import * as importacaoCSV from "./importacao-csv";
+import { getCache } from "./cache";
 
 let _ipCache: string | undefined;
 let _ipCacheAt: number = 0;
@@ -71,6 +72,16 @@ function createHandlers(
         setState("usarPjAtivo", data.usuario?.usar_pj === true);
         setState("accessToken", data.token);
         setState("refreshToken", data.refreshToken);
+
+        getCache().invalidarTodos();
+
+        Promise.all([
+          repository.getCategorias(data.usuario.id, null, false, data.usuario?.usar_pj ? "PJ" : "PF").catch(() => {}),
+          repository.getSubcategorias(data.usuario.id, undefined, data.usuario?.usar_pj ? "PJ" : "PF").catch(() => {}),
+          repository.getContas(data.usuario.id, data.usuario?.usar_pj ? "PJ" : "PF").catch(() => {}),
+          repository.getPessoas(data.usuario.id, data.usuario?.usar_pj ? "PJ" : "PF").catch(() => {}),
+        ]).catch(() => {});
+
         return data;
       } catch (err) {
         const code = (err as { code?: string }).code || (err as Error).message || "ERRO_INTERNO";
@@ -84,6 +95,7 @@ function createHandlers(
       const data = await auth.logout(metadados);
       resetStateFn();
       setState("usuarioAtual", null);
+      getCache().invalidarTodos();
       return data;
     },
 
@@ -751,6 +763,7 @@ function createHandlers(
         return { success: false };
       }
       setState("tipoPessoaAtivo", tipoPessoa);
+      getCache().invalidarTodos();
       return { success: true };
     },
 
@@ -767,6 +780,7 @@ function createHandlers(
       if (usuarioId) {
         await repository.updatePerfil(usuarioId, { usar_pj: value });
       }
+      getCache().invalidarTodos();
       return { success: true };
     },
 
@@ -785,10 +799,6 @@ function createHandlers(
       } catch (err) {
         return { error: (err as Error).message };
       }
-    },
-
-    handleLimparCache: async () => {
-      return { success: true };
     },
 
     handleTrialStatus: async () => {

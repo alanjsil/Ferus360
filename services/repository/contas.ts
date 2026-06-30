@@ -1,6 +1,7 @@
 import type { Conta, CriarContaPayload } from "../../src/types";
 import crypto from "crypto";
 import * as logger from "../logger";
+import { getCache } from "../cache";
 import {
   supabase,
   adicionarFiltroUsuario,
@@ -10,6 +11,13 @@ import {
 } from "./utils";
 
 async function getContas(usuarioId?: string, tipoPessoa?: string): Promise<Conta[]> {
+  if (usuarioId && tipoPessoa) {
+    const cache = getCache();
+    if (cache.isValid("contas", usuarioId, tipoPessoa)) {
+      return cache.get<Conta>("contas");
+    }
+  }
+
   try {
     let query = supabase.from("financas_contas").select("*").order("nome") as any;
 
@@ -18,9 +26,21 @@ async function getContas(usuarioId?: string, tipoPessoa?: string): Promise<Conta
 
     const { data, error } = await query;
     if (error) throw error;
+
+    if (usuarioId && tipoPessoa) {
+      getCache().set("contas", data, usuarioId, tipoPessoa);
+    }
+
     return data;
   } catch (err) {
     logger.warn("repository", "getContas Supabase indisponível", err);
+    if (usuarioId && tipoPessoa) {
+      const cache = getCache();
+      if (cache.hasStale("contas")) {
+        logger.warn("repository", "getContas retornando cache expirado (offline)");
+        return cache.get<Conta>("contas");
+      }
+    }
   }
 
   return [];
@@ -38,6 +58,7 @@ async function criarConta(usuarioId: string, payload: CriarContaPayload): Promis
 
   if (error) throw error;
 
+  getCache().invalidar("contas");
   return data;
 }
 
@@ -57,6 +78,7 @@ async function updateConta(id: string, patch: { nome?: string }): Promise<Conta 
 
   if (error) throw error;
 
+  getCache().invalidar("contas");
   return data;
 }
 
@@ -80,6 +102,7 @@ async function deletarConta(usuarioId: string, id: string): Promise<{ success: b
   query = adicionarFiltroUsuario(query, usuarioId);
   const { error } = await query;
   if (error) throw error;
+  getCache().invalidar("contas");
   return { success: true };
 }
 
