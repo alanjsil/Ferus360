@@ -67,6 +67,7 @@ const api = {
 
   // ==================== LANÇAMENTOS ====================
   getLancamentos: (mes: string) => ipcRenderer.invoke("lancamentos:get", mes),
+  getLancamentosPaginado: (filtros: any) => ipcRenderer.invoke("lancamentos:paginado", filtros),
   criarLancamento: (payload: any) => ipcRenderer.invoke("lancamentos:create", payload),
   updateLancamento: (id: string, payload: any) => ipcRenderer.invoke("lancamentos:update", id, payload),
   deletarLancamento: (id: string) => ipcRenderer.invoke("lancamentos:delete", id),

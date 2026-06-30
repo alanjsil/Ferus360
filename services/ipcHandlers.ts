@@ -433,6 +433,21 @@ function createHandlers(
       }
     },
 
+    handleLancamentosPaginado: async (_event: unknown, filtros: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        return await repository.getLancamentosPaginado({
+          ...filtros,
+          usuarioId,
+          tipoPessoa: obterTipoPessoaAtivo(),
+        });
+      } catch (err) {
+        logger.error("ipc", "getLancamentosPaginado", err);
+        return { error: "ERRO_INTERNO" };
+      }
+    },
+
     handleOrcamentoImportar: async (_event: unknown, itens: unknown[]) => {
       const usuarioId = obterUsuarioId();
       if (!usuarioId) return { error: "UNAUTHORIZED" };
@@ -880,6 +895,7 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("pessoa:update", handlers.handlePessoaUpdate);
   ipcMain.handle("pessoa:delete", handlers.handlePessoaDelete);
   ipcMain.handle("lancamentos:get", handlers.handleLancamentosGet);
+  ipcMain.handle("lancamentos:paginado", handlers.handleLancamentosPaginado);
   ipcMain.handle("orcamento:get", handlers.handleOrcamentoGet);
   ipcMain.handle("dashboard:dados", handlers.handleDashboardDados);
   ipcMain.handle("dashboard:anos", handlers.handleDashboardAnos);

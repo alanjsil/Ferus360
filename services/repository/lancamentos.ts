@@ -1,8 +1,58 @@
 import crypto from "crypto";
-import type { CriarLancamentoPayload, CriarTransferenciaPayload, DashboardDadosResult, DashboardData, ImportarOrcamentoItem, Lancamento, Orcamento } from "../../src/types";
+import type { CriarLancamentoPayload, CriarTransferenciaPayload, DashboardDadosResult, DashboardData, FiltrosLancamento, ImportarOrcamentoItem, Lancamento, Orcamento, PaginaLancamentos } from "../../src/types";
 import * as logger from "../logger";
 import { logAuditoria } from "./auditoria";
 import { adicionarFiltroTipoPessoaRestrito, adicionarFiltroUsuario, supabase, validarMes } from "./utils";
+
+async function getLancamentosPaginado(filtros: FiltrosLancamento): Promise<PaginaLancamentos> {
+  const limite = Math.min(filtros.limite ?? 50, 100);
+  const limiteMaisUm = limite + 1;
+
+  let countQuery = supabase.from("financas_lancamentos")
+    .select("id", { count: "exact", head: true }) as any;
+  countQuery = adicionarFiltroUsuario(countQuery, filtros.usuarioId);
+  countQuery = adicionarFiltroTipoPessoaRestrito(countQuery, filtros.tipoPessoa);
+  if (filtros.mes) countQuery = countQuery.like("data_busca", `${filtros.mes}%`);
+  if (filtros.tipo) countQuery = countQuery.eq("tipo", filtros.tipo);
+  if (filtros.status) countQuery = countQuery.eq("status", filtros.status);
+
+  let query = supabase.from("financas_lancamentos")
+    .select("*")
+    .order("data", { ascending: false })
+    .order("criado_em", { ascending: false })
+    .order("id", { ascending: true })
+    .limit(limiteMaisUm) as any;
+
+  query = adicionarFiltroUsuario(query, filtros.usuarioId);
+  query = adicionarFiltroTipoPessoaRestrito(query, filtros.tipoPessoa);
+  if (filtros.mes) query = query.like("data_busca", `${filtros.mes}%`);
+  if (filtros.tipo) query = query.eq("tipo", filtros.tipo);
+  if (filtros.status) query = query.eq("status", filtros.status);
+
+  if (filtros.cursor) {
+    query = query.or(
+      `data.lt.${filtros.cursor.data},` +
+      `and(data.eq.${filtros.cursor.data},criado_em.lt.${filtros.cursor.criado_em}),` +
+      `and(data.eq.${filtros.cursor.data},criado_em.eq.${filtros.cursor.criado_em},id.gt.${filtros.cursor.id})`
+    );
+  }
+
+  const [{ count }, { data, error }] = await Promise.all([countQuery, query]);
+  if (error) throw error;
+
+  const registros = (data as Lancamento[]).slice(0, limite);
+  const temMais = data.length > limite;
+
+  const ultimo = registros.length > 0 ? registros[registros.length - 1] : null;
+  return {
+    data: registros,
+    cursor: temMais && ultimo
+      ? { data: ultimo.data, criado_em: ultimo.criado_em, id: ultimo.id }
+      : null,
+    total: count ?? 0,
+    hasMore: temMais,
+  };
+}
 
 async function getLancamentos(mes?: string, usuarioId?: string, tipoPessoa?: string): Promise<Lancamento[]> {
   let query = supabase.from("financas_lancamentos").select("*").order("data", { ascending: false }).limit(5000) as any;

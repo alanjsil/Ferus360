@@ -210,6 +210,29 @@ export interface DashboardRpcResult {
   saldo_acumulado: DashboardRpcSaldoAcumulado[];
 }
 
+export interface CursorLancamento {
+  data: string;
+  criado_em: string;
+  id: string;
+}
+
+export interface FiltrosLancamento {
+  mes?: string;
+  usuarioId?: string;
+  tipoPessoa?: string;
+  tipo?: string;
+  status?: string;
+  cursor?: CursorLancamento;
+  limite?: number;
+}
+
+export interface PaginaLancamentos {
+  data: Lancamento[];
+  cursor: CursorLancamento | null;
+  total: number;
+  hasMore: boolean;
+}
+
 export interface AuthResult {
   token: string;
   refreshToken: string;
