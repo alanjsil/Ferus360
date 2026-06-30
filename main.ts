@@ -26,6 +26,7 @@ const { registerHandlers } = require("./services/ipcHandlers");
 const expiracao = require("./services/expiration");
 const { iniciarMonitoramento, pararMonitoramento } = require("./services/conexao");
 const { promptSenha } = require("./services/prompt-senha");
+const { initCache } = require("./services/cache");
 
 let mainWindow: any;
 
@@ -171,6 +172,7 @@ if (!gotLock) {
 
     iniciarMonitoramento();
 
+    initCache(app.getPath("userData"));
     registerHandlers(promptSenha);
     createWindow();
 
