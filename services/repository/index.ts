@@ -29,10 +29,9 @@ export { getPessoas, criarPessoa, updatePessoa, deletarPessoa } from "./pessoas"
 
 export {
   getLancamentos,
+  getLancamentosPaginado,
   getOrcamento,
   getAnosDisponiveis,
-  getDashboardDados,
-  getDashboard,
   criarLancamento,
   deletarLancamento,
   updateLancamento,

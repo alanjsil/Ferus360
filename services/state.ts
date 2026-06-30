@@ -1,5 +1,5 @@
 import { BrowserWindow } from "electron";
-import type { Usuario, Categoria, Subcategoria, Conta, Pessoa, Lancamento, Orcamento, DashboardData, TipoPessoa } from "../src/types";
+import type { Usuario, Categoria, Subcategoria, Conta, Pessoa, Lancamento, Orcamento, TipoPessoa } from "../src/types";
 
 interface State {
   categorias: Categoria[];
@@ -8,7 +8,6 @@ interface State {
   pessoas: Pessoa[];
   lancamentos: Lancamento[];
   orcamento: Orcamento[];
-  dashboard: DashboardData | null;
   usuarioAtual: Usuario | null;
   tipoPessoaAtivo: TipoPessoa;
   usarPjAtivo: boolean;
@@ -23,7 +22,6 @@ let state: State = {
   pessoas: [],
   lancamentos: [],
   orcamento: [],
-  dashboard: null,
   usuarioAtual: null,
   tipoPessoaAtivo: "PF",
   usarPjAtivo: false,
@@ -61,7 +59,6 @@ function reiniciarState(): void {
     pessoas: [],
     lancamentos: [],
     orcamento: [],
-    dashboard: null,
     usuarioAtual: null,
     tipoPessoaAtivo: "PF",
     usarPjAtivo: false,
