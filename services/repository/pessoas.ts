@@ -1,6 +1,7 @@
 import type { Pessoa, CriarPessoaPayload } from "../../src/types";
 import crypto from "crypto";
 import * as logger from "../logger";
+import { getCache } from "../cache";
 import {
   supabase,
   adicionarFiltroUsuario,
@@ -9,6 +10,13 @@ import {
 } from "./utils";
 
 async function getPessoas(usuarioId?: string, tipoPessoa?: string): Promise<Pessoa[]> {
+  if (usuarioId && tipoPessoa) {
+    const cache = getCache();
+    if (cache.isValid("pessoas", usuarioId, tipoPessoa)) {
+      return cache.get<Pessoa>("pessoas");
+    }
+  }
+
   try {
     let query = supabase.from("financas_pessoas").select("*").order("nome") as any;
     query = adicionarFiltroUsuario(query, usuarioId);
@@ -16,9 +24,21 @@ async function getPessoas(usuarioId?: string, tipoPessoa?: string): Promise<Pess
 
     const { data, error } = await query;
     if (error) throw error;
+
+    if (usuarioId && tipoPessoa) {
+      getCache().set("pessoas", data, usuarioId, tipoPessoa);
+    }
+
     return data;
   } catch (err) {
     logger.warn("repository", "getPessoas Supabase indisponível", err);
+    if (usuarioId && tipoPessoa) {
+      const cache = getCache();
+      if (cache.hasStale("pessoas")) {
+        logger.warn("repository", "getPessoas retornando cache expirado (offline)");
+        return cache.get<Pessoa>("pessoas");
+      }
+    }
   }
 
   return [];
@@ -36,6 +56,7 @@ async function criarPessoa(usuarioId: string, payload: CriarPessoaPayload): Prom
 
   if (error) throw error;
 
+  getCache().invalidar("pessoas");
   return data;
 }
 
@@ -55,6 +76,7 @@ async function updatePessoa(id: string, patch: { nome?: string }): Promise<Pesso
 
   if (error) throw error;
 
+  getCache().invalidar("pessoas");
   return data;
 }
 
@@ -71,6 +93,7 @@ async function deletarPessoa(usuarioId: string, id: string): Promise<{ success: 
   query = adicionarFiltroUsuario(query, usuarioId);
   const { error } = await query;
   if (error) throw error;
+  getCache().invalidar("pessoas");
   return { success: true };
 }
 

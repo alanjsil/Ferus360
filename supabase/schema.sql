@@ -753,3 +753,154 @@ USING (
     OR public.is_admin ()
   )
 );
+
+-- ============================================================
+-- RPC: get_dashboard_data
+-- Retorna totais, por_mes, por_categoria e saldo_acumulado
+-- ============================================================
+CREATE OR REPLACE FUNCTION get_dashboard_data(
+  p_usuario_id   UUID,
+  p_tipo_pessoa  TEXT,
+  p_ano          INT     DEFAULT NULL,
+  p_mes          INT     DEFAULT NULL,
+  p_categoria_id UUID    DEFAULT NULL
+)
+RETURNS JSON
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_resultado JSON;
+BEGIN
+  IF p_usuario_id != auth.uid() AND NOT is_admin() THEN
+    RAISE EXCEPTION 'UNAUTHORIZED';
+  END IF;
+
+  SELECT json_build_object(
+    'totais', (
+      SELECT json_build_object(
+        'receitas', COALESCE(SUM(CASE WHEN tipo = 'RECEITA' THEN valor END), 0),
+        'despesas', COALESCE(SUM(CASE WHEN tipo = 'DESPESA' THEN valor END), 0)
+      )
+      FROM financas_lancamentos
+      WHERE usuario_id = p_usuario_id AND tipo_pessoa = p_tipo_pessoa
+        AND status = 'PAGO' AND transferencia_grupo_id IS NULL
+        AND (p_ano IS NULL OR EXTRACT(YEAR FROM data) = p_ano)
+        AND (p_mes IS NULL OR EXTRACT(MONTH FROM data) = p_mes)
+    ),
+
+    'por_mes', (
+      SELECT json_agg(row_to_json(rm)) FROM (
+        SELECT EXTRACT(MONTH FROM data)::int AS mes, tipo, SUM(valor) AS total
+        FROM financas_lancamentos
+        WHERE usuario_id = p_usuario_id AND tipo_pessoa = p_tipo_pessoa
+          AND status = 'PAGO' AND transferencia_grupo_id IS NULL
+          AND (p_ano IS NULL OR EXTRACT(YEAR FROM data) = p_ano)
+        GROUP BY EXTRACT(MONTH FROM data), tipo
+        ORDER BY EXTRACT(MONTH FROM data)
+      ) rm
+    ),
+
+    'por_categoria', (
+      SELECT json_agg(row_to_json(gc)) FROM (
+        SELECT l.categoria_id, c.nome AS categoria_nome, l.tipo, SUM(l.valor) AS total
+        FROM financas_lancamentos l
+        LEFT JOIN financas_categorias c ON c.id = l.categoria_id
+        WHERE l.usuario_id = p_usuario_id AND l.tipo_pessoa = p_tipo_pessoa
+          AND l.status = 'PAGO' AND l.transferencia_grupo_id IS NULL
+          AND (p_ano IS NULL OR EXTRACT(YEAR  FROM l.data) = p_ano)
+          AND (p_mes IS NULL OR EXTRACT(MONTH FROM l.data) = p_mes)
+          AND (p_categoria_id IS NULL OR l.categoria_id = p_categoria_id)
+        GROUP BY l.categoria_id, c.nome, l.tipo
+        ORDER BY SUM(l.valor) DESC LIMIT 8
+      ) gc
+    ),
+
+    'saldo_acumulado', (
+      SELECT json_agg(row_to_json(sa)) FROM (
+        SELECT EXTRACT(MONTH FROM data)::int AS mes,
+          SUM(SUM(CASE
+            WHEN tipo = 'RECEITA' THEN  valor
+            WHEN tipo = 'DESPESA' THEN -valor
+            ELSE 0
+          END)) OVER (ORDER BY EXTRACT(MONTH FROM data)) AS saldo
+        FROM financas_lancamentos
+        WHERE usuario_id = p_usuario_id AND tipo_pessoa = p_tipo_pessoa
+          AND status = 'PAGO' AND transferencia_grupo_id IS NULL
+          AND (p_ano IS NULL OR EXTRACT(YEAR FROM data) = p_ano)
+        GROUP BY EXTRACT(MONTH FROM data)
+        ORDER BY EXTRACT(MONTH FROM data)
+      ) sa
+    )
+  ) INTO v_resultado;
+
+  RETURN v_resultado;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION get_dashboard_data(UUID, TEXT, INT, INT, UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION get_dashboard_data(UUID, TEXT, INT, INT, UUID) TO authenticated;
+
+-- ============================================================
+-- RPC: get_comparacao_orcamento
+-- Retorna receitas/despesas planejadas e realizadas
+-- ============================================================
+CREATE OR REPLACE FUNCTION get_comparacao_orcamento(
+  p_usuario_id  UUID,
+  p_tipo_pessoa TEXT,
+  p_ano         INT  DEFAULT NULL,
+  p_mes         INT  DEFAULT NULL
+)
+RETURNS JSON
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_resultado JSON;
+BEGIN
+  IF p_usuario_id != auth.uid() AND NOT is_admin() THEN
+    RAISE EXCEPTION 'UNAUTHORIZED';
+  END IF;
+
+  SELECT json_build_object(
+    'receitas_planejadas', COALESCE((
+      SELECT SUM(valor_planejado) FROM financas_orcamento
+      WHERE usuario_id = p_usuario_id AND tipo_pessoa = p_tipo_pessoa AND tipo = 'RECEITA'
+        AND (p_ano IS NULL OR EXTRACT(YEAR FROM data) = p_ano)
+        AND (p_mes IS NULL OR EXTRACT(MONTH FROM data) = p_mes)
+    ), 0),
+
+    'despesas_planejadas', COALESCE((
+      SELECT SUM(valor_planejado) FROM financas_orcamento
+      WHERE usuario_id = p_usuario_id AND tipo_pessoa = p_tipo_pessoa AND tipo = 'DESPESA'
+        AND (p_ano IS NULL OR EXTRACT(YEAR FROM data) = p_ano)
+        AND (p_mes IS NULL OR EXTRACT(MONTH FROM data) = p_mes)
+    ), 0),
+
+    'receitas_realizadas', COALESCE((
+      SELECT SUM(valor) FROM financas_lancamentos
+      WHERE usuario_id = p_usuario_id AND tipo_pessoa = p_tipo_pessoa AND tipo = 'RECEITA'
+        AND status = 'PAGO' AND transferencia_grupo_id IS NULL
+        AND (p_ano IS NULL OR EXTRACT(YEAR  FROM data) = p_ano)
+        AND (p_mes IS NULL OR EXTRACT(MONTH FROM data) = p_mes)
+    ), 0),
+
+    'despesas_realizadas', COALESCE((
+      SELECT SUM(valor) FROM financas_lancamentos
+      WHERE usuario_id = p_usuario_id AND tipo_pessoa = p_tipo_pessoa AND tipo = 'DESPESA'
+        AND status = 'PAGO' AND transferencia_grupo_id IS NULL
+        AND (p_ano IS NULL OR EXTRACT(YEAR  FROM data) = p_ano)
+        AND (p_mes IS NULL OR EXTRACT(MONTH FROM data) = p_mes)
+    ), 0)
+  ) INTO v_resultado;
+
+  RETURN v_resultado;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION get_comparacao_orcamento(UUID, TEXT, INT, INT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION get_comparacao_orcamento(UUID, TEXT, INT, INT) TO authenticated;

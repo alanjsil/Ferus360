@@ -242,10 +242,10 @@ async function carregarCategorias() {
  */
 function filtrarCategoriasComLancamentos() {
   const select = document.getElementById("filtroCategoria");
-  if (!dadosDashboard?.lancamentos?.length || !_todasCategorias.length) return;
+  if (!dadosDashboard?.por_categoria?.length || !_todasCategorias.length) return;
 
   const idsComLancamentos = new Set(
-    dadosDashboard.lancamentos
+    dadosDashboard.por_categoria
       .filter((l) => l.categoria_id)
       .map((l) => String(l.categoria_id)),
   );
@@ -313,16 +313,11 @@ async function popularAnos() {
  */
 function popularMeses() {
   const select = document.getElementById("filtroMes");
-  const mesesDisponiveis = [];
+  const mesesDisponiveis = new Set();
 
-  dadosDashboard.lancamentos?.forEach((item) => {
-    const mes = item.data.substring(5, 7);
-    if (!mesesDisponiveis.includes(mes)) {
-      mesesDisponiveis.push(mes);
-    }
+  (dadosDashboard.por_mes || []).forEach((item) => {
+    mesesDisponiveis.add(item.mes);
   });
-
-  mesesDisponiveis.sort();
 
   select.innerHTML = '<option value="all">Todos</option>';
 
@@ -429,17 +424,11 @@ function renderizarGraficoMensal() {
   const receitas = new Array(12).fill(0);
   const despesas = new Array(12).fill(0);
 
-  dadosDashboard.lancamentos?.forEach((item) => {
-    // PARSE MANUAL para evitar problemas de fuso horário
-    const [, mesStr] = item.data.split("-");
-    const mes = parseInt(mesStr) - 1; // Convertendo 01-12 para 0-11
-
-    if (mes >= 0 && mes < 12) {
-      if (item.tipo === "RECEITA" && !item.transferencia_grupo_id) {
-        receitas[mes] += Number(item.valor);
-      } else if (item.tipo === "DESPESA" && !item.transferencia_grupo_id) {
-        despesas[mes] += Number(item.valor);
-      }
+  (dadosDashboard.por_mes || []).forEach((item) => {
+    const idx = item.mes - 1;
+    if (idx >= 0 && idx < 12) {
+      if (item.tipo === "RECEITA") receitas[idx] = Number(item.total);
+      if (item.tipo === "DESPESA") despesas[idx] = Number(item.total);
     }
   });
 
@@ -498,26 +487,12 @@ function renderizarGraficoCategorias() {
 
   if (chartCategorias) chartCategorias.destroy();
 
-  const categoriasMap = {};
-
-  dadosDashboard.lancamentos?.forEach((item) => {
-    // Filtra pelo tipo selecionado
-    if (item.tipo === tipoFiltro && !item.transferencia_grupo_id && item.categoria) {
-      const categoriaNome = item.categoria.nome;
-      if (!categoriasMap[categoriaNome]) {
-        categoriasMap[categoriaNome] = 0;
-      }
-      categoriasMap[categoriaNome] += Number(item.valor);
-    }
-  });
-
-  // Se quiser um seletor para tipo (despesa/receita)
-  const categoriasOrdenadas = Object.entries(categoriasMap)
-    .sort(([, a], [, b]) => b - a)
+  const dados = (dadosDashboard.por_categoria || [])
+    .filter((item) => item.tipo === tipoFiltro)
     .slice(0, 8);
 
-  const categorias = categoriasOrdenadas.map(([nome]) => nome);
-  const valores = categoriasOrdenadas.map(([, valor]) => valor);
+  const categorias = dados.map((d) => d.categoria_nome || "Sem categoria");
+  const valores = dados.map((d) => Number(d.total));
 
   chartCategorias = new Chart(ctx, {
     type: "doughnut",
@@ -550,47 +525,23 @@ function renderizarGraficoCategorias() {
 // 3. Gráfico de Evolução do Saldo
 function renderizarGraficoSaldo() {
   const ctx = document.getElementById("chartSaldo").getContext("2d");
-  const anoSelecionado = parseInt(document.getElementById("filtroAno").value);
 
   if (chartSaldo) chartSaldo.destroy();
 
   const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const saldos = new Array(12).fill(0);
 
-  // Processar todos os lançamentos - USANDO PARSE MANUAL PARA EVITAR FUSO HORÁRIO
-  const lancamentosPorMes = new Array(12).fill().map(() => ({ receita: 0, despesa: 0 }));
-
-  dadosDashboard.lancamentos?.forEach((item) => {
-    // PARSE MANUAL para evitar problemas de fuso horário
-    // Formato esperado: "YYYY-MM-DD"
-    const [anoStr, mesStr] = item.data.split("-");
-    const anoItem = parseInt(anoStr);
-    const mesItem = parseInt(mesStr) - 1; // Convertendo 01-12 para 0-11
-    const valor = Number(item.valor);
-
-    // Verificar se é do ano correto
-    if (anoItem === anoSelecionado && mesItem >= 0 && mesItem < 12) {
-      if (item.tipo === "RECEITA" && !item.transferencia_grupo_id) {
-        lancamentosPorMes[mesItem].receita += valor;
-      } else if (item.tipo === "DESPESA" && !item.transferencia_grupo_id) {
-        lancamentosPorMes[mesItem].despesa += valor;
-      }
+  (dadosDashboard.saldo_acumulado || []).forEach((item) => {
+    const idx = item.mes - 1;
+    if (idx >= 0 && idx < 12) {
+      saldos[idx] = Number(item.saldo);
     }
   });
-
-  // Calcular saldo acumulado
-  let saldoAcumulado = 0;
-
-  for (let mes = 0; mes < 12; mes++) {
-    const saldoMes = lancamentosPorMes[mes].receita - lancamentosPorMes[mes].despesa;
-    saldoAcumulado += saldoMes;
-    saldos[mes] = saldoAcumulado;
-  }
 
   chartSaldo = new Chart(ctx, {
     type: "line",
     data: {
-      labels: meses.map((mes) => `${mes}/${anoSelecionado.toString().slice(-2)}`),
+      labels: meses.map((mes) => `${mes}/${(document.getElementById("filtroAno")?.value || "").toString().slice(-2)}`),
       datasets: [
         {
           label: "Saldo Acumulado",

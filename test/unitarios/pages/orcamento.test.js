@@ -21,6 +21,7 @@ const mockElectronAPI = {
   getContas: vi.fn(),
   getPessoas: vi.fn(),
   getLancamentos: vi.fn(),
+  getLancamentosPaginado: vi.fn().mockResolvedValue({ data: [], cursor: null, hasMore: false, total: 0 }),
   getOrcamento: vi.fn(),
   getDashboard: vi.fn(),
   criarLancamento: vi.fn(),

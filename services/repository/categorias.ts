@@ -1,6 +1,7 @@
 import type { Categoria, Subcategoria, CriarCategoriaPayload, CriarSubcategoriaPayload } from "../../src/types";
 import crypto from "crypto";
 import * as logger from "../logger";
+import { getCache } from "../cache";
 import {
   supabase,
   adicionarFiltroUsuario,
@@ -11,6 +12,13 @@ import {
 import { logAuditoria } from "./auditoria";
 
 async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas = false, tipoPessoa?: string): Promise<Categoria[]> {
+  if (usuarioId && tipoPessoa && !tipo && !mostrarInativas) {
+    const cache = getCache();
+    if (cache.isValid("categorias", usuarioId, tipoPessoa)) {
+      return cache.get<Categoria>("categorias");
+    }
+  }
+
   function montarQueryBase() {
     let q = supabase.from("financas_categorias").select("*");
     if (!mostrarInativas) q = q.eq("ativo", true);
@@ -40,9 +48,20 @@ async function getCategorias(usuarioId?: string, tipo?: string, mostrarInativas 
       data = res.data;
     }
 
+    if (usuarioId && tipoPessoa && !tipo && !mostrarInativas) {
+      getCache().set("categorias", data, usuarioId, tipoPessoa);
+    }
+
     return data;
   } catch (err) {
     logger.warn("repository", "getCategorias Supabase indisponível, fallback ao cache local", err);
+    if (usuarioId && tipoPessoa && !tipo && !mostrarInativas) {
+      const cache = getCache();
+      if (cache.hasStale("categorias")) {
+        logger.warn("repository", "getCategorias retornando cache expirado (offline)");
+        return cache.get<Categoria>("categorias");
+      }
+    }
   }
 
   return [];
@@ -84,6 +103,7 @@ async function criarCategoria(payload: CriarCategoriaPayload): Promise<Categoria
   if (inactiveExisting) {
     const { data, error } = await supabase.from("financas_categorias").update({ ativo: true, nome: nomeNormalizado }).eq("id", inactiveExisting.id).select().single();
     if (error) throw error;
+    getCache().invalidar("categorias");
     return data;
   }
 
@@ -101,6 +121,8 @@ async function criarCategoria(payload: CriarCategoriaPayload): Promise<Categoria
   const { data, error } = await supabase.from("financas_categorias").insert(insertPayload).select().single();
 
   if (error) throw error;
+
+  getCache().invalidar("categorias");
 
   if (usuarioId) {
     logAuditoria(usuarioId, "CATEGORIA_CRIADA", { entidade: "categoria", entidade_id: data.id, dados_novos: { nome: nomeNormalizado, tipo } }).catch((err: unknown) =>
@@ -138,6 +160,7 @@ async function updateCategoria(id: string, patch: { nome?: string; tipo?: string
 
   if (error) throw error;
 
+  getCache().invalidar("categorias");
   return data;
 }
 
@@ -166,6 +189,7 @@ async function toggleCategoriaAtivo(id: string, usuarioId?: string): Promise<Cat
 
   if (error) throw error;
 
+  getCache().invalidar("categorias");
   return data;
 }
 
@@ -189,6 +213,8 @@ async function toggleCategoriaUniversal(id: string, usuarioId?: string, tipoPess
   const { error: errSub } = await supabase.from("financas_subcategorias").update({ tipo_pessoa: novoTipoPessoa }).eq("categoria_id", id);
   if (errSub) throw errSub;
 
+  getCache().invalidar("categorias");
+  getCache().invalidar("subcategorias");
   return data;
 }
 
@@ -212,6 +238,7 @@ async function criarSubcategoria(usuarioId: string, payload: CriarSubcategoriaPa
 
   if (error) throw error;
 
+  getCache().invalidar("subcategorias");
   return data;
 }
 
@@ -232,10 +259,18 @@ async function updateSubcategoria(id: string, patch: { nome?: string }): Promise
   if (error) throw error;
   if (!data || data.length === 0) throw new Error("Subcategoria não encontrada.");
 
+  getCache().invalidar("subcategorias");
   return data[0];
 }
 
 async function getSubcategorias(usuarioId?: string, categoriaId?: string, tipoPessoa?: string): Promise<Subcategoria[]> {
+  if (usuarioId && tipoPessoa && !categoriaId) {
+    const cache = getCache();
+    if (cache.isValid("subcategorias", usuarioId, tipoPessoa)) {
+      return cache.get<Subcategoria>("subcategorias");
+    }
+  }
+
   try {
     let query = supabase.from("financas_subcategorias").select("*").order("nome") as any;
 
@@ -248,9 +283,21 @@ async function getSubcategorias(usuarioId?: string, categoriaId?: string, tipoPe
 
     const { data, error } = await query;
     if (error) throw error;
+
+    if (usuarioId && tipoPessoa && !categoriaId) {
+      getCache().set("subcategorias", data, usuarioId, tipoPessoa);
+    }
+
     return data;
   } catch (err) {
     logger.warn("repository", "getSubcategorias Supabase indisponível", err);
+    if (usuarioId && tipoPessoa && !categoriaId) {
+      const cache = getCache();
+      if (cache.hasStale("subcategorias")) {
+        logger.warn("repository", "getSubcategorias retornando cache expirado (offline)");
+        return cache.get<Subcategoria>("subcategorias");
+      }
+    }
   }
 
   return [];
@@ -268,6 +315,7 @@ async function deletarSubcategoria(id: string): Promise<{ success: boolean }> {
   const { error } = await supabase.from("financas_subcategorias").delete().eq("id", id);
 
   if (error) throw error;
+  getCache().invalidar("subcategorias");
   return { success: true };
 }
 

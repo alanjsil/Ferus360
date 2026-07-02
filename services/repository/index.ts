@@ -28,11 +28,12 @@ export { getContas, criarConta, updateConta, deletarConta } from "./contas";
 export { getPessoas, criarPessoa, updatePessoa, deletarPessoa } from "./pessoas";
 
 export {
+  getDashboard,
+  getDashboardDados,
   getLancamentos,
+  getLancamentosPaginado,
   getOrcamento,
   getAnosDisponiveis,
-  getDashboardDados,
-  getDashboard,
   criarLancamento,
   deletarLancamento,
   updateLancamento,

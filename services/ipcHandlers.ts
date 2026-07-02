@@ -3,6 +3,8 @@ import type { IpcMainInvokeEvent } from "electron";
 import { AuthError } from "./auth";
 import * as logger from "./logger";
 import * as importacaoCSV from "./importacao-csv";
+import { getCache } from "./cache";
+import { supabase, setAuthSession } from "./repository/utils";
 
 let _ipCache: string | undefined;
 let _ipCacheAt: number = 0;
@@ -71,6 +73,16 @@ function createHandlers(
         setState("usarPjAtivo", data.usuario?.usar_pj === true);
         setState("accessToken", data.token);
         setState("refreshToken", data.refreshToken);
+
+        getCache().invalidarTodos();
+
+        Promise.all([
+          repository.getCategorias(data.usuario.id, null, false, data.usuario?.usar_pj ? "PJ" : "PF").catch(() => {}),
+          repository.getSubcategorias(data.usuario.id, undefined, data.usuario?.usar_pj ? "PJ" : "PF").catch(() => {}),
+          repository.getContas(data.usuario.id, data.usuario?.usar_pj ? "PJ" : "PF").catch(() => {}),
+          repository.getPessoas(data.usuario.id, data.usuario?.usar_pj ? "PJ" : "PF").catch(() => {}),
+        ]).catch(() => {});
+
         return data;
       } catch (err) {
         const code = (err as { code?: string }).code || (err as Error).message || "ERRO_INTERNO";
@@ -84,6 +96,7 @@ function createHandlers(
       const data = await auth.logout(metadados);
       resetStateFn();
       setState("usuarioAtual", null);
+      getCache().invalidarTodos();
       return data;
     },
 
@@ -299,22 +312,30 @@ function createHandlers(
 
     handleDashboardDados: async (_event: unknown, ano: unknown, mes: unknown, categoria: string) => {
       try {
-        const usuarioId = obterUsuarioId();
-        if (!usuarioId) return { error: "UNAUTHORIZED" };
         const token = getState("accessToken") as string | null;
         const refreshToken = getState("refreshToken") as string | null;
         if (token && refreshToken) {
           try {
-            await repository.setAuthSession(token, refreshToken);
+            await setAuthSession(token, refreshToken);
           } catch (err) {
             logger.error("ipcHandlers", "setAuthSession falhou no dashboard:dados", err);
           }
         }
-        const tipoPessoa = obterTipoPessoaAtivo();
-        return await repository.getDashboardDados(ano, mes, categoria, usuarioId, tipoPessoa);
+        const usuarioId = obterUsuarioId();
+        if (!usuarioId) return { error: "UNAUTHORIZED" };
+
+        const { data, error } = await supabase.rpc("get_dashboard_data", {
+          p_usuario_id:   usuarioId,
+          p_tipo_pessoa:  obterTipoPessoaAtivo(),
+          p_ano:          ano && ano !== "all" ? Number(ano) : null,
+          p_mes:          mes && mes !== "all" ? Number(mes) : null,
+          p_categoria_id: categoria && categoria !== "all" ? categoria : null,
+        });
+        if (error) throw error;
+        return data;
       } catch (err) {
-        logger.error("ipc", "Erro no dashboard:dados", err);
-        return { error: "ERRO_INTERNO", detalhe: err instanceof Error ? err.message : String(err) };
+        logger.error("ipc", "dashboard:dados", err);
+        return { error: "ERRO_INTERNO", detalhe: (err as Error).message };
       }
     },
 
@@ -326,11 +347,32 @@ function createHandlers(
     },
 
     handleDashboardGet: async (_event: unknown, mes: string) => {
-      const usuarioId = obterUsuarioId();
-      if (!usuarioId) return { error: "UNAUTHORIZED" };
-      const tipoPessoa = obterTipoPessoaAtivo();
-      const data = await repository.getDashboard(mes, usuarioId, tipoPessoa);
-      return data;
+      try {
+        const token = getState("accessToken") as string | null;
+        const refreshToken = getState("refreshToken") as string | null;
+        if (token && refreshToken) {
+          try {
+            await setAuthSession(token, refreshToken);
+          } catch (err) {
+            logger.error("ipcHandlers", "setAuthSession falhou no dashboard:get", err);
+          }
+        }
+        const usuarioId = obterUsuarioId();
+        if (!usuarioId) return { error: "UNAUTHORIZED" };
+
+        const parts = mes ? mes.split("-") : [];
+        const { data, error } = await supabase.rpc("get_comparacao_orcamento", {
+          p_usuario_id:  usuarioId,
+          p_tipo_pessoa: obterTipoPessoaAtivo(),
+          p_ano:         parts[0] ? Number(parts[0]) : null,
+          p_mes:         parts[1] ? Number(parts[1]) : null,
+        });
+        if (error) throw error;
+        return { totais: data };
+      } catch (err) {
+        logger.error("ipc", "dashboard:get", err);
+        return { error: "ERRO_INTERNO" };
+      }
     },
 
     handleLancamentosCreate: async (event: IpcMainInvokeEvent, payload: Record<string, unknown>) => {
@@ -388,6 +430,21 @@ function createHandlers(
         const msg = (err as Error).message || "ERRO_ATUALIZAR_LANCAMENTO";
         logger.error("ipcHandlers", "updateLancamento falhou", err);
         return { error: msg };
+      }
+    },
+
+    handleLancamentosPaginado: async (_event: unknown, filtros: Record<string, unknown>) => {
+      const usuarioId = obterUsuarioId();
+      if (!usuarioId) return { error: "UNAUTHORIZED" };
+      try {
+        return await repository.getLancamentosPaginado({
+          ...filtros,
+          usuarioId,
+          tipoPessoa: obterTipoPessoaAtivo(),
+        });
+      } catch (err) {
+        logger.error("ipc", "getLancamentosPaginado", err);
+        return { error: "ERRO_INTERNO" };
       }
     },
 
@@ -751,6 +808,7 @@ function createHandlers(
         return { success: false };
       }
       setState("tipoPessoaAtivo", tipoPessoa);
+      getCache().invalidarTodos();
       return { success: true };
     },
 
@@ -767,6 +825,7 @@ function createHandlers(
       if (usuarioId) {
         await repository.updatePerfil(usuarioId, { usar_pj: value });
       }
+      getCache().invalidarTodos();
       return { success: true };
     },
 
@@ -785,10 +844,6 @@ function createHandlers(
       } catch (err) {
         return { error: (err as Error).message };
       }
-    },
-
-    handleLimparCache: async () => {
-      return { success: true };
     },
 
     handleTrialStatus: async () => {
@@ -840,6 +895,7 @@ function registerHandlers(promptSenha: (msg: string) => Promise<string>): void {
   ipcMain.handle("pessoa:update", handlers.handlePessoaUpdate);
   ipcMain.handle("pessoa:delete", handlers.handlePessoaDelete);
   ipcMain.handle("lancamentos:get", handlers.handleLancamentosGet);
+  ipcMain.handle("lancamentos:paginado", handlers.handleLancamentosPaginado);
   ipcMain.handle("orcamento:get", handlers.handleOrcamentoGet);
   ipcMain.handle("dashboard:dados", handlers.handleDashboardDados);
   ipcMain.handle("dashboard:anos", handlers.handleDashboardAnos);

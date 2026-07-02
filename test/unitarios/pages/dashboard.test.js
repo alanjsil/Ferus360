@@ -58,10 +58,10 @@ describe("dashboard (painel principal)", () => {
       { id: 2, nome: "Salário" },
     ]);
     mockElectronAPI.getDashboardDados.mockResolvedValue({
-      lancamentos: [],
-      orcamentos: [],
-      totalLancamentos: 0,
-      totalOrcamentos: 0,
+      totais: { receitas: 0, despesas: 0 },
+      por_mes: [],
+      por_categoria: [],
+      saldo_acumulado: [],
     });
     mockElectronAPI.getAnosDisponiveis.mockResolvedValue([2026, 2025]);
 
@@ -105,27 +105,18 @@ describe("dashboard (painel principal)", () => {
     it("carrega dados do dashboard e renderiza gráficos", async () => {
       // Arrange
       mockElectronAPI.getDashboardDados.mockResolvedValue({
-        lancamentos: [
-          {
-            data: "2026-06-15",
-            tipo: "DESPESA",
-            valor: 100,
-            categoria: { nome: "Alimentação" },
-            subcategoria: { nome: "Mercado" },
-            status: "PAGO",
-          },
-          {
-            data: "2026-06-10",
-            tipo: "RECEITA",
-            valor: 5000,
-            categoria: { nome: "Salário" },
-            subcategoria: { nome: "Salário Fixo" },
-            status: "PAGO",
-          },
+        totais: { receitas: 5000, despesas: 100 },
+        por_mes: [
+          { mes: 6, tipo: "DESPESA", total: 100 },
+          { mes: 6, tipo: "RECEITA", total: 5000 },
         ],
-        orcamentos: [],
-        totalLancamentos: 2,
-        totalOrcamentos: 0,
+        por_categoria: [
+          { categoria_id: "1", categoria_nome: "Alimentação", tipo: "DESPESA", total: 100 },
+          { categoria_id: "2", categoria_nome: "Salário", tipo: "RECEITA", total: 5000 },
+        ],
+        saldo_acumulado: [
+          { mes: 6, saldo: 4900 },
+        ],
       });
 
       // Act
@@ -140,14 +131,14 @@ describe("dashboard (painel principal)", () => {
       await dashboard.carregarCategorias();
       await dashboard.popularAnos();
       mockElectronAPI.getDashboardDados.mockResolvedValue({
-        lancamentos: [{ data: "2026-06-15", tipo: "DESPESA", valor: 100, categoria_id: "1", categoria: { nome: "X" }, subcategoria: {}, status: "PAGO" }],
-        orcamentos: [],
-        totalLancamentos: 1,
-        totalOrcamentos: 0,
+        totais: { receitas: 0, despesas: 100 },
+        por_mes: [{ mes: 6, tipo: "DESPESA", total: 100 }],
+        por_categoria: [{ categoria_id: "1", categoria_nome: "X", tipo: "DESPESA", total: 100 }],
+        saldo_acumulado: [{ mes: 6, saldo: -100 }],
       });
       await dashboard.carregarDashboard();
       dashboard.popularMeses();
-      document.getElementById("filtroMes").value = "06";
+      document.getElementById("filtroMes").value = "6";
       document.getElementById("filtroCategoria").value = "1";
       mockElectronAPI.getDashboardDados.mockClear();
 
@@ -155,17 +146,17 @@ describe("dashboard (painel principal)", () => {
       await dashboard.carregarDashboard();
 
       // Assert
-      expect(mockElectronAPI.getDashboardDados).toHaveBeenCalledWith("2026", "06", "1");
+      expect(mockElectronAPI.getDashboardDados).toHaveBeenCalledWith("2026", "6", "1");
     });
 
     it("passa undefined para mes quando 'all' está selecionado", async () => {
       // Arrange
       await dashboard.popularAnos();
       mockElectronAPI.getDashboardDados.mockResolvedValue({
-        lancamentos: [{ data: "2026-06-15", tipo: "DESPESA", valor: 100, categoria: { nome: "X" }, subcategoria: {}, status: "PAGO" }],
-        orcamentos: [],
-        totalLancamentos: 1,
-        totalOrcamentos: 0,
+        totais: { receitas: 0, despesas: 100 },
+        por_mes: [{ mes: 6, tipo: "DESPESA", total: 100 }],
+        por_categoria: [{ categoria_id: "1", categoria_nome: "X", tipo: "DESPESA", total: 100 }],
+        saldo_acumulado: [{ mes: 6, saldo: -100 }],
       });
       await dashboard.carregarDashboard();
       dashboard.popularMeses();
@@ -180,12 +171,12 @@ describe("dashboard (painel principal)", () => {
     });
   });
 
-  function setDashboardData(lancamentos) {
+  function setDashboardData() {
     mockElectronAPI.getDashboardDados.mockResolvedValue({
-      lancamentos,
-      orcamentos: [],
-      totalLancamentos: lancamentos.length,
-      totalOrcamentos: 0,
+      totais: { receitas: 0, despesas: 0 },
+      por_mes: [],
+      por_categoria: [],
+      saldo_acumulado: [],
     });
   }
 

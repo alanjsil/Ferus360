@@ -19,6 +19,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as repo from "../../services/repository.js";
 import { createAndLoginUser, createMockSupabase } from "./helpers.js";
+import { initCache } from "../../services/cache.js";
+import path from "node:path";
+import os from "node:os";
 
 describe("Fluxo Integrado: Admin → Filtro PF/PJ", () => {
   let mockSupabase;
@@ -29,6 +32,7 @@ describe("Fluxo Integrado: Admin → Filtro PF/PJ", () => {
   beforeEach(async () => {
     mockSupabase = createMockSupabase();
     repo.__setSupabase(mockSupabase);
+    initCache(path.join(os.tmpdir(), "test-cache-admin-pfpj"));
 
     // Criar cliente que terá dados PF e PJ
     const result = await createAndLoginUser(mockSupabase, {

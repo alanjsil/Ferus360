@@ -16,6 +16,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createMockSupabase, createAndLoginUser } from "./helpers.js";
 import * as repo from "../../services/repository.js";
 import { construirAuthService } from "../../services/auth.js";
+import { initCache } from "../../services/cache.js";
+import path from "node:path";
+import os from "node:os";
 
 describe("Fluxo Integrado: Admin → Categorias Globais", () => {
   let _auth;
@@ -26,6 +29,7 @@ describe("Fluxo Integrado: Admin → Categorias Globais", () => {
   beforeEach(async () => {
     mockSupabase = createMockSupabase();
     repo.__setSupabase(mockSupabase);
+    initCache(path.join(os.tmpdir(), "test-cache-admin-global"));
 
     _auth = construirAuthService({
       supabase: mockSupabase,

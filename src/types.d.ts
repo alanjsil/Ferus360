@@ -180,6 +180,59 @@ export interface DashboardDadosResult {
   totalOrcamentos: number;
 }
 
+export interface DashboardRpcTotais {
+  receitas: number;
+  despesas: number;
+}
+
+export interface DashboardRpcPorMes {
+  mes: number;
+  tipo: string;
+  total: number;
+}
+
+export interface DashboardRpcPorCategoria {
+  categoria_id: string;
+  categoria_nome: string;
+  tipo: string;
+  total: number;
+}
+
+export interface DashboardRpcSaldoAcumulado {
+  mes: number;
+  saldo: number;
+}
+
+export interface DashboardRpcResult {
+  totais: DashboardRpcTotais;
+  por_mes: DashboardRpcPorMes[];
+  por_categoria: DashboardRpcPorCategoria[];
+  saldo_acumulado: DashboardRpcSaldoAcumulado[];
+}
+
+export interface CursorLancamento {
+  data: string;
+  criado_em: string;
+  id: string;
+}
+
+export interface FiltrosLancamento {
+  mes?: string;
+  usuarioId?: string;
+  tipoPessoa?: string;
+  tipo?: string;
+  status?: string;
+  cursor?: CursorLancamento;
+  limite?: number;
+}
+
+export interface PaginaLancamentos {
+  data: Lancamento[];
+  cursor: CursorLancamento | null;
+  total: number;
+  hasMore: boolean;
+}
+
 export interface AuthResult {
   token: string;
   refreshToken: string;

@@ -91,6 +91,77 @@ let filtroAtualAno = "all";
 let filtroAtualMes = "all";
 let _importTimeoutId = null;
 let arquivoImportacaoAtual = null;
+
+// ====== PAGINAÇÃO ======
+let _paginaAtual = {
+  cursor: null,
+  total: 0,
+  hasMore: false,
+  carregando: false,
+};
+
+function resetarPaginacao() {
+  _paginaAtual = { cursor: null, total: 0, hasMore: false, carregando: false };
+  lancamentos = [];
+}
+
+async function carregarPrimeiraPagina() {
+  resetarPaginacao();
+  await carregarProximaPagina();
+}
+
+async function carregarProximaPagina() {
+  if (_paginaAtual.carregando) return;
+  if (!_paginaAtual.hasMore && _paginaAtual.cursor !== null) return;
+
+  _paginaAtual.carregando = true;
+  atualizarBotaoPaginacao();
+
+  try {
+    const mes = (filtroAtualMes !== "all" && filtroAtualAno !== "all")
+      ? `${filtroAtualAno}-${filtroAtualMes.padStart(2, "0")}`
+      : undefined;
+
+    const resultado = await window.electronAPI.getLancamentosPaginado({
+      mes,
+      tipo: filtroAtualTipo !== "all" ? filtroAtualTipo : undefined,
+      status: filtroAtualStatus !== "all" ? filtroAtualStatus : undefined,
+      cursor: _paginaAtual.cursor ?? undefined,
+      limite: 50,
+    });
+
+    if (resultado.error) {
+      exibirToast("Erro ao carregar lançamentos.", "error");
+      return;
+    }
+
+    lancamentos = [...lancamentos, ...resultado.data];
+    _paginaAtual.cursor  = resultado.cursor;
+    _paginaAtual.total   = resultado.total;
+    _paginaAtual.hasMore = resultado.hasMore;
+
+    renderizarTabela();
+    atualizarContador();
+    atualizarBotaoPaginacao();
+  } finally {
+    _paginaAtual.carregando = false;
+    atualizarBotaoPaginacao();
+  }
+}
+
+function atualizarBotaoPaginacao() {
+  const btn = document.getElementById("btnCarregarMais");
+  if (!btn) return;
+  if (!_paginaAtual.hasMore) {
+    btn.hidden = true;
+    return;
+  }
+  btn.hidden = false;
+  btn.disabled = _paginaAtual.carregando;
+  btn.textContent = _paginaAtual.carregando
+    ? "Carregando..."
+    : `Carregar mais (${lancamentos.length} de ${_paginaAtual.total})`;
+}
 // ====== SISTEMA DE FILTROS EM LOCALSTORAGE ======
 const NS = "fnc:v1:";
 const STORAGE_KEYS = {
@@ -180,7 +251,7 @@ async function aplicarFiltrosSalvos() {
   aplicarFiltroPill("status", estado.filtroStatus);
 
   // Recarregar dados
-  await carregarLancamentos();
+  await carregarPrimeiraPagina();
   await carregarOrcamento();
   await carregarDashboard();
   atualizarResumo();
@@ -192,6 +263,13 @@ async function aplicarFiltrosSalvos() {
  * @param {string} valor
  * @returns {void}
  */
+function atualizarContador() {
+  const el = document.getElementById("contadorLancamentos");
+  if (!el) return;
+  const sufixo = _paginaAtual.hasMore ? ` de ${_paginaAtual.total}` : "";
+  el.textContent = `${lancamentos.length} lançamento${lancamentos.length !== 1 ? "s" : ""}${sufixo}`;
+}
+
 function aplicarFiltroPill(tipo, valor) {
   const btn = document.querySelector(`.pill-filter[data-filter-${tipo}="${valor}"]`);
   if (btn) {
@@ -209,21 +287,20 @@ function configurarEventListeners() {
     salvarEstadoFiltros();
     document.getElementById("filtroMes").value = "all";
     filtroAtualMes = "all";
-    atualizarMesesFiltro();
+    await carregarPrimeiraPagina();
     await carregarOrcamento();
     await carregarDashboard();
     atualizarResumo();
-    renderizarTabela();
   });
 
   // Filtro de mês
   document.getElementById("filtroMes").addEventListener("change", async function () {
     filtroAtualMes = this.value;
     salvarEstadoFiltros();
+    await carregarPrimeiraPagina();
     await carregarOrcamento();
     await carregarDashboard();
     atualizarResumo();
-    renderizarTabela();
   });
 
   // Filtros de tipo (pills)
@@ -289,6 +366,7 @@ function configurarEventListeners() {
   document.getElementById("arquivoImportacao")?.addEventListener("change", selecionarArquivoImportacao);
   document.getElementById("btnCancelar")?.addEventListener("click", cancelarEdicao);
   document.getElementById("btnImportarDados")?.addEventListener("click", processarImportacao);
+  document.getElementById("btnCarregarMais")?.addEventListener("click", carregarProximaPagina);
 }
 function ir_para_dashboard() {
   window.location.href = "dashboard.html";
@@ -817,7 +895,7 @@ async function excluirLancamento(id, event = null) {
     }
 
     // Recarregar os dados
-    await carregarLancamentos();
+    await carregarPrimeiraPagina();
     await carregarDashboard();
 
     // Feedback visual
@@ -1095,7 +1173,7 @@ function renderizarTabela() {
     return true;
   });
 
-  document.getElementById("contadorLancamentos").textContent = `${lista.length} lançamento${lista.length !== 1 ? "s" : ""}`;
+  atualizarContador();
 
   if (lista.length === 0) {
     tbody.innerHTML = `
@@ -1207,14 +1285,14 @@ document.getElementById("formLancamento").addEventListener("submit", async (e) =
     exibirToast(isEditing ? "Lançamento atualizado com sucesso!" : "Lançamento criado com sucesso!", "success");
 
     // Recarregar dados e resetar formulário
-    await carregarLancamentos();
+    await carregarPrimeiraPagina();
     await cancelarEdicao();
     await carregarDashboard();
     await atualizarSubcategorias();
   } catch (error) {
     exibirToast("Erro ao salvar lançamento: " + error.message, "error");
     setCampoValor({ disabled: false });
-    await carregarLancamentos();
+    await carregarPrimeiraPagina();
     await atualizarSubcategorias();
     await cancelarEdicao();
   }
@@ -1223,7 +1301,6 @@ document.getElementById("formLancamento").addEventListener("submit", async (e) =
 // Recarrega ao trocar o mês
 document.getElementById("filtroMes").addEventListener("change", () => {
   atualizarResumo();
-  renderizarTabela();
 });
 // Preencher data atual por padrão
 document.getElementById("data").valueAsDate = new Date();
@@ -1369,7 +1446,9 @@ export {
   aplicarFiltroPill,
   aplicarFiltrosSalvos,
   atualizarAnosFiltro,
+  atualizarBotaoPaginacao,
   atualizarComparacao,
+  atualizarContador,
   atualizarMesesFiltro,
   atualizarResumo,
   atualizarSubcategorias,
@@ -1382,6 +1461,8 @@ export {
   carregarLancamentos,
   carregarOrcamento,
   carregarPessoas,
+  carregarPrimeiraPagina,
+  carregarProximaPagina,
   carregarSubcategoriasCache,
   editarLancamento,
   excluirLancamento,
@@ -1393,6 +1474,7 @@ export {
   mostrarResultadoImportacao,
   processarImportacao,
   renderizarTabela,
+  resetarPaginacao,
   selecionarArquivoImportacao,
   salvarEstadoFiltros,
   setCampoValor,

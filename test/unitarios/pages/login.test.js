@@ -33,6 +33,7 @@ beforeEach(() => {
     solicitarRecuperacao: vi.fn(),
     renovarAuth: vi.fn().mockRejectedValue(new Error("no session")),
     verificarAuth: vi.fn().mockRejectedValue(new Error("no token")),
+    onUpdateStatus: vi.fn(() => vi.fn()),
   };
 });
 
@@ -72,6 +73,7 @@ describe("login (página de autenticação)", () => {
           usuario: { id: "user-1", nome: "User", email: "u@t.com", role: "user" },
         }),
         verificarAuth: vi.fn().mockRejectedValue(new Error("no token")),
+        onUpdateStatus: vi.fn(() => vi.fn()),
       };
       localStorage.setItem("financas.refresh_token", "refresh:user-1:session-1");
 
@@ -173,6 +175,7 @@ describe("login (página de autenticação)", () => {
         solicitarRecuperacao: vi.fn(),
         renovarAuth: vi.fn().mockRejectedValue(new Error("no session")),
         verificarAuth: vi.fn().mockRejectedValue(new Error("no token")),
+        onUpdateStatus: vi.fn(() => vi.fn()),
       };
       const module = await import("../../../public/js/login.js");
       loginLocal = module;
@@ -238,6 +241,7 @@ describe("login (página de autenticação)", () => {
         solicitarRecuperacao: vi.fn(),
         renovarAuth: vi.fn().mockRejectedValue(new Error("no session")),
         verificarAuth: vi.fn().mockRejectedValue(new Error("no token")),
+        onUpdateStatus: vi.fn(() => vi.fn()),
       };
       const module = await import("../../../public/js/login.js");
       loginLocal = module;
